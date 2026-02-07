@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { motion, useMotionValue, AnimatePresence } from 'framer-motion';
+import { motion, useScroll, useSpring, AnimatePresence } from 'framer-motion';
 import { 
-  ArrowUpRight, Megaphone, PenTool, Share2, Search, Palette, 
-  ShoppingBag, Plus, Crosshair, Rocket, Menu, X, Globe, ChevronDown
+  ArrowUpRight, Palette, Globe, Megaphone, Search, 
+  Menu, X, Sparkles, ChevronDown 
 } from 'lucide-react';
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -14,182 +14,273 @@ if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
+// --- Global Custom CSS (No Tailwind) ---
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&display=swap');
-  @font-face {
-    font-family: 'DIN Next LT Arabic';
-    src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Regular.woff2') format('woff2');
-    font-weight: 400; font-display: swap;
-  }
-  @font-face {
-    font-family: 'DIN Next LT Arabic';
-    src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Bold-2.woff2') format('woff2');
-    font-weight: 700; font-display: swap;
-  }
 
   :root {
-    --bg-dark: #050607; --primary: #4390b3; --primary-glow: rgba(67, 144, 179, 0.5);
-    --white: #ffffff; --border-color: rgba(255, 255, 255, 0.08);
+    --bg-dark: #030303;
+    --bg-card: #0a0a0a;
+    --primary: #4390b3;
+    --accent: #b34390;
+    --text-main: #ffffff;
+    --text-muted: #888888;
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(20, 20, 20, 0.6);
+    --capsule-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+    --transition-smooth: cubic-bezier(0.23, 1, 0.32, 1);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background-color: var(--bg-dark); color: var(--white); font-family: 'DIN Next LT Arabic', sans-serif; overflow-x: hidden; direction: rtl; }
-  h1, h2, h3 { font-weight: 700; margin: 0; }
-  h1 { font-size: clamp(3rem, 10vw, 6.5rem); }
-  h2 { font-size: clamp(2rem, 5vw, 4rem); }
-  p { font-size: clamp(0.95rem, 2vw, 1.15rem); line-height: 1.8; color: #94a3b8; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
   
-  .container { max-width: 1400px; margin: 0 auto; padding: 0 clamp(1rem, 5vw, 3rem); position: relative; }
+  html, body {
+    background-color: var(--bg-dark);
+    color: var(--text-main);
+    font-family: 'Readex Pro', sans-serif;
+    overflow-x: hidden;
+    direction: rtl;
+    scroll-behavior: smooth;
+  }
+
+  /* Typography */
+  h1 { font-size: clamp(3rem, 10vw, 7rem); font-weight: 700; letter-spacing: -2px; line-height: 1.1; }
+  h2 { font-size: clamp(2rem, 6vw, 4rem); font-weight: 600; letter-spacing: -1px; }
+  h3 { font-size: 1.5rem; font-weight: 500; }
+  p { color: var(--text-muted); line-height: 1.8; font-size: 1.1rem; }
+  
+  .text-gradient {
+    background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* Layout Utilities */
+  .main-container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 2rem; position: relative; }
   .flex-center { display: flex; align-items: center; justify-content: center; }
-  .absolute-fill { position: absolute; inset: 0; }
-  .text-gradient { background: linear-gradient(135deg, #fff 0%, var(--primary) 100%); -webkit-background-clip: text; color: transparent; }
+  .grid-services { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
 
-  /* Navbar Helpers */
-  .desktop-only { display: none !important; }
-  .mobile-only { display: block !important; }
+  /* --- The Glass Capsule Navbar --- */
+  .nav-wrapper {
+    position: fixed; top: 2rem; left: 0; width: 100%; 
+    z-index: 1000; pointer-events: none;
+    display: flex; justify-content: center;
+  }
   
-  @media (min-width: 768px) {
-    .desktop-only { display: flex !important; }
-    .mobile-only { display: none !important; }
+  .nav-capsule {
+    pointer-events: auto;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    padding: 0.8rem 1.5rem;
+    border-radius: 100px;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 3rem;
+    box-shadow: var(--capsule-shadow);
+    transition: all 0.5s var(--transition-smooth);
+    width: auto;
+    max-width: 90%;
   }
 
-  /* Glass Navbar */
-  .navbar { position: fixed; top: 0; left: 0; width: 100%; z-index: 1000; padding: 1.5rem 0; transition: all 0.6s; }
-  .navbar.scrolled { padding: 1rem 0; background: rgba(5,6,7,0.7); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.08); }
-  .nav-link { cursor: pointer; opacity: 0.7; transition: 0.3s; font-weight: 500; }
-  .nav-link:hover { opacity: 1; color: white; }
-  .nav-btn { padding: 0.75rem 1.75rem; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 99px; color: white; cursor: pointer; transition: 0.4s; font-family: inherit; }
-  .nav-btn:hover { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 20px var(--primary-glow); }
-
-  /* Mobile Menu */
-  .mobile-menu { position: fixed; inset: 0; background: var(--bg-dark); z-index: 999; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2.5rem; }
-  .mobile-link { font-size: 2.5rem; font-weight: 700; color: white; cursor: pointer; transition: 0.3s; }
-
-  /* Grid & Cards */
-  .bento-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-  .bento-card { padding: 2rem; border-radius: 1.5rem; border: 1px solid var(--border-color); background: linear-gradient(145deg, #0F1115, #08090b); transition: 0.4s; position: relative; overflow: hidden; display: flex; flex-direction: column; min-height: 240px; justify-content: space-between; }
-  .bento-card:hover { transform: translateY(-8px); border-color: var(--primary); }
-  
-  /* Works */
-  .works-section { height: 300vh; position: relative; }
-  .works-sticky-wrapper { height: 100vh; overflow: hidden; position: sticky; top: 0; display: flex; align-items: center; }
-  .works-track { display: flex; gap: 4vw; padding: 0 5vw; flex-direction: row-reverse; }
-  .work-card { position: relative; border-radius: 2rem; overflow: hidden; border: 1px solid var(--border-color); width: 60vw; height: 60vh; flex-shrink: 0; }
-  
-  /* Footer */
-  footer { padding: 5rem 0; border-top: 1px solid var(--border-color); background: radial-gradient(circle at 50% 0%, rgba(67, 144, 179, 0.1), transparent 70%); }
-  
-  /* Responsive Overrides */
-  @media (min-width: 768px) {
-    .bento-grid { grid-template-columns: repeat(2, 1fr); }
-    .col-span-2 { grid-column: span 2; }
-    .work-card { width: 35vw; height: 70vh; }
+  .nav-capsule:hover {
+    border-color: rgba(255,255,255,0.2);
+    box-shadow: 0 15px 40px -10px rgba(67, 144, 179, 0.15);
   }
-  @media (max-width: 767px) {
+
+  .nav-links { display: flex; gap: 2rem; align-items: center; }
+  .nav-item { 
+    color: var(--text-muted); text-decoration: none; font-size: 0.95rem; 
+    transition: 0.3s; position: relative; cursor: pointer;
+  }
+  .nav-item:hover { color: white; }
+  
+  .nav-cta {
+    background: white; color: black; border-radius: 50px;
+    padding: 0.6rem 1.4rem; font-weight: 600; border: none;
+    cursor: pointer; transition: transform 0.3s var(--transition-smooth);
+  }
+  .nav-cta:hover { transform: scale(1.05); }
+
+  /* Mobile Nav */
+  .mobile-toggle { display: none; background: none; border: none; color: white; cursor: pointer; }
+  
+  @media (max-width: 768px) {
+    .nav-links { display: none; }
+    .mobile-toggle { display: block; }
+    .nav-capsule { padding: 0.8rem 1.2rem; width: 85%; justify-content: space-between; }
+  }
+
+  /* --- Hero Section --- */
+  .hero-section {
+    height: 100vh; position: relative; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    text-align: center; z-index: 1;
+  }
+  
+  .scroll-indicator {
+    position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%);
+    animation: float 3s ease-in-out infinite; opacity: 0.6;
+  }
+
+  /* --- Services Card --- */
+  .glass-card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    padding: 2.5rem;
+    position: relative; overflow: hidden;
+    transition: transform 0.4s var(--transition-smooth), border-color 0.4s;
+  }
+  .glass-card:hover {
+    transform: translateY(-10px);
+    border-color: var(--primary);
+  }
+  .card-icon {
+    width: 60px; height: 60px; border-radius: 16px;
+    background: rgba(67, 144, 179, 0.1);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 1.5rem; color: var(--primary);
+  }
+
+  /* --- Works Horizontal Scroll --- */
+  .works-section { height: 400vh; position: relative; }
+  .works-sticky {
+    position: sticky; top: 0; height: 100vh; width: 100%;
+    overflow: hidden; display: flex; align-items: center;
+  }
+  .works-track {
+    display: flex; gap: 4vw; padding-right: 10vw; padding-left: 5vw;
+    width: max-content; /* Critical for horizontal scroll */
+  }
+  .work-item {
+    width: 45vw; height: 65vh; position: relative;
+    border-radius: 30px; overflow: hidden; flex-shrink: 0;
+    border: 1px solid var(--glass-border);
+  }
+  .work-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.7s; }
+  .work-item:hover .work-img { transform: scale(1.1); }
+  
+  @media (max-width: 768px) {
     .works-section { height: auto; }
-    .works-sticky-wrapper { position: relative; height: auto; display: block; overflow: visible; }
-    .works-track { flex-direction: column; transform: none !important; gap: 2rem; padding: 2rem 1rem; }
-    .work-card { width: 100%; height: 50vh; }
+    .works-sticky { position: relative; height: auto; display: block; }
+    .works-track { flex-direction: column; width: 100%; padding: 2rem; gap: 2rem; transform: none !important; }
+    .work-item { width: 100%; height: 50vh; }
   }
-  .custom-cursor { position: fixed; top: 0; left: 0; width: 20px; height: 20px; background: var(--primary); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); mix-blend-mode: difference; }
-`;
 
-/* --- Shaders --- */
-const particleVertexShader = `
-  uniform float uTime; uniform float uProgress; uniform vec2 uMouse;
-  attribute vec3 aRandomPos; attribute vec3 aTargetPos; attribute float aSize;
-  varying float vAlpha; varying vec3 vPos;
-  float snoise(vec3 v) { return 0.0; } /* Simplified for brevity/stability */
-  void main() {
-    float t = uProgress;
-    float ease = 1.0 - pow(1.0 - t, 3.0);
-    vec3 p = aRandomPos;
-    vec3 auroraPos = p + vec3(0.0, sin(p.x * 0.1 + uTime * 0.5) * 5.0, sin(p.z * 0.2 + uTime * 0.2) * 4.0);
-    vec3 finalPos = mix(auroraPos, aTargetPos, ease);
-    vec3 mouseWorld = vec3(uMouse.x * 40.0, uMouse.y * 20.0, 0.0); 
-    float dist = distance(finalPos, mouseWorld);
-    if (dist < 8.0) { finalPos += normalize(finalPos - mouseWorld) * ((8.0 - dist) / 8.0) * 2.0 * ease; }
-    vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
-    gl_Position = projectionMatrix * mvPosition;
-    gl_PointSize = (aSize * 4.0) * (1.0 + ease * 0.5) * (20.0 / -mvPosition.z);
-    vAlpha = 0.4 + ease * 0.6; vPos = finalPos;
+  /* --- Footer --- */
+  footer {
+    padding: 6rem 0; border-top: 1px solid var(--glass-border);
+    background: radial-gradient(circle at 50% 0%, rgba(67,144,179,0.08), transparent 60%);
+    text-align: center;
   }
-`;
-const particleFragmentShader = `
-  uniform vec3 uColorPrimary; uniform vec3 uColorAurora; uniform float uProgress;
-  varying float vAlpha; varying vec3 vPos;
-  void main() {
-    vec2 center = gl_PointCoord - 0.5;
-    if (length(center) > 0.5) discard;
-    float glow = exp(-length(center) * 4.0);
-    vec3 color = mix(uColorAurora, uColorPrimary, 0.5);
-    gl_FragColor = vec4(color, vAlpha * glow);
+
+  /* Animations */
+  @keyframes float { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 10px); } }
+  
+  .custom-cursor {
+    width: 12px; height: 12px; background: var(--primary);
+    border-radius: 50%; position: fixed; pointer-events: none; z-index: 9999;
+    mix-blend-mode: difference;
   }
 `;
 
-const generateTextPoints = (text: string, count: number, factor: number) => {
-  if (typeof document === 'undefined') return new Float32Array(count * 3);
-  const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d', {willReadFrequently:true});
-  if(!ctx) return new Float32Array(count * 3);
-  canvas.width = 1000; canvas.height = 500;
-  ctx.fillStyle = 'black'; ctx.fillRect(0,0,1000,500);
-  ctx.fillStyle = 'white'; ctx.font = '900 150px "DIN Next LT Arabic", sans-serif'; 
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 500, 250);
-  const data = ctx.getImageData(0,0,1000,500).data;
-  const valid = [];
-  for(let y=0; y<500; y+=4) { for(let x=0; x<1000; x+=4) { if(data[(y*1000+x)*4]>100) valid.push({x:(x/1000-0.5)*factor, y:-(y/500-0.5)*20}); } }
-  const pos = new Float32Array(count*3);
-  for(let i=0; i<count; i++) { const p = valid[i%valid.length] || {x:0,y:0}; pos[i*3]=p.x; pos[i*3+1]=p.y; pos[i*3+2]=0; }
-  return pos;
-}
+/* --- Three.js Logic --- */
+// (Same robust particle system as before, optimized)
+const particleShader = {
+  vertex: `
+    uniform float uTime; uniform float uProgress;
+    attribute vec3 aTarget; attribute float aSize; attribute vec3 aRandom;
+    varying float vAlpha;
+    void main() {
+      vec3 pos = mix(aRandom, aTarget, uProgress);
+      pos.y += sin(uTime * 1.5 + pos.x * 0.05) * 0.3 * (1.0 - uProgress); 
+      vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
+      gl_Position = projectionMatrix * mvPosition;
+      gl_PointSize = (aSize * 2.5) * (1.0 / -mvPosition.z);
+      vAlpha = 0.5 + 0.5 * uProgress;
+    }
+  `,
+  fragment: `
+    uniform vec3 uColor; varying float vAlpha;
+    void main() {
+      float r = distance(gl_PointCoord, vec2(0.5));
+      if (r > 0.5) discard;
+      gl_FragColor = vec4(uColor, vAlpha * (1.0 - r*2.0));
+    }
+  `
+};
+
+const generateParticles = (text) => {
+  if (typeof document === 'undefined') return null;
+  const canvas = document.createElement('canvas'); const ctx = canvas.getContext('2d');
+  canvas.width = 800; canvas.height = 400;
+  ctx.font = '900 130px "Readex Pro"'; ctx.fillStyle = 'white'; 
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 400, 200);
+  const data = ctx.getImageData(0,0,800,400).data;
+  const particles = [];
+  for(let i=0; i<800; i+=3) { for(let j=0; j<400; j+=3) {
+    if(data[(j*800+i)*4] > 128) particles.push({x:(i-400)/12, y:-(j-200)/12, z:0});
+  }}
+  return particles;
+};
 
 /* --- Components --- */
 
 const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const navLinks = ['الرئيسية', 'خدماتنا', 'أعمالنا', 'عن أورا'];
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const [isOpen, setIsOpen] = useState(false);
+  const navItems = ['الرئيسية', 'خدماتنا', 'المشاريع', 'المدونة'];
 
   return (
     <>
-      <motion.nav className={`navbar ${scrolled ? 'scrolled' : ''}`} initial={{ y: -100 }} animate={{ y: 0 }} transition={{duration:0.8}}>
-        <div className="container" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-          <div className="flex-center" style={{ gap: '0.8rem', cursor:'pointer' }}>
-             <motion.div animate={{ rotate: 360 }} transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                style={{ width: '28px', height: '28px', border: '2px solid #4390b3', borderRadius: '8px', position:'relative' }}>
-                <div style={{position:'absolute', inset:'2px', background:'rgba(67, 144, 179, 0.3)'}} />
-             </motion.div>
-             <span style={{ fontSize: '1.5rem', fontWeight: '800', letterSpacing: '-0.5px' }}>AURA</span>
+      <div className="nav-wrapper">
+        <motion.nav 
+          className="nav-capsule"
+          initial={{ y: -50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 1, ease: [0.23, 1, 0.32, 1] }}
+        >
+          {/* Logo */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ width: '32px', height: '32px', background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Sparkles size={18} color="#000" />
+            </div>
+            <span style={{ fontWeight: 700, fontSize: '1.2rem', letterSpacing: '1px' }}>AURA</span>
           </div>
-          
-          {/* Desktop Menu - Using CSS classes instead of inline conditions */}
-          <div className="flex-center desktop-only" style={{ gap: '3rem' }}>
-             {navLinks.map((link, i) => <a key={i} className="nav-link">{link}</a>)}
-          </div>
-          
-          <div className="flex-center" style={{ gap: '1.5rem' }}>
-            <button className="nav-btn desktop-only">ابدأ مشروعك</button>
-            <button className="mobile-only" style={{background:'none', border:'none', color:'white', cursor:'pointer'}} onClick={() => setMobileMenuOpen(true)}>
-                <Menu size={28} />
-            </button>
-          </div>
-        </div>
-      </motion.nav>
 
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div className="mobile-menu" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <button style={{position:'absolute', top:'2rem', left:'2rem', background:'none', border:'none', color:'white', cursor:'pointer'}} onClick={() => setMobileMenuOpen(false)}>
-                <X size={32} />
+          {/* Desktop Links */}
+          <div className="nav-links">
+            {navItems.map((item, i) => (
+              <a key={i} className="nav-item">{item}</a>
+            ))}
+          </div>
+
+          {/* CTA & Mobile Toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <button className="nav-cta" style={{ display: isOpen ? 'none' : 'block' }}>اتصل بنا</button>
+            <button className="mobile-toggle" onClick={() => setIsOpen(!isOpen)}>
+              {isOpen ? <X /> : <Menu />}
             </button>
-            {navLinks.map((link, i) => (
-              <motion.a key={i} className="mobile-link" initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 * i }} onClick={() => setMobileMenuOpen(false)}>
-                {link}
+          </div>
+        </motion.nav>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(3,3,3,0.95)', backdropFilter: 'blur(10px)', zIndex: 999, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: '2rem' }}
+          >
+            {navItems.map((item, i) => (
+              <motion.a 
+                key={i} 
+                initial={{ y: 20, opacity: 0 }} 
+                animate={{ y: 0, opacity: 1 }} 
+                transition={{ delay: 0.1 * i }}
+                style={{ fontSize: '2rem', fontWeight: 600, color: 'white', cursor: 'pointer' }}
+                onClick={() => setIsOpen(false)}
+              >
+                {item}
               </motion.a>
             ))}
           </motion.div>
@@ -199,212 +290,203 @@ const Navbar = () => {
   );
 };
 
-const HeroScene = () => {
-    const canvasRef = useRef(null);
-    useLayoutEffect(() => {
-        if (!canvasRef.current) return;
-        let w = window.innerWidth, h = window.innerHeight;
-        const isMobile = w < 768;
-        const scene = new THREE.Scene(); scene.fog = new THREE.FogExp2(0x050607, 0.02);
-        const camera = new THREE.PerspectiveCamera(45, w/h, 0.1, 1000);
-        camera.position.set(0, 0, isMobile ? 50 : 35);
-        const renderer = new THREE.WebGLRenderer({ canvas: canvasRef.current, alpha: true, antialias: !isMobile });
-        renderer.setSize(w, h); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+const Hero = () => {
+  const mount = useRef(null);
+  useEffect(() => {
+    if (!mount.current) return;
+    const w = window.innerWidth, h = window.innerHeight;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 100);
+    camera.position.z = 30;
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(w, h);
+    mount.current.appendChild(renderer.domElement);
 
-        const geometry = new THREE.BufferGeometry();
-        const count = isMobile ? 5000 : 15000;
-        const pos = new Float32Array(count * 3), rand = new Float32Array(count * 3), size = new Float32Array(count);
-        const target = generateTextPoints("AURA", count, isMobile ? 20 : 40);
-        for(let i=0; i<count; i++) {
-            rand[i*3] = (Math.random()-0.5)*70; rand[i*3+1] = (Math.random()-0.5)*30; rand[i*3+2] = (Math.random()-0.5)*20;
-            size[i] = Math.random()*2.0 + 0.5;
+    const baseData = generateParticles("إبداع");
+    if(!baseData) return;
+    const count = baseData.length;
+    const geo = new THREE.BufferGeometry();
+    const target = new Float32Array(count*3);
+    const random = new Float32Array(count*3);
+    const sizes = new Float32Array(count);
+    
+    baseData.forEach((p, i) => {
+      target[i*3]=p.x; target[i*3+1]=p.y; target[i*3+2]=p.z;
+      random[i*3]=(Math.random()-0.5)*80; random[i*3+1]=(Math.random()-0.5)*80; random[i*3+2]=(Math.random()-0.5)*50;
+      sizes[i] = Math.random();
+    });
+    
+    geo.setAttribute('position', new THREE.BufferAttribute(target, 3));
+    geo.setAttribute('aTarget', new THREE.BufferAttribute(target, 3));
+    geo.setAttribute('aRandom', new THREE.BufferAttribute(random, 3));
+    geo.setAttribute('aSize', new THREE.BufferAttribute(sizes, 1));
+    
+    const mat = new THREE.ShaderMaterial({
+      vertexShader: particleShader.vertex, fragmentShader: particleShader.fragment,
+      uniforms: { uTime: {value:0}, uProgress: {value:0}, uColor: {value: new THREE.Color('#4390b3')} },
+      transparent: true, blending: THREE.AdditiveBlending, depthTest: false
+    });
+    
+    scene.add(new THREE.Points(geo, mat));
+    
+    gsap.to(mat.uniforms.uProgress, { value: 1, duration: 2.5, ease: "power3.out" });
+    
+    const clock = new THREE.Clock();
+    let req;
+    const animate = () => {
+      mat.uniforms.uTime.value = clock.getElapsedTime();
+      scene.rotation.y = Math.sin(clock.getElapsedTime()*0.1)*0.1;
+      renderer.render(scene, camera);
+      req = requestAnimationFrame(animate);
+    };
+    animate();
+    
+    return () => { cancelAnimationFrame(req); mount.current?.removeChild(renderer.domElement); geo.dispose(); };
+  }, []);
+
+  return (
+    <div className="hero-section">
+      <div ref={mount} style={{ position: 'absolute', inset: 0 }} />
+      <div className="main-container" style={{ zIndex: 10, marginTop: '10vh' }}>
+        <motion.p 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1 }}
+          style={{ letterSpacing: '3px', textTransform: 'uppercase', marginBottom: '1rem', color: '#4390b3' }}
+        >
+          Creative Digital Agency
+        </motion.p>
+        <motion.h1 
+          initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1 }}
+        >
+          نبتكر المستقبل <br /> <span className="text-gradient">الرقمي</span>
+        </motion.h1>
+      </div>
+      <div className="scroll-indicator">
+        <ChevronDown color="#555" size={32} />
+      </div>
+    </div>
+  );
+};
+
+const Services = () => {
+  const list = [
+    { t: "الهوية البصرية", i: Palette, d: "تصاميم تعكس جوهر علامتك التجارية." },
+    { t: "تطوير الويب", i: Globe, d: "واجهات عصرية بأحدث التقنيات." },
+    { t: "التسويق", i: Megaphone, d: "وصول استراتيجي لجمهورك المستهدف." },
+    { t: "SEO", i: Search, d: "تصدر نتائج البحث بشكل طبيعي." }
+  ];
+
+  return (
+    <section className="main-container" style={{ paddingBottom: '10rem', paddingTop: '5rem' }}>
+      <div style={{ marginBottom: '5rem', textAlign: 'center' }}>
+        <h2>حلول <span className="text-gradient">احترافية</span></h2>
+      </div>
+      <div className="grid-services">
+        {list.map((item, i) => (
+          <div key={i} className="glass-card">
+            <div className="card-icon"><item.i size={28} /></div>
+            <h3 style={{ marginBottom: '0.8rem' }}>{item.t}</h3>
+            <p style={{ fontSize: '0.95rem' }}>{item.d}</p>
+            <div style={{ marginTop: '2rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <ArrowUpRight size={20} color="#4390b3" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+};
+
+const Works = () => {
+  const sectionRef = useRef(null);
+  const trackRef = useRef(null);
+  
+  useLayoutEffect(() => {
+    if (window.innerWidth < 768) return;
+    const ctx = gsap.context(() => {
+      const track = trackRef.current;
+      // Scroll Right (RTL) logic
+      gsap.to(track, {
+        x: window.innerWidth - track.scrollWidth, // Move leftwards
+        ease: "none",
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top top",
+          end: "+=300%",
+          scrub: 1,
+          pin: true
         }
-        geometry.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        geometry.setAttribute('aRandomPos', new THREE.BufferAttribute(rand, 3));
-        geometry.setAttribute('aTargetPos', new THREE.BufferAttribute(target, 3));
-        geometry.setAttribute('aSize', new THREE.BufferAttribute(size, 1));
+      });
+    }, sectionRef);
+    return () => ctx.revert();
+  }, []);
 
-        const mat = new THREE.ShaderMaterial({
-            vertexShader: particleVertexShader, fragmentShader: particleFragmentShader,
-            uniforms: { uTime: {value:0}, uProgress: {value:0}, uMouse: {value: new THREE.Vector2(999,999)}, uColorPrimary: {value: new THREE.Color('#4390b3')}, uColorAurora: {value: new THREE.Color('#0047AB')} },
-            transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
-        });
-        scene.add(new THREE.Points(geometry, mat));
+  const works = [
+    { t: "مشروع نيوم", img: "https://images.unsplash.com/photo-1596707328659-56540c490a6c?w=800&q=80" },
+    { t: "العلا", img: "https://images.unsplash.com/photo-1542382156909-9ae37b3f56fd?w=800&q=80" },
+    { t: "القدية", img: "https://images.unsplash.com/photo-1518623489648-a173ef7824f3?w=800&q=80" },
+    { t: "البحر الأحمر", img: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80" }
+  ];
 
-        const tl = gsap.timeline({ scrollTrigger: { trigger: ".hero-section", start: "top top", end: "+=300%", scrub: 1, pin: true } });
-        tl.to(mat.uniforms.uProgress, { value: 1, duration: 5 });
-        tl.to(camera.position, { z: isMobile ? 70 : 50, duration: 5 }, 0);
-        tl.to(".hero-content", { opacity: 0, scale: 0.9, duration: 1 }, 0);
-        tl.fromTo(".intro-content", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 2 }, 1);
-
-        const clock = new THREE.Clock(); const mouse = new THREE.Vector2(0,0);
-        const onMove = (e: MouseEvent) => { mouse.x = (e.clientX/w)*2-1; mouse.y = -(e.clientY/h)*2+1; };
-        window.addEventListener('mousemove', onMove);
-        let req: number;
-        const animate = () => {
-            mat.uniforms.uTime.value = clock.getElapsedTime(); mat.uniforms.uMouse.value.lerp(mouse, 0.05);
-            renderer.render(scene, camera); req = requestAnimationFrame(animate);
-        };
-        animate();
-        return () => { window.removeEventListener('mousemove', onMove); cancelAnimationFrame(req); renderer.dispose(); };
-    }, []);
-
-    return (
-        <div className="hero-section" style={{height:'100vh', position:'relative', overflow:'hidden'}}>
-            <canvas ref={canvasRef} className="absolute-fill" style={{zIndex:1}}/>
-            <div className="absolute-fill flex-center" style={{zIndex:10, pointerEvents:'none'}}>
-                <div className="hero-content" style={{textAlign:'center', padding:'0 1rem'}}>
-                    <motion.div initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ duration:1 }}>
-                        <div style={{display:'inline-block', padding:'0.5rem 1rem', background:'rgba(255,255,255,0.05)', borderRadius:'99px', border:'1px solid rgba(255,255,255,0.1)', marginBottom:'1.5rem'}}>
-                            ✨ وكالة إبداعية رقمية
-                        </div>
-                    </motion.div>
-                    <h1 style={{textShadow:'0 0 30px rgba(0,0,0,0.8)'}}>من شتات <span className="text-gradient">الفضاء</span></h1>
-                    <p style={{marginTop:'1.5rem'}}>نشكل هالتك الفارقة ونبني حضوراً لا ينسى</p>
-                </div>
-                <div className="intro-content" style={{position:'absolute', opacity:0, textAlign:'center', width:'100%', padding:'0 1rem'}}>
-                    <Globe size={40} color="#4390b3" style={{marginBottom:'1rem'}} />
-                    <h2>نصنع مستقبلك <span style={{color:'#4390b3'}}>الرقمي</span></h2>
-                </div>
-            </div>
-            <div className="hero-scroll-indicator desktop-only" style={{position:'absolute', bottom:'2rem', left:'50%', transform:'translateX(-50%)'}}>
-                <ChevronDown size={20} />
-            </div>
+  return (
+    <section ref={sectionRef} className="works-section">
+      <div className="works-sticky">
+        <div style={{ position: 'absolute', top: '10vh', right: '5vw', zIndex: 10 }}>
+          <h2 style={{ fontSize: '3rem' }}>أعمالنا <span className="text-gradient">المميزة</span></h2>
         </div>
-    );
-};
-
-const ServicesSection = () => {
-    const services = [
-        { title: "بناء العلامة", icon: Palette, desc: "هوية بصرية تخلد في الأذهان." },
-        { title: "التسويق الرقمي", icon: Megaphone, desc: "نصل بصوتك للجمهور الصحيح." },
-        { title: "تطوير الويب", icon: Globe, desc: "مواقع فائقة السرعة والتفاعل." },
-        { title: "صناعة المحتوى", icon: PenTool, desc: "قصص تروى وتأثير يبقى." },
-        { title: "تحسين المحركات", icon: Search, desc: "تصدر النتائج الأولى." },
-        { title: "التجارة الإلكترونية", icon: ShoppingBag, desc: "متاجر تبيع 24/7." }
-    ];
-    return (
-        <section className="container" style={{paddingTop:'8rem', paddingBottom:'8rem'}}>
-            <div style={{textAlign:'center', marginBottom:'4rem'}}>
-                <h2 style={{marginBottom:'1rem'}}>خدمات <span className="text-gradient">متكاملة</span></h2>
+        <div ref={trackRef} className="works-track">
+          {works.map((w, i) => (
+            <div key={i} className="work-item">
+              <img src={w.img} alt={w.t} className="work-img" />
+              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '100%', padding: '2rem', background: 'linear-gradient(to top, #000 0%, transparent 100%)' }}>
+                <h3 style={{ color: 'white' }}>{w.t}</h3>
+              </div>
             </div>
-            <div className="bento-grid">
-                {services.map((s, i) => (
-                    <motion.div key={i} className={`bento-card ${i===0||i===3 ? 'col-span-2' : ''}`} whileHover={{ y: -10 }}>
-                        <s.icon size={40} color={i===0||i===3 ? "#4390b3" : "#fff"} style={{opacity:0.1, position:'absolute', bottom:-10, left:-10}} />
-                        <div style={{marginBottom:'1rem'}}>
-                            <div style={{width:'50px', height:'50px', background:'rgba(255,255,255,0.05)', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'1rem'}}>
-                                <s.icon size={24} color={i===0||i===3 ? "#4390b3" : "#fff"} />
-                            </div>
-                            <h3>{s.title}</h3>
-                        </div>
-                        <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-end'}}>
-                            <p style={{fontSize:'0.9rem', maxWidth:'80%'}}>{s.desc}</p>
-                            <ArrowUpRight size={16} />
-                        </div>
-                    </motion.div>
-                ))}
-            </div>
-        </section>
-    );
-};
-
-const WorksSection = () => {
-    const container = useRef(null); const track = useRef(null);
-    useLayoutEffect(() => {
-        if(window.innerWidth < 768) return;
-        const ctx = gsap.context(() => {
-            const el = track.current as any;
-            if(el) {
-                gsap.to(el, {
-                    x: () => el.scrollWidth - window.innerWidth,
-                    ease: "none",
-                    scrollTrigger: { trigger: container.current, pin: true, scrub: 1, end: "+=300%" }
-                });
-            }
-        }, container);
-        return () => ctx.revert();
-    }, []);
-    const works = [
-        {title:"العلا", img:"https://images.unsplash.com/photo-1542382156909-9ae37b3f56fd?q=80&w=1000", cat:"سياحة"},
-        {title:"نيوم", img:"https://images.unsplash.com/photo-1486325212027-8081e485255e?q=80&w=1000", cat:"تطوير عقاري"},
-        {title:"مسك", img:"https://images.unsplash.com/photo-1596707328659-56540c490a6c?q=80&w=1000", cat:"مبادرة"},
-        {title:"جدة", img:"https://images.unsplash.com/photo-1558231294-8777990176dc?q=80&w=1000", cat:"فعاليات"}
-    ];
-    return (
-        <div ref={container} className="works-section">
-            <div className="works-sticky-wrapper">
-                <div style={{position:'absolute', top:'10%', right:'5%', zIndex:20}}><h2>أحدث <span className="text-gradient">الأعمال</span></h2></div>
-                <div ref={track} className="works-track">
-                    {works.map((w, i) => (
-                        <div key={i} className="work-card">
-                            <img src={w.img} alt={w.title} style={{width:'100%', height:'100%', objectFit:'cover'}} />
-                            <div style={{position:'absolute', bottom:0, right:0, width:'100%', padding:'2rem', background:'linear-gradient(to top, #050607, transparent)'}}>
-                                <span style={{fontSize:'0.9rem', color:'#4390b3', fontWeight:'bold'}}>{w.cat}</span>
-                                <h3>{w.title}</h3>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+          ))}
         </div>
-    );
+      </div>
+    </section>
+  );
 };
 
-const FAQ = () => {
-    const [open, setOpen] = useState<number | null>(0);
-    const faqs = [{q:"المدة؟", a:"2-4 أسابيع."}, {q:"الدعم؟", a:"متاح 24/7."}];
-    return (
-        <section className="container" style={{padding:'6rem 1.5rem', maxWidth:'800px'}}>
-            <h2 style={{textAlign:'center', marginBottom:'3rem'}}>الأسئلة الشائعة</h2>
-            {faqs.map((f, i) => (
-                <div key={i} style={{borderBottom:'1px solid rgba(255,255,255,0.1)'}}>
-                    <button onClick={() => setOpen(open===i ? null : i)} style={{width:'100%', padding:'2rem 1rem', display:'flex', justifyContent:'space-between', background:'none', border:'none', color:'white', cursor:'pointer'}}>
-                        <span style={{fontSize:'1.1rem', fontWeight:'600'}}>{f.q}</span>
-                        <Plus />
-                    </button>
-                    <AnimatePresence>
-                        {open===i && <motion.div initial={{height:0}} animate={{height:'auto'}} exit={{height:0}} style={{overflow:'hidden', padding:'0 1rem 1rem', color:'#94a3b8'}}>{f.a}</motion.div>}
-                    </AnimatePresence>
-                </div>
-            ))}
-        </section>
-    );
-};
+export default function AuraPage() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  
+  // Custom Cursor
+  const cursorRef = useRef(null);
+  useEffect(() => {
+    if (window.matchMedia("(pointer: coarse)").matches) return;
+    const move = (e) => {
+      if(cursorRef.current) cursorRef.current.style.transform = `translate3d(${e.clientX - 6}px, ${e.clientY - 6}px, 0)`;
+    };
+    window.addEventListener('mousemove', move);
+    return () => window.removeEventListener('mousemove', move);
+  }, []);
 
-const Footer = () => (
-    <footer>
-        <div className="container" style={{textAlign:'center'}}>
-            <h2 style={{fontSize:'3rem', marginBottom:'2rem'}}>جاهز؟</h2>
-            <button className="nav-btn" style={{padding:'1rem 3rem', background:'white', color:'black'}}>تواصل معنا</button>
-            <div style={{marginTop:'4rem', color:'#666'}}>© 2026 AURA.</div>
+  return (
+    <div style={{ backgroundColor: 'var(--bg-dark)', minHeight: '100vh' }}>
+      <style dangerouslySetInnerHTML={{ __html: styles }} />
+      
+      {/* Scroll Progress Bar */}
+      <motion.div style={{ scaleX, position: 'fixed', top: 0, left: 0, right: 0, height: '2px', background: 'var(--primary)', transformOrigin: '0%', zIndex: 2000 }} />
+      
+      <div ref={cursorRef} className="custom-cursor" />
+      
+      <Navbar />
+      
+      <main>
+        <Hero />
+        <Services />
+        <Works />
+      </main>
+
+      <footer>
+        <div className="main-container">
+          <h2 style={{ marginBottom: '2rem' }}>لنبدأ رحلة النجاح</h2>
+          <button style={{ background: 'white', color: 'black', border: 'none', padding: '1rem 3rem', borderRadius: '50px', fontSize: '1.2rem', cursor: 'pointer', fontWeight: 'bold' }}>تواصل معنا</button>
+          <div style={{ marginTop: '4rem', opacity: 0.5 }}>© 2026 AURA Inc.</div>
         </div>
-    </footer>
-);
-
-const CustomCursor = () => {
-    const mouseX = useMotionValue(-100); const mouseY = useMotionValue(-100);
-    useEffect(() => {
-        if (typeof window === 'undefined' || window.matchMedia("(pointer: coarse)").matches) return;
-        const move = (e: MouseEvent) => { mouseX.set(e.clientX); mouseY.set(e.clientY); };
-        window.addEventListener('mousemove', move); return () => window.removeEventListener('mousemove', move);
-    }, []);
-    return <motion.div className="custom-cursor" style={{ x: mouseX, y: mouseY }} />;
-};
-
-export default function AuraWebsite() {
-    return (
-        <div className="main-wrapper">
-            <style dangerouslySetInnerHTML={{ __html: styles }} />
-            <CustomCursor />
-            <Navbar />
-            <main>
-                <HeroScene />
-                <ServicesSection />
-                <WorksSection />
-                <FAQ />
-            </main>
-            <Footer />
-        </div>
-    );
+      </footer>
+    </div>
+  );
 }
