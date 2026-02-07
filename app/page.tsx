@@ -2,40 +2,30 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - ULTIMATE ENTERPRISE EDITION (v5.0)
+ * AURA DIGITAL AGENCY - ULTIMATE ENTERPRISE EDITION (v4.1 Fixed)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * CORE COLORS:
- * - Primary:   #438FB3 (Ocean Blue)
- * - Secondary: #58A8B4 (Teal Cyan)
- * - Neutral:   #B3B7C1 (Platinum Silver)
- * - Background: #FFFFFF (Pure White)
- * * * FEATURES:
- * - GPU-Accelerated Shader Morphing (Three.js)
- * - GSAP ScrollTrigger Integration
- * - Advanced Typography System (No Overlaps)
- * - Semantic HTML5 & JSON-LD
  */
 
-import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowUpRight, Palette, Search, ShoppingBag, Menu, X,
   Megaphone, CheckCircle, Shield, Star, Code, Smartphone,
   Phone, Mail, MapPin, Zap, Send, Layout, BarChart, Users,
-  Layers, Globe, MousePointer, Lightbulb, TrendingUp, Monitor
+  Globe
 } from 'lucide-react';
 import Script from 'next/script';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Register GSAP Plugins Safe Check
+// Register Plugins safely
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
 // =========================================
-// 1. CONFIGURATION & DATA
+// 1. CONSTANTS & CONFIGURATION
 // =========================================
 
 const BRAND = {
@@ -49,7 +39,7 @@ const BRAND = {
   info: {
     email: "hello@aurateam3.com",
     phone: "+966 50 000 0000",
-    address: "المملكة العربية السعودية، الرياض، العليا"
+    address: "الرياض، طريق الملك فهد، المملكة العربية السعودية"
   }
 };
 
@@ -59,18 +49,17 @@ const JSON_LD = {
   "name": "AURA Digital Agency",
   "url": "https://aurateam3.com",
   "logo": "https://aurateam3.com/logo.png",
-  "description": "أورا: الوكالة الرقمية الرائدة في السعودية. نقدم حلولاً متكاملة في التصميم، البرمجة، والتسويق الرقمي.",
+  "description": "أورا هي الوكالة الرقمية الرائدة في السعودية.",
   "priceRange": "$$$"
 };
 
 // =========================================
-// 2. CSS ARCHITECTURE (Zero-Overlap System)
+// 2. GLOBAL STYLES
 // =========================================
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700;800&display=swap');
   
-  /* --- RESET & BASICS --- */
   html, body {
     background-color: #ffffff !important;
     color: #0f172a !important;
@@ -78,7 +67,7 @@ const styles = `
     margin: 0; padding: 0;
     overflow-x: hidden;
     direction: rtl;
-    -webkit-font-smoothing: antialiased;
+    scroll-behavior: smooth;
   }
 
   ::selection {
@@ -86,85 +75,46 @@ const styles = `
     color: white;
   }
 
-  /* --- TYPOGRAPHY ENGINE (NO OVERLAP) --- */
   h1, h2, h3, h4, h5 {
     color: ${BRAND.colors.dark};
     font-weight: 800;
-    margin-top: 0;
-    margin-bottom: 1.5rem; /* مسافة أمان سفلية */
-  }
-  
-  h1 { 
-    font-size: clamp(3rem, 6vw, 6rem); 
-    line-height: 1.15; /* ارتفاع سطر ضيق للعناوين الكبيرة */
-    letter-spacing: -0.03em;
-  }
-  
-  h2 { 
-    font-size: clamp(2.2rem, 5vw, 4rem); 
-    line-height: 1.25; 
+    line-height: 1.2;
     letter-spacing: -0.02em;
   }
   
-  h3 { 
-    font-size: 1.75rem; 
-    line-height: 1.4; 
-  }
+  h1 { font-size: clamp(3rem, 6vw, 5.5rem); margin-bottom: 1.5rem; }
+  h2 { font-size: clamp(2.2rem, 5vw, 4rem); margin-bottom: 1.5rem; }
+  h3 { font-size: 1.75rem; margin-bottom: 1rem; }
   
   p { 
     color: #475569; 
     font-size: 1.125rem; 
-    line-height: 1.8; /* ارتفاع سطر مريح للقراءة */
+    line-height: 1.8; 
     margin-bottom: 1.5rem; 
-    max-width: 65ch; /* عرض مثالي للقراءة */
+    max-width: 70ch; 
   }
   
   .text-gradient {
     background: linear-gradient(135deg, ${BRAND.colors.primary} 0%, ${BRAND.colors.secondary} 100%);
     -webkit-background-clip: text; color: transparent; display: inline-block;
   }
-  
-  .text-silver { color: ${BRAND.colors.grey}; }
 
-  /* --- LAYOUT GRID SYSTEM --- */
   .container { 
-    width: 100%; 
-    max-width: 1300px; 
-    margin: 0 auto; 
-    padding: 0 clamp(1.5rem, 5vw, 3rem); 
-    position: relative; 
-    z-index: 10; 
+    width: 100%; max-width: 1300px; margin: 0 auto; 
+    padding: 0 clamp(1.5rem, 5vw, 3rem); position: relative; z-index: 10; 
   }
   
-  .section { 
-    padding: clamp(6rem, 10vw, 10rem) 0; /* تباعد رأسي كبير بين الأقسام */
-    position: relative; 
-  }
-  
-  .grid-2 { 
-    display: grid; 
-    grid-template-columns: 1fr 1fr; 
-    gap: clamp(3rem, 6vw, 6rem); /* تباعد ذكي */
-    align-items: center; 
-  }
-  
-  .grid-3 { 
-    display: grid; 
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); 
-    gap: 2.5rem; 
-  }
-  
+  .section { padding: clamp(6rem, 10vw, 10rem) 0; position: relative; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+  .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2.5rem; }
   .flex-center { display: flex; align-items: center; justify-content: center; }
   .flex-between { display: flex; align-items: center; justify-content: space-between; }
-  .flex-col { display: flex; flex-direction: column; }
 
-  /* --- COMPONENTS: CANVAS --- */
   #aura-canvas {
     position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
     z-index: 0; pointer-events: none; opacity: 1;
   }
 
-  /* --- COMPONENTS: NAVBAR --- */
   .navbar {
     position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
     width: 90%; max-width: 950px; z-index: 1000;
@@ -180,16 +130,12 @@ const styles = `
     box-shadow: 0 20px 40px -10px rgba(67, 143, 179, 0.1);
     border-color: ${BRAND.colors.primary};
   }
-  .nav-logo { font-size: 1.6rem; font-weight: 900; color: ${BRAND.colors.primary}; letter-spacing: -1px; display: flex; align-items: center; gap: 8px; }
-  .nav-dot { width: 10px; height: 10px; background: ${BRAND.colors.secondary}; border-radius: 50%; }
-  
   .nav-link { 
     text-decoration: none; color: ${BRAND.colors.dark}; font-weight: 600; font-size: 0.95rem;
     transition: 0.3s; padding: 0.5rem 1rem; cursor: pointer;
   }
   .nav-link:hover { color: ${BRAND.colors.primary}; }
 
-  /* --- COMPONENTS: BUTTONS --- */
   .btn {
     padding: 1rem 2.5rem; border-radius: 50px; border: none; cursor: pointer;
     font-weight: 700; font-size: 1.05rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -204,14 +150,12 @@ const styles = `
     box-shadow: 0 20px 40px -10px rgba(88, 168, 180, 0.5);
   }
   .btn-outline {
-    background: transparent; color: ${BRAND.colors.dark};
-    border: 2px solid #e2e8f0;
+    background: transparent; color: ${BRAND.colors.dark}; border: 2px solid #e2e8f0;
   }
   .btn-outline:hover {
     border-color: ${BRAND.colors.primary}; color: ${BRAND.colors.primary};
   }
 
-  /* --- COMPONENTS: GLASS CARDS --- */
   .glass-card {
     background: #ffffff; border: 1px solid rgba(179, 183, 193, 0.2);
     border-radius: 2rem; padding: 3rem;
@@ -219,7 +163,7 @@ const styles = `
     transition: 0.4s; height: 100%; display: flex; flex-direction: column;
   }
   .glass-card:hover {
-    transform: translateY(-8px); border-color: ${BRAND.colors.secondary};
+    transform: translateY(-10px); border-color: ${BRAND.colors.secondary};
     box-shadow: 0 25px 60px -15px rgba(88, 168, 180, 0.15);
   }
   .icon-box {
@@ -232,31 +176,21 @@ const styles = `
     background: ${BRAND.colors.primary}; color: white; transform: rotate(-10deg) scale(1.1);
   }
 
-  /* --- INTRO OVERLAY --- */
   .intro-overlay {
     position: fixed; inset: 0; z-index: 9999; background: #0f172a; color: white;
     display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
   }
-  .intro-warning {
-    font-size: 1.1rem; color: ${BRAND.colors.secondary}; margin-bottom: 2rem;
-    padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px;
-    background: rgba(0,0,0,0.3); opacity: 0; transform: translateY(20px);
-  }
   .intro-counter { font-size: 8rem; font-weight: 900; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
   
-  /* --- MARQUEE --- */
   .marquee-container { overflow: hidden; white-space: nowrap; padding: 2rem 0; background: ${BRAND.colors.light}; border-y: 1px solid rgba(0,0,0,0.05); }
   .marquee-content { display: inline-flex; animation: scroll 30s linear infinite; }
   .marquee-item { margin: 0 3rem; font-size: 1.5rem; font-weight: 700; color: ${BRAND.colors.grey}; opacity: 0.7; }
   @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 
-  /* --- PRICING --- */
   .pricing-card { position: relative; overflow: hidden; }
   .pricing-header { text-align: center; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid #f1f5f9; }
-  .price-tag { font-size: 3rem; font-weight: 800; color: ${BRAND.colors.dark}; }
   .popular-badge { position: absolute; top: 1.5rem; right: -2rem; background: ${BRAND.colors.secondary}; color: white; padding: 0.5rem 3rem; transform: rotate(45deg); font-size: 0.8rem; font-weight: 700; }
 
-  /* --- FORM --- */
   .form-input {
     width: 100%; padding: 1.2rem; border-radius: 1rem; border: 1px solid #e2e8f0;
     font-family: inherit; font-size: 1rem; transition: 0.3s; background: #f8fafc;
@@ -264,15 +198,15 @@ const styles = `
   }
   .form-input:focus { outline: none; border-color: ${BRAND.colors.primary}; background: white; }
 
-  /* --- FOOTER --- */
+  .process-step { position: relative; padding-right: 3rem; margin-bottom: 4rem; border-right: 2px solid rgba(179, 183, 193, 0.2); }
+  .process-marker { position: absolute; right: -11px; top: 0; width: 20px; height: 20px; background: white; border: 4px solid ${BRAND.colors.primary}; border-radius: 50%; }
+
   footer { background: #0f172a; color: white; padding: 8rem 0 3rem; margin-top: 8rem; }
   .footer-link { color: #94a3b8; text-decoration: none; display: block; margin-bottom: 1rem; transition: 0.3s; }
   .footer-link:hover { color: ${BRAND.colors.secondary}; padding-right: 5px; }
 
-  /* --- GSAP CLASSES --- */
   .gsap-reveal { opacity: 0; transform: translateY(30px); }
 
-  /* --- RESPONSIVE --- */
   @media (max-width: 1024px) {
     .grid-2 { grid-template-columns: 1fr; gap: 3rem; }
     .navbar { width: 90%; }
@@ -284,10 +218,9 @@ const styles = `
 `;
 
 // =========================================
-// 3. SHADER & PARTICLES LOGIC
+// 3. LOGIC: PARTICLES SYSTEM
 // =========================================
 
-// Creating the text data safely
 const getParticlesData = (text: string, width: number, height: number) => {
   if (typeof document === 'undefined') return [];
   const canvas = document.createElement('canvas');
@@ -320,65 +253,52 @@ const getParticlesData = (text: string, width: number, height: number) => {
 // 4. COMPONENTS
 // =========================================
 
-// --- A. INTRO ---
 const Intro = ({ onComplete }: { onComplete: () => void }) => {
   const container = useRef(null);
-  const warning = useRef(null);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    // Reveal warning then counter
-    const tl = gsap.timeline();
-    
-    tl.to(warning.current, { opacity: 1, y: 0, duration: 1, delay: 0.5 })
-      .to(warning.current, { opacity: 0, y: -20, duration: 0.5, delay: 2 })
-      .call(() => {
-        // Start counting
-        const interval = setInterval(() => {
-          setCount(prev => {
-            if (prev >= 100) {
-              clearInterval(interval);
-              // Explosion exit
-              gsap.to(container.current, {
-                clipPath: "circle(0% at 50% 50%)", duration: 1.5, ease: "expo.inOut", onComplete: onComplete
-              });
-              return 100;
-            }
-            return prev + 2;
+    const interval = setInterval(() => {
+      setCount(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          gsap.to(container.current, {
+            yPercent: -100,
+            duration: 1.5,
+            ease: "expo.inOut",
+            onComplete: onComplete
           });
-        }, 20);
+          return 100;
+        }
+        return prev + 2;
       });
+    }, 30);
+    return () => clearInterval(interval);
   }, []);
 
   return (
-    <div ref={container} className="intro-overlay" style={{clipPath: "circle(150% at 50% 50%)"}}>
-      <div ref={warning} className="intro-warning">
-        ⚠️ تنبيه: هالة "أورا" ساطعة جداً. يرجى خفض إضاءة الشاشة.
+    <div ref={container} className="intro-overlay">
+      <div style={{marginBottom:'2rem', color: BRAND.colors.secondary, letterSpacing:'1px'}}>
+        ⚠️ تجربة بصرية عالية الدقة
       </div>
-      {count > 0 && (
-        <div style={{position:'relative'}}>
-          <div className="intro-counter">{count}%</div>
-          <div style={{width:'200px', height:'4px', background:'rgba(255,255,255,0.1)', marginTop:'1rem', borderRadius:'2px'}}>
-            <div style={{width: `${count}%`, height:'100%', background: BRAND.colors.primary}}></div>
-          </div>
-        </div>
-      )}
+      <div className="intro-counter">{count}%</div>
+      <div style={{width:'200px', height:'4px', background:'rgba(255,255,255,0.1)', marginTop:'1rem', borderRadius:'2px'}}>
+        <div style={{width: `${count}%`, height:'100%', background: BRAND.colors.primary}}></div>
+      </div>
     </div>
   );
 };
 
-// --- B. AURA SCENE (GPU MORPHING) ---
 const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // 1. Setup
     const w = window.innerWidth;
     const h = window.innerHeight;
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xffffff, 0.005);
+    scene.fog = new THREE.FogExp2(0xffffff, 0.005); 
     
     const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
     camera.position.z = 40;
@@ -389,114 +309,58 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Geometry & Shader
     const textPoints = getParticlesData("AURA", 1000, 500);
-    const count = textPoints.length + 2000;
+    const count = textPoints.length + 2000; 
     
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
-    const targetPositions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
-    const randoms = new Float32Array(count);
 
     const c1 = new THREE.Color(BRAND.colors.primary);
     const c2 = new THREE.Color(BRAND.colors.secondary);
 
     for(let i=0; i<count; i++) {
-      // Start (Chaos)
-      positions[i*3] = (Math.random()-0.5) * 200;
-      positions[i*3+1] = (Math.random()-0.5) * 200;
+      positions[i*3] = (Math.random()-0.5) * 150;
+      positions[i*3+1] = (Math.random()-0.5) * 150;
       positions[i*3+2] = (Math.random()-0.5) * 100;
-
-      // End (Text)
-      if (i < textPoints.length) {
-        targetPositions[i*3] = textPoints[i].x;
-        targetPositions[i*3+1] = textPoints[i].y;
-        targetPositions[i*3+2] = 0;
-      } else {
-        // Stars background
-        targetPositions[i*3] = positions[i*3];
-        targetPositions[i*3+1] = positions[i*3+1];
-        targetPositions[i*3+2] = positions[i*3+2];
-      }
-
-      const mixed = Math.random() > 0.5 ? c1 : c2;
-      colors[i*3] = mixed.r; colors[i*3+1] = mixed.g; colors[i*3+2] = mixed.b;
-      randoms[i] = Math.random();
+      
+      const col = Math.random() > 0.5 ? c1 : c2;
+      colors[i*3] = col.r; colors[i*3+1] = col.g; colors[i*3+2] = col.b;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('target', new THREE.BufferAttribute(targetPositions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute('aRandom', new THREE.BufferAttribute(randoms, 1));
-
-    // Custom Shader Material for Morphing
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        uTime: { value: 0 },
-        uProgress: { value: 0 }
-      },
-      vertexShader: `
-        uniform float uTime;
-        uniform float uProgress;
-        attribute vec3 target;
-        attribute vec3 color;
-        attribute float aRandom;
-        varying vec3 vColor;
-        
-        void main() {
-          vColor = color;
-          
-          // Cubic easeInOut
-          float t = uProgress < 0.5 ? 4.0 * uProgress * uProgress * uProgress : 1.0 - pow(-2.0 * uProgress + 2.0, 3.0) / 2.0;
-          
-          vec3 pos = mix(position, target, t);
-          
-          // Noise movement
-          float noise = sin(pos.x * 0.1 + uTime) * cos(pos.y * 0.1 + uTime) * aRandom;
-          pos.z += noise * 2.0 * (1.0 - t * 0.8); // Less noise when formed
-          
-          vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
-          gl_Position = projectionMatrix * mvPosition;
-          gl_PointSize = (6.0 * (1.0 + t)) * (10.0 / -mvPosition.z);
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vColor;
-        void main() {
-          vec2 center = gl_PointCoord - 0.5;
-          if(length(center) > 0.5) discard;
-          gl_FragColor = vec4(vColor, 0.8);
-        }
-      `,
-      transparent: true
+    
+    const material = new THREE.PointsMaterial({
+      size: 0.15, vertexColors: true, transparent: true, opacity: 0.8
     });
-
+    
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    // 3. Animation
-    const clock = new THREE.Clock();
     const animate = () => {
       requestAnimationFrame(animate);
-      material.uniforms.uTime.value = clock.getElapsedTime();
-      
-      if (material.uniforms.uProgress.value > 0.8) {
-        particles.rotation.y = Math.sin(clock.getElapsedTime() * 0.1) * 0.05;
-      }
-      
+      particles.rotation.y += 0.001;
       renderer.render(scene, camera);
     };
     animate();
 
-    // 4. GSAP Trigger
     if (startAnimation) {
-      gsap.to(material.uniforms.uProgress, {
-        value: 1,
-        duration: 3,
-        ease: "power2.inOut",
-        delay: 0.5
-      });
+      for(let i=0; i<count; i++) {
+        if (i < textPoints.length) {
+          gsap.to(positions, {
+            [i*3]: textPoints[i].x,
+            [i*3+1]: textPoints[i].y,
+            [i*3+2]: 0,
+            duration: 3,
+            ease: "power3.inOut",
+            delay: 0.5 + Math.random() * 0.5,
+            onUpdate: () => {
+              geometry.attributes.position.needsUpdate = true;
+            }
+          });
+        }
+      }
     }
 
     const handleResize = () => {
@@ -505,7 +369,6 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
-    
     return () => { 
       window.removeEventListener('resize', handleResize);
       mountRef.current?.removeChild(renderer.domElement);
@@ -516,7 +379,6 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   return <div id="aura-canvas" ref={mountRef}></div>;
 };
 
-// --- C. NAVBAR ---
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -526,12 +388,12 @@ const Navbar = () => {
 
   return (
     <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div className="nav-logo">
-        <div className="nav-dot"></div>
-        AURA
+      <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+        <div style={{width:12, height:12, background: BRAND.colors.primary, borderRadius:'50%'}}></div>
+        <span style={{fontSize:'1.5rem', fontWeight:'900', color: BRAND.colors.dark}}>AURA</span>
       </div>
-      <div className="nav-links mobile-hidden" style={{display:'flex', gap:'1rem'}}>
-        {['الرئيسية', 'منهجيتنا', 'الخدمات', 'أعمالنا', 'الأسعار'].map(item => (
+      <div className="nav-links mobile-hidden" style={{display:'flex', gap:'2rem'}}>
+        {['الرئيسية', 'منهجيتنا', 'الخدمات', 'أعمالنا', 'التواصل'].map(item => (
           <a key={item} href={`#${item}`} className="nav-link">{item}</a>
         ))}
       </div>
@@ -543,7 +405,6 @@ const Navbar = () => {
   );
 };
 
-// --- D. SCROLL REVEAL ANIMATION HOOK ---
 const useReveal = () => {
   const ref = useRef(null);
   useEffect(() => {
@@ -558,17 +419,15 @@ const useReveal = () => {
   return ref;
 };
 
-// =========================================
-// 5. MAIN SECTIONS
-// =========================================
+// --- D. SECTIONS ---
 
 const Hero = () => {
   return (
-    <section className="section" id="الرئيسية" style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center'}}>
-      <div className="container" style={{textAlign:'center'}}>
-        <motion.div initial={{opacity:0, y:30}} animate={{opacity:1, y:0}} transition={{duration:1, delay:3}}>
+    <section className="section" id="الرئيسية" style={{minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', textAlign:'center'}}>
+      <div className="container">
+        <motion.div initial={{opacity:0, y:50}} animate={{opacity:1, y:0}} transition={{duration:1, delay:1.5}}>
           <div style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'0.6rem 1.8rem', borderRadius:'50px', background:'#f1f5f9', color:BRAND.colors.primary, fontWeight:'700', marginBottom:'2rem', border:`1px solid ${BRAND.colors.grey}30`}}>
-            <Zap size={18} fill="currentColor" /> الإصدار الخامس 2026
+            <Zap size={18} fill="currentColor" /> الإصدار البلاتيني 2026
           </div>
           
           <h1>
@@ -652,7 +511,7 @@ const Services = () => (
           const ref = useReveal();
           return (
             <div key={idx} className="glass-card" ref={ref}>
-              <div className="icon-wrapper"><s.i size={32} /></div>
+              <div className="icon-box"><s.i size={32} /></div>
               <h3>{s.t}</h3>
               <p>{s.d}</p>
               <div style={{marginTop:'auto', paddingTop:'1.5rem', color: BRAND.colors.primary, fontWeight:'bold', display:'flex', alignItems:'center', gap:'5px'}}>
@@ -783,7 +642,7 @@ const Pricing = () => (
 );
 
 const Contact = () => {
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert("تم إرسال طلبك بنجاح!");
   };
@@ -859,7 +718,7 @@ const Footer = () => (
 );
 
 // =========================================
-// 6. MAIN APP
+// 5. MAIN ENTRY
 // =========================================
 
 export default function AuraWebsite() {
