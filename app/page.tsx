@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { motion, useSpring, useMotionValue, AnimatePresence } from 'framer-motion';
+import { motion, useMotionValue, AnimatePresence } from 'framer-motion';
 import { 
   ArrowUpRight, Megaphone, PenTool, Share2, Search, Palette, 
-  ShoppingBag, Plus, Crosshair, Rocket 
+  ShoppingBag, Plus, Crosshair, Rocket, Menu, X
 } from 'lucide-react';
 import * as THREE from 'three';
 import gsap from 'gsap';
@@ -38,7 +38,6 @@ const styles = `
     --white: #ffffff;
     --border-color: rgba(255, 255, 255, 0.08);
     --padding-section: 6rem 1.5rem;
-    --padding-mobile: 4rem 1rem;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,12 +48,11 @@ const styles = `
     font-family: 'DIN Next LT Arabic', 'Readex Pro', sans-serif;
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
-    direction: rtl; /* اتجاه عربي عام */
+    direction: rtl;
   }
 
   /* Typography */
   h1, h2, h3 { font-weight: 700; line-height: 1.2; margin: 0; }
-  
   h1 { font-size: clamp(2.5rem, 8vw, 5.5rem); }
   h2 { font-size: clamp(2rem, 5vw, 4rem); }
   h3 { font-size: clamp(1.25rem, 3vw, 1.75rem); }
@@ -80,7 +78,6 @@ const styles = `
     backdrop-filter: blur(12px); border-bottom: 1px solid var(--border-color);
   }
   .nav-content { display: flex; justify-content: space-between; align-items: center; }
-  
   .nav-links-desktop { display: none; gap: 2.5rem; }
   .nav-link { cursor: pointer; opacity: 0.8; transition: 0.3s; }
   .nav-link:hover { opacity: 1; color: var(--primary); }
@@ -92,19 +89,14 @@ const styles = `
     font-family: inherit; font-size: 0.9rem;
   }
   .nav-btn:hover { background: var(--primary); border-color: var(--primary); }
-
-  .mobile-toggle-btn {
-    background: transparent; border: none; color: white; cursor: pointer;
-    display: flex; flex-direction: column; gap: 6px; width: 30px; align-items: flex-end;
-  }
-  .burger-line { width: 100%; height: 2px; background: white; transition: 0.3s; }
+  .mobile-toggle-btn { background: transparent; border: none; color: white; cursor: pointer; display: flex; }
 
   /* Mobile Menu */
   .mobile-menu-overlay {
     position: fixed; inset: 0; background: var(--bg-dark); z-index: 999;
     display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 2rem;
   }
-  .mobile-link { font-size: 2rem; font-weight: bold; color: white; cursor: pointer; text-decoration: none; }
+  .mobile-link { font-size: 2rem; font-weight: bold; color: white; cursor: pointer; }
 
   /* Preloader */
   .preloader {
@@ -121,158 +113,103 @@ const styles = `
   /* Process Section */
   .process-section { padding: var(--padding-section); overflow: hidden; }
   .process-timeline { position: relative; max-width: 800px; margin: 0 auto; }
-  .process-line { 
-    position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(67, 144, 179, 0.3); transform: translateX(-50%);
-  }
+  .process-line { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(67, 144, 179, 0.3); transform: translateX(-50%); }
   .process-step { display: flex; justify-content: center; align-items: center; margin-bottom: 4rem; position: relative; }
   .process-content { width: 40%; padding: 1.5rem; background: rgba(255,255,255,0.03); border-radius: 1rem; border: 1px solid var(--border-color); transition: 0.3s; }
-  .process-dot { 
-    position: absolute; left: 50%; transform: translateX(-50%); 
-    width: 1.2rem; height: 1.2rem; background: var(--bg-dark); border: 2px solid var(--primary); border-radius: 50%; z-index: 2;
-    transition: 0.3s;
-  }
+  .process-dot { position: absolute; left: 50%; transform: translateX(-50%); width: 1.2rem; height: 1.2rem; background: var(--bg-dark); border: 2px solid var(--primary); border-radius: 50%; z-index: 2; transition: 0.3s; }
   .process-dot.active { background: var(--primary); box-shadow: 0 0 15px var(--primary); }
 
   /* Services Grid */
   .services-section { padding: var(--padding-section); }
-  .bento-grid { 
-    display: grid; grid-template-columns: 1fr; gap: 1rem;
-  }
-  .bento-card { 
-    padding: 1.5rem; border-radius: 1.5rem; border: 1px solid var(--border-color); 
-    background: #0F1115; transition: transform 0.3s; position: relative;
-    display: flex; flex-direction: column; gap: 1rem;
-  }
+  .bento-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .bento-card { padding: 1.5rem; border-radius: 1.5rem; border: 1px solid var(--border-color); background: #0F1115; transition: transform 0.3s; display: flex; flex-direction: column; gap: 1rem; }
   .bento-card:hover { transform: translateY(-5px); border-color: var(--primary); }
   .icon-box { padding: 0.5rem; background: rgba(67,144,179,0.2); border-radius: 0.5rem; color: #5fc2d0; width: fit-content; }
   .card-header { display: flex; justify-content: space-between; align-items: flex-start; }
 
-  /* Works Horizontal Scroll (RTL Support) */
+  /* Works Horizontal Scroll */
   .works-section { height: 100vh; overflow: hidden; display: flex; align-items: center; position: relative; background: #050607; }
-  .works-container { 
-    display: flex; gap: 2rem; padding: 0 5vw; width: max-content; 
-    flex-direction: row-reverse; /* RTL Logic */
-  }
-  .work-card { 
-    position: relative;
-    border-radius: 1.5rem; overflow: hidden; border: 1px solid var(--border-color);
-    flex-shrink: 0;
-  }
+  .works-container { display: flex; gap: 2rem; padding: 0 5vw; width: max-content; flex-direction: row-reverse; }
+  .work-card { position: relative; border-radius: 1.5rem; overflow: hidden; border: 1px solid var(--border-color); flex-shrink: 0; width: 85vw; height: 50vh; }
   .work-image { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
-  .work-overlay {
-    position: absolute; bottom: 0; right: 0; width: 100%;
-    padding: 1.5rem; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
-    text-align: right;
-  }
-  
+  .work-overlay { position: absolute; bottom: 0; right: 0; width: 100%; padding: 1.5rem; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); text-align: right; }
+
   /* FAQ */
   .faq-section { padding: var(--padding-section); max-width: 800px; margin: 0 auto; }
   .faq-item { border-bottom: 1px solid var(--border-color); }
   .faq-trigger { width: 100%; padding: 1.5rem 0; display: flex; justify-content: space-between; align-items: center; background: none; border: none; color: white; cursor: pointer; text-align: right; font-family: inherit; }
-  
+
   /* Footer */
   footer { padding: 4rem 1.5rem; border-top: 1px solid var(--border-color); text-align: center; }
   .footer-content { display: flex; flex-direction: column; align-items: center; gap: 2rem; }
-  
+
   /* Custom Cursor */
-  .custom-cursor {
-    position: fixed; top: 0; left: 0; width: 30px; height: 30px;
-    background: white; border-radius: 50%; mix-blend-mode: difference;
-    pointer-events: none; z-index: 9999;
-    transform: translate(-50%, -50%);
-    display: none; /* Hide on touch by default */
-  }
+  .custom-cursor { position: fixed; top: 0; left: 0; width: 30px; height: 30px; background: white; border-radius: 50%; mix-blend-mode: difference; pointer-events: none; z-index: 9999; transform: translate(-50%, -50%); display: none; }
 
-  /* Glass Card (Difference Section) */
-  .glass-card {
-    background: rgba(15, 17, 21, 0.7);
-    padding: clamp(1.5rem, 5vw, 3rem);
-    border-radius: 1.5rem;
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(67, 144, 179, 0.15);
-    max-width: 800px;
-    text-align: center;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-  }
+  /* Glass Card */
+  .glass-card { background: rgba(15, 17, 21, 0.7); padding: clamp(1.5rem, 5vw, 3rem); border-radius: 1.5rem; backdrop-filter: blur(16px); border: 1px solid rgba(67, 144, 179, 0.15); max-width: 800px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
 
-  /* --- Responsive Media Queries --- */
-  
-  /* Tablet & Desktop */
+  /* Responsive */
   @media (min-width: 768px) {
     .nav-links-desktop { display: flex; }
     .mobile-toggle-btn { display: none; }
     .bento-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
     .col-span-2 { grid-column: span 2; }
-    
     .work-card { width: clamp(400px, 45vw, 600px); height: 60vh; }
-    
-    /* Process Alternating */
     .process-step:nth-child(odd) { flex-direction: row; }
     .process-step:nth-child(even) { flex-direction: row-reverse; }
     .process-step:nth-child(odd) .process-content { text-align: left; }
     .process-step:nth-child(even) .process-content { text-align: right; }
-    
     .footer-content { flex-direction: row; justify-content: space-between; width: 100%; }
     footer { text-align: right; }
   }
-
-  /* Desktop Large */
   @media (min-width: 1024px) {
     .bento-grid { grid-template-columns: repeat(3, 1fr); }
     .work-card { width: 35vw; height: 70vh; }
   }
-  
-  /* Mobile Specific Overrides */
   @media (max-width: 767px) {
     .process-line { right: 20px; left: auto; transform: none; }
     .process-step { justify-content: flex-start; margin-right: 20px; padding-right: 2rem; flex-direction: column; align-items: flex-start; }
     .process-dot { right: -6px; left: auto; transform: none; }
     .process-content { width: 100%; margin-top: 1rem; }
-    
-    .work-card { width: 85vw; height: 50vh; }
-    .works-container { padding: 0 1rem; }
   }
-
-  /* Enable Custom Cursor only on fine pointers (Mouse) */
-  @media (pointer: fine) {
-    .custom-cursor { display: block; }
-  }
+  @media (pointer: fine) { .custom-cursor { display: block; } }
 `;
 
 // --- Helpers & Shaders ---
 const generateTextPoints = (text: string, particleCount: number, widthFactor: number) => {
-    if (typeof document === 'undefined') return new Float32Array(particleCount * 3);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return new Float32Array(particleCount * 3);
-    
-    const w = 1000; const h = 500;
-    canvas.width = w; canvas.height = h;
-    ctx.fillStyle = 'black'; ctx.fillRect(0, 0, w, h);
-    ctx.fillStyle = 'white'; 
-    ctx.font = '900 150px "DIN Next LT Arabic", sans-serif'; 
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
-    ctx.fillText(text, w / 2, h / 2);
+  if (typeof document === 'undefined') return new Float32Array(particleCount * 3);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  if (!ctx) return new Float32Array(particleCount * 3);
+  
+  const w = 1000; const h = 500;
+  canvas.width = w; canvas.height = h;
+  ctx.fillStyle = 'black'; ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = 'white'; 
+  ctx.font = '900 150px "DIN Next LT Arabic", sans-serif'; 
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
+  ctx.fillText(text, w / 2, h / 2);
 
-    const imageData = ctx.getImageData(0, 0, w, h);
-    const data = imageData.data;
-    const validPixels = [];
-    
-    const step = 4;
-    for (let y = 0; y < h; y += step) { 
-        for (let x = 0; x < w; x += step) {
-            if (data[(y * w + x) * 4] > 100) { 
-                validPixels.push({ x: (x / w - 0.5) * widthFactor, y: -(y / h - 0.5) * 20 }); 
-            }
-        }
+  const imageData = ctx.getImageData(0, 0, w, h);
+  const data = imageData.data;
+  const validPixels = [];
+  
+  const step = 4;
+  for (let y = 0; y < h; y += step) { 
+    for (let x = 0; x < w; x += step) {
+      if (data[(y * w + x) * 4] > 100) { 
+        validPixels.push({ x: (x / w - 0.5) * widthFactor, y: -(y / h - 0.5) * 20 }); 
+      }
     }
-    
-    const positions = new Float32Array(particleCount * 3);
-    for (let i = 0; i < particleCount; i++) {
-        const pixel = validPixels[i % validPixels.length];
-        if (pixel) { positions[i*3] = pixel.x; positions[i*3+1] = pixel.y; positions[i*3+2] = 0; }
-    }
-    return positions;
+  }
+  
+  const positions = new Float32Array(particleCount * 3);
+  for (let i = 0; i < particleCount; i++) {
+    const pixel = validPixels[i % validPixels.length];
+    if (pixel) { positions[i*3] = pixel.x; positions[i*3+1] = pixel.y; positions[i*3+2] = 0; }
+  }
+  return positions;
 };
 
 const particleVertexShader = `
@@ -370,11 +307,9 @@ const Navbar = () => {
           </div>
           
           <div className="flex-center" style={{ gap: '1rem', zIndex: 1001 }}>
-            <button className="nav-btn" style={{ display: 'none' }} /* Desktop only button logic controlled via CSS if needed later */>ابدأ مشروعك</button>
+            <button className="nav-btn" style={{ display: 'none' }}>ابدأ مشروعك</button>
             <button className="mobile-toggle-btn" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-              <motion.span className="burger-line" animate={{ rotate: mobileMenuOpen ? 45 : 0, y: mobileMenuOpen ? 8 : 0 }} />
-              <motion.span className="burger-line" animate={{ opacity: mobileMenuOpen ? 0 : 1, width: '70%' }} />
-              <motion.span className="burger-line" animate={{ rotate: mobileMenuOpen ? -45 : 0, y: mobileMenuOpen ? -8 : 0 }} />
+                {mobileMenuOpen ? <X /> : <Menu />}
             </button>
           </div>
         </div>
@@ -524,7 +459,7 @@ const WorksSection = () => {
     
     useLayoutEffect(() => {
         const ctx = gsap.context(() => {
-            const el = containerRef.current;
+            const el = containerRef.current as HTMLElement | null;
             if (el) {
                 const moveDist = el.scrollWidth - window.innerWidth;
                 gsap.to(el, { 
@@ -651,7 +586,7 @@ const AuraScene = () => {
 
         const clock = new THREE.Clock();
         const mouse = new THREE.Vector2(0,0);
-        const onMove = (e) => { mouse.x = (e.clientX/width)*2-1; mouse.y = -(e.clientY/height)*2+1; };
+        const onMove = (e: MouseEvent) => { mouse.x = (e.clientX/width)*2-1; mouse.y = -(e.clientY/height)*2+1; };
         const onResize = () => {
             width = window.innerWidth; height = window.innerHeight;
             camera.aspect = width/height; camera.updateProjectionMatrix();
@@ -660,7 +595,7 @@ const AuraScene = () => {
         
         window.addEventListener('mousemove', onMove);
         window.addEventListener('resize', onResize);
-        let req;
+        let req: number;
         const animate = () => {
             const t = clock.getElapsedTime(); 
             mat.uniforms.uTime.value = t; 
