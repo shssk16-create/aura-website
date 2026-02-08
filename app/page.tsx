@@ -2,7 +2,7 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - QUANTUM EDITION (v6.1 - FIXED STABLE)
+ * AURA DIGITAL AGENCY - QUANTUM EDITION (v6.2 - PRODUCTION BUILD FIXED)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * * [STRATEGY & ARCHITECTURE]
  * * 1. CORE PHILOSOPHY: "Adaptive Commerce & Digital Aura"
@@ -19,9 +19,6 @@
  * - Secondary (#58A8B4): Innovation, Growth, Vitality.
  * - Neutral (#B3B7C1): Balance, High-Tech Industrial.
  * - Dark (#0B1121): The Void, Depth, Contrast.
- * * 4. TYPOGRAPHY:
- * - Dynamic Scaling using clamp() for zero-overlap guarantee.
- * - High line-height ratios for readability.
  * * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
@@ -61,7 +58,6 @@ const BRAND = {
     light: '#f8fafc',
     white: '#ffffff'
   },
-  // --- ADDED MISSING INFO OBJECT HERE ---
   info: {
     email: "hello@aurateam3.com",
     phone: "+966 50 000 0000",
@@ -75,7 +71,7 @@ const BRAND = {
     hero: {
       badge: "الريادة الرقمية 2026",
       title: "نحن لا نصنع حملات،",
-      subtitle: "نحن نصنع هالة التميز.",
+      highlight: "نحن نصنع هالة التميز.", // FIXED: Changed from 'subtitle' to 'highlight'
       desc: "في عصر التشابه، 'أورا' هي الفارق. ندمج الذكاء الاصطناعي التوليدي مع الإبداع البشري لبناء أنظمة براند ذكية تتنبأ باحتياجات عملائك قبل أن يدركوها."
     }
   }
@@ -133,7 +129,6 @@ const styles = `
   }
 
   /* --- TYPOGRAPHY SCALE (CLAMP BASED) --- */
-  /* Ensures text never overlaps by fluidly scaling with viewport */
   
   h1 { 
     font-size: clamp(2.5rem, 5vw + 1rem, 5.5rem); 
@@ -895,7 +890,7 @@ const Contact = () => {
                 <input type="email" className="form-input" placeholder="name@company.com" required />
               </div>
               <div className="form-group">
-                <label className="form-label">كيف يمكننا مساعدتك؟</label>
+                <label className="form-label">تفاصيل المشروع</label>
                 <textarea className="form-input" style={{minHeight:'150px'}} placeholder="أخبرنا عن أهدافك..."></textarea>
               </div>
               <button className="btn btn-primary" style={{width:'100%'}}>
