@@ -2,7 +2,7 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - SEO-MAX ENTERPRISE EDITION (v8.0 - SAUDI MARKET)
+ * AURA DIGITAL AGENCY - SEO-MAX ENTERPRISE EDITION (v8.1 - FINAL FIX)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * * [SEO STRATEGY & TECHNICAL ARCHITECTURE]
  * * 1. TARGET KEYWORDS: "Digital Marketing Saudi", "AI Marketing", "SEO Riyadh".
@@ -63,6 +63,11 @@ const BRAND = {
   },
   content: {
     seoTitle: "أورا | أفضل شركة تسويق رقمي في السعودية والرياض",
+    // --- FIXED: Added missing 'intro' object ---
+    intro: {
+      warning: "تنبيه: سطوع بصري عالي الكثافة. هالة أورا تتوهج الآن.",
+      loading: "جاري تهيئة الأنظمة الإبداعية..."
+    },
     hero: {
       badge: "الريادة الرقمية 2026",
       title: "أفضل شركة تسويق رقمي في السعودية:",
