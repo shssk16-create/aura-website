@@ -2,7 +2,7 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - HUMAN-CENTRIC TECH EDITION (v7.0 - FINAL STABLE)
+ * AURA DIGITAL AGENCY - HUMAN-CENTRIC TECH EDITION (v7.1 - PRODUCTION FIX)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * * [CRITIQUE RESPONSE & IMPLEMENTATION STRATEGY]
  * * 1. ACCESSIBILITY & COLOR PSYCHOLOGY:
@@ -56,7 +56,8 @@ const BRAND = {
     dark: '#0f172a',      // Deep Slate (Headings)
     text: '#334155',      // Slate 700 (Readable Body Text)
     bg: '#ffffff',        // Pure White
-    glassDark: '#1e293b'  // For AI Section
+    glassDark: '#1e293b', // For AI Section
+    light: '#f8fafc'      // <--- FIXED: Added missing light color
   },
   info: {
     email: "hello@aurateam3.com",
@@ -381,22 +382,24 @@ const styles = `
   .mobile-only { display: block; }
   
   /* Marquee */
-  .marquee-container { overflow: hidden; white-space: nowrap; padding: 2rem 0; background: ${BRAND.colors.light}; }
+  .marquee-container { overflow: hidden; white-space: nowrap; padding: 2rem 0; background: ${BRAND.colors.light}; border-y: 1px solid rgba(0,0,0,0.05); }
   .marquee-content { display: inline-flex; animation: scroll 30s linear infinite; }
   .marquee-item { margin: 0 3rem; font-size: 1.5rem; font-weight: 700; color: ${BRAND.colors.grey}; opacity: 0.5; font-family: var(--font-heading); }
   @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 `;
 
 // =========================================
-// 3. LOGIC: PARTICLE SYSTEM (Optimized)
+// 3. LOGIC: PARTICLE SYSTEM (Canvas Sampling)
 // =========================================
 
+// Safely generate text particles on the CPU
 const getParticlesData = (text: string, width: number, height: number) => {
   if (typeof document === 'undefined') return [];
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return [];
   
+  // High res for crisp text
   const scale = 1; 
   canvas.width = width * scale; 
   canvas.height = height * scale;
@@ -409,6 +412,7 @@ const getParticlesData = (text: string, width: number, height: number) => {
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   const particles = [];
   
+  // Optimized sampling rate based on screen size
   const step = 5; 
   
   for (let y = 0; y < canvas.height; y += step) {
@@ -428,22 +432,25 @@ const getParticlesData = (text: string, width: number, height: number) => {
 // 4. REACT COMPONENTS
 // =========================================
 
-// --- A. Cinematic Intro ---
+// --- A. Cinematic Intro (Blue Dark Mode) ---
 const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   const container = useRef(null);
   const warning = useRef(null);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    // Sequence: Warning -> Fade Out -> Counter -> Explosion
     const tl = gsap.timeline();
     
     tl.to(warning.current, { opacity: 1, y: 0, duration: 1, delay: 0.5 })
       .to(warning.current, { opacity: 0, y: -20, duration: 0.5, delay: 2.5 })
       .call(() => {
+        // Start Counter
         const interval = setInterval(() => {
           setCount(prev => {
             if (prev >= 100) {
               clearInterval(interval);
+              // Explosion Reveal
               gsap.to(container.current, {
                 clipPath: "circle(0% at 50% 50%)", 
                 duration: 1.5, 
@@ -454,7 +461,7 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
             }
             return prev + 2;
           });
-        }, 20); 
+        }, 20); // Fast load
       });
   }, []);
 
@@ -478,16 +485,18 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-// --- B. Aura Scene ---
+// --- B. Aura Scene (Fixed Background) ---
 const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
+    // 1. Scene Setup
     const w = window.innerWidth;
     const h = window.innerHeight;
     const scene = new THREE.Scene();
+    // Light fog for depth perception on white background
     scene.fog = new THREE.FogExp2(0xffffff, 0.005); 
     
     const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
@@ -499,8 +508,9 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
 
+    // 2. Geometry generation
     const textPoints = getParticlesData("AURA", 1000, 500);
-    const count = textPoints.length + 1500; 
+    const count = textPoints.length + 1500; // Text + Ambient stars
     
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
@@ -510,6 +520,7 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const c2 = new THREE.Color(BRAND.colors.secondary);
 
     for(let i=0; i<count; i++) {
+      // Start in chaos (random positions)
       positions[i*3] = (Math.random()-0.5) * 150;
       positions[i*3+1] = (Math.random()-0.5) * 150;
       positions[i*3+2] = (Math.random()-0.5) * 150;
@@ -528,16 +539,22 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
+    // 3. Animation Loop
     const animate = () => {
       requestAnimationFrame(animate);
+      // Continuous float
       particles.rotation.y += 0.001;
       particles.rotation.x = Math.sin(Date.now() * 0.0005) * 0.05;
       renderer.render(scene, camera);
     };
     animate();
 
+    // 4. Trigger Morphing (GSAP)
     if (startAnimation) {
+      // We animate a proxy object, and update geometry in the callback
       const progress = { t: 0 };
+      
+      // Store initial random positions to lerp from
       const initialPos = Float32Array.from(positions); 
       
       gsap.to(progress, {
@@ -553,15 +570,18 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
             let tx, ty, tz;
             
             if (i < textPoints.length) {
+              // Target is Text
               tx = textPoints[i].x;
               ty = textPoints[i].y;
               tz = 0;
             } else {
+              // Target is same random pos (just floating)
               tx = initialPos[i*3];
               ty = initialPos[i*3+1];
               tz = initialPos[i*3+2];
             }
             
+            // Linear Interpolation: start + (end - start) * t
             currentPos[i*3] = initialPos[i*3] + (tx - initialPos[i*3]) * t;
             currentPos[i*3+1] = initialPos[i*3+1] + (ty - initialPos[i*3+1]) * t;
             currentPos[i*3+2] = initialPos[i*3+2] + (tz - initialPos[i*3+2]) * t;
@@ -571,6 +591,7 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
       });
     }
 
+    // Resize Handler
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
