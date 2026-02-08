@@ -2,7 +2,7 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - QUANTUM EDITION (v6.0 - PRODUCTION READY)
+ * AURA DIGITAL AGENCY - QUANTUM EDITION (v6.1 - FIXED STABLE)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * * [STRATEGY & ARCHITECTURE]
  * * 1. CORE PHILOSOPHY: "Adaptive Commerce & Digital Aura"
@@ -60,6 +60,12 @@ const BRAND = {
     deepBlue: '#0B1121', // Intro Background
     light: '#f8fafc',
     white: '#ffffff'
+  },
+  // --- ADDED MISSING INFO OBJECT HERE ---
+  info: {
+    email: "hello@aurateam3.com",
+    phone: "+966 50 000 0000",
+    address: "الرياض، طريق الملك فهد، المملكة العربية السعودية"
   },
   content: {
     intro: {
@@ -253,7 +259,11 @@ const styles = `
     color: ${BRAND.colors.dark}; font-weight: 600; font-size: 0.95rem; cursor: pointer;
     transition: 0.3s; padding: 0.5rem 1rem; position: relative; text-decoration: none;
   }
-  .nav-link:hover { color: ${BRAND.colors.primary}; }
+  .nav-link::after {
+    content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px;
+    background: var(--primary); transition: 0.3s; transform: translateX(-50%);
+  }
+  .nav-link:hover::after { width: 100%; }
 
   /* 3. Buttons (Primary & Outline) */
   .btn {
@@ -375,6 +385,12 @@ const styles = `
     .mobile-only { display: none !important; }
   }
   .mobile-only { display: block; }
+  
+  /* Marquee Animation */
+  .marquee-container { overflow: hidden; white-space: nowrap; padding: 2rem 0; background: ${BRAND.colors.light}; }
+  .marquee-content { display: inline-flex; animation: scroll 30s linear infinite; }
+  .marquee-item { margin: 0 3rem; font-size: 1.5rem; font-weight: 700; color: ${BRAND.colors.grey}; opacity: 0.5; }
+  @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 `;
 
 // =========================================
@@ -682,7 +698,7 @@ const Hero = () => {
         <Reveal delay={0.4}>
           <h1>
             {BRAND.content.hero.title} <br/>
-            <span className="text-gradient">{BRAND.content.hero.subtitle}</span>
+            <span className="text-gradient">{BRAND.content.hero.highlight}</span>
           </h1>
         </Reveal>
         
@@ -730,7 +746,18 @@ const Stats = () => {
   );
 };
 
-// --- G. AI Lab Section (Dark Mode Block) ---
+// --- G. Client Marquee ---
+const ClientMarquee = () => (
+  <div className="marquee-container">
+    <div className="marquee-content">
+      {[...Array(10)].map((_, i) => (
+        <span key={i} className="marquee-item">CLIENT PARTNER {i+1}</span>
+      ))}
+    </div>
+  </div>
+);
+
+// --- H. AI Lab Section ---
 const AILab = () => {
   return (
     <section className="section" id="مختبر AI" style={{background: BRAND.colors.dark, color: 'white', borderRadius:'3rem', margin:'0 1rem'}}>
@@ -771,7 +798,7 @@ const AILab = () => {
   );
 };
 
-// --- H. Services (Bento Grid) ---
+// --- I. Services (Bento Grid) ---
 const Services = () => {
   const services = [
     { title: "الاستراتيجيات الرقمية", desc: "خارطة طريق واضحة لنقلك من المنافسة إلى الريادة.", icon: Target, col: "span 2" },
@@ -819,9 +846,9 @@ const Services = () => {
   );
 };
 
-// --- I. Contact Form ---
+// --- J. Contact Form ---
 const Contact = () => {
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     alert("تم استلام طلبك بنجاح! فريق أورا سيتواصل معك.");
   };
@@ -882,7 +909,7 @@ const Contact = () => {
   );
 };
 
-// --- J. Footer ---
+// --- K. Footer ---
 const Footer = () => (
   <footer>
     <div className="container">
@@ -924,7 +951,7 @@ const Footer = () => (
 );
 
 // =========================================
-// 5. MAIN ENTRY POINT
+// 5. MAIN ENTRY POINT (The App)
 // =========================================
 
 export default function AuraWebsite() {
@@ -935,22 +962,27 @@ export default function AuraWebsite() {
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <Script id="json-ld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       
+      {/* 1. Cinematic Intro */}
       <AnimatePresence>
-        {!introFinished && <Intro onComplete={() => setIntroFinished(true)} />}
+        {!introFinished && <IntroOverlay onComplete={() => setIntroFinished(true)} />}
       </AnimatePresence>
 
-      <div style={{opacity: introFinished ? 1 : 0, transition: 'opacity 1s ease'}}>
-        <AuraScene startAnimation={introFinished} />
-        <Navbar />
-        <main>
-          <Hero />
-          <Stats />
-          <Services />
-          <AILab />
-          <Contact />
-        </main>
-        <Footer />
-      </div>
+      {/* 2. Main Site */}
+      {introFinished && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
+          <AuraScene startAnimation={introFinished} />
+          <Navbar />
+          <main>
+            <Hero />
+            <ClientMarquee />
+            <Stats />
+            <Services />
+            <AILab />
+            <Contact />
+          </main>
+          <Footer />
+        </motion.div>
+      )}
     </>
   );
 }
