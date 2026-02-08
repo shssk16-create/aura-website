@@ -10,7 +10,7 @@
  * * 3. SCHEMA MARKUP: Full JSON-LD implementation for "ProfessionalService".
  * * 4. UX/UI:
  * - Glassmorphism Navigation (Blur 20px)
- * - WebGL Aurora Background (Three.js)
+ * - WebGL Aurora Background (Three.js Optimized)
  * - Bento Grid Services Layout
  * * 5. COLOR PALETTE (Trust & Tech):
  * - Primary: #438FB3 (Strategic Blue)
@@ -20,7 +20,7 @@
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import React, { useState, useEffect, useRef, FormEvent } from 'react';
+import React, { useState, useEffect, useRef, FormEvent, useMemo } from 'react';
 import { 
   motion, AnimatePresence, useScroll, useTransform, useSpring 
 } from 'framer-motion';
@@ -29,7 +29,7 @@ import {
   Megaphone, CheckCircle, Shield, Star, Code, Smartphone,
   Phone, Mail, MapPin, Zap, Send, Layout, BarChart, Users,
   Globe, Lightbulb, TrendingUp, Monitor, Cpu, Target, 
-  Sparkles, Heart, MousePointer2, Briefcase, Eye
+  Sparkles, Heart, MousePointer2, Briefcase, Eye, BarChart3
 } from 'lucide-react';
 import Script from 'next/script';
 import * as THREE from 'three';
@@ -68,6 +68,10 @@ const BRAND = {
       title: "أفضل شركة تسويق رقمي في السعودية:",
       highlight: "نصنع هالة التميز لعلامتك",
       desc: "في أورا، ندمج بين الذكاء الاصطناعي التوليدي وإدارة الحملات الإعلانية المبنية على البيانات لتحقيق عائد استثمار (ROI) يتجاوز التوقعات في الرياض وجدة وكافة أنحاء المملكة."
+    },
+    cta: {
+      main: "ابدأ التحول الرقمي الآن",
+      secondary: "احصل على استشارة مجانية"
     }
   }
 };
@@ -483,7 +487,7 @@ const Navbar = () => {
         </div>
 
         <div style={{display:'flex', gap:'1rem'}}>
-          <button className="btn btn-primary desktop-only">ابدأ مشروعك</button>
+          <button className="btn btn-primary desktop-only">{BRAND.content.cta.secondary}</button>
           <button className="mobile-only" onClick={() => setIsOpen(true)} style={{background:'none', border:'none'}}>
             <Menu color={BRAND.colors.primary} size={28} />
           </button>
@@ -554,7 +558,7 @@ const Hero = () => {
         <Reveal delay={0.8}>
           <div className="flex-center" style={{gap:'1.5rem', flexWrap:'wrap'}}>
             <button className="btn btn-primary">
-              ابدأ التحول الرقمي الآن <ArrowUpRight size={20} />
+              {BRAND.content.cta.main} <ArrowUpRight size={20} />
             </button>
             <button className="btn btn-outline">
               شاهد معرض الأعمال <Globe size={20} />
@@ -580,7 +584,7 @@ const Stats = () => {
           <Reveal key={i} delay={i * 0.1}>
             <div className="glass-card" style={{padding:'2rem'}}>
               <span style={{display:'block', fontSize:'3rem', fontWeight:'900', color: BRAND.colors.primary, lineHeight:1, fontFamily:'var(--font-heading)'}}>{s.n}</span>
-              <span style={{color: BRAND.colors.text, fontWeight:'600'}}>{s.l}</span>
+              <span style={{color: '#64748b', fontWeight:'600'}}>{s.l}</span>
             </div>
           </Reveal>
         ))}
