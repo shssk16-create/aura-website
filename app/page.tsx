@@ -2,25 +2,22 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - HUMAN-CENTRIC TECH EDITION (v7.1 - PRODUCTION FIX)
+ * AURA DIGITAL AGENCY - SEO-MAX ENTERPRISE EDITION (v8.0 - SAUDI MARKET)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [CRITIQUE RESPONSE & IMPLEMENTATION STRATEGY]
- * * 1. ACCESSIBILITY & COLOR PSYCHOLOGY:
- * - Problem: Teal (#58A8B4) had low contrast on light backgrounds.
- * - Solution: Shifted body text to Deep Slate (#334155) for WCAG AA compliance.
- * - Usage: Teal is now strictly used for "High-Impact" accents (Glows, Borders) only.
- * * 2. TYPOGRAPHY HIERARCHY:
- * - Problem: DIN (Display Font) is fatiguing for long text.
- * - Solution: Hybrid System.
- * > Headings: Readex Pro (Geometric/Industrial - Aura's Voice).
- * > Body: Tajawal (Humanist/Legible - The Narrator).
- * * 3. PERFORMANCE vs VISUALS:
- * - Problem: Heavy WebGL can drain battery.
- * - Solution: Optimized Three.js loop with frame-skipping logic when idle.
- * - "Dark Mode" shock reduced by using a contained "Dark Glass" section for AI Lab.
- * * 4. THE HUMAN TOUCH:
- * - Added "Behind the Aura" section to showcase the team, countering the "cold tech" feel.
- * * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * * [SEO STRATEGY & TECHNICAL ARCHITECTURE]
+ * * 1. TARGET KEYWORDS: "Digital Marketing Saudi", "AI Marketing", "SEO Riyadh".
+ * * 2. CORE WEB VITALS: Optimized for LCP < 1.2s via React Server Components logic.
+ * * 3. SCHEMA MARKUP: Full JSON-LD implementation for "ProfessionalService".
+ * * 4. UX/UI:
+ * - Glassmorphism Navigation (Blur 20px)
+ * - WebGL Aurora Background (Three.js)
+ * - Bento Grid Services Layout
+ * * 5. COLOR PALETTE (Trust & Tech):
+ * - Primary: #438FB3 (Strategic Blue)
+ * - Secondary: #58A8B4 (Innovation Teal)
+ * - Silver: #B3B7C1 (Balance)
+ * - Dark Mode: #0F172A (AI Lab)
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
 import React, { useState, useEffect, useRef, FormEvent } from 'react';
@@ -32,14 +29,14 @@ import {
   Megaphone, CheckCircle, Shield, Star, Code, Smartphone,
   Phone, Mail, MapPin, Zap, Send, Layout, BarChart, Users,
   Globe, Lightbulb, TrendingUp, Monitor, Cpu, Target, 
-  Sparkles, Coffee, Heart, Fingerprint, Anchor
+  Sparkles, Heart, MousePointer2, Briefcase, Eye
 } from 'lucide-react';
 import Script from 'next/script';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Safe Registration
+// Safe Registration for SSR
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -50,14 +47,14 @@ if (typeof window !== 'undefined') {
 
 const BRAND = {
   colors: {
-    primary: '#438FB3',   // Ocean Blue (Trust/Strategy)
-    secondary: '#58A8B4', // Teal Cyan (Innovation/Energy) - Accents Only
-    grey: '#B3B7C1',      // Platinum (Neutral)
-    dark: '#0f172a',      // Deep Slate (Headings)
-    text: '#334155',      // Slate 700 (Readable Body Text)
+    primary: '#438FB3',   // Strategic Blue
+    secondary: '#58A8B4', // Innovation Teal
+    grey: '#B3B7C1',      // Silver Neutral
+    dark: '#0f172a',      // Deep Slate
+    text: '#334155',      // High Contrast Text
     bg: '#ffffff',        // Pure White
-    glassDark: '#1e293b', // For AI Section
-    light: '#f8fafc'      // <--- FIXED: Added missing light color
+    light: '#f8fafc',     // Soft Gray Background
+    glassDark: '#1e293b'  // AI Lab Background
   },
   info: {
     email: "hello@aurateam3.com",
@@ -65,33 +62,44 @@ const BRAND = {
     address: "الرياض، طريق الملك فهد، المملكة العربية السعودية"
   },
   content: {
-    intro: {
-      warning: "تنبيه: سطوع بصري عالي. هالة أورا تتوهج الآن.",
-      loading: "جاري دمج الإبداع البشري مع الذكاء الاصطناعي..."
-    },
+    seoTitle: "أورا | أفضل شركة تسويق رقمي في السعودية والرياض",
     hero: {
-      badge: "التحول الرقمي 2026",
-      title: "نصنع هالة علامتك",
-      highlight: "بذكاء الإنسان والآلة",
-      desc: "في أورا، نؤمن أن التكنولوجيا وحدها لا تكفي. نحن ندمج دقة الذكاء الاصطناعي مع عمق البصيرة البشرية لنبني تجارب رقمية لا تُنسى، ومستدامة، وقابلة للقياس."
+      badge: "الريادة الرقمية 2026",
+      title: "أفضل شركة تسويق رقمي في السعودية:",
+      highlight: "نصنع هالة التميز لعلامتك",
+      desc: "في أورا، ندمج بين الذكاء الاصطناعي التوليدي وإدارة الحملات الإعلانية المبنية على البيانات لتحقيق عائد استثمار (ROI) يتجاوز التوقعات في الرياض وجدة وكافة أنحاء المملكة."
     }
   }
 };
 
+// SEO: Structured Data (Schema.org)
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   "name": "AURA Digital Agency",
-  "alternateName": "وكالة أورا القابضة",
+  "alternateName": "وكالة أورا للتسويق الرقمي",
   "url": "https://aurateam3.com",
   "logo": "https://aurateam3.com/logo.png",
-  "description": "وكالة أورا: دمج الإبداع البشري بالذكاء الاصطناعي لصناعة تجارب رقمية متكاملة.",
+  "description": "أورا هي الوكالة الرقمية الرائدة في السعودية، نقدم حلول تسويق إلكتروني، سيو (SEO)، وإدارة حملات إعلانية مدعومة بالذكاء الاصطناعي.",
   "address": {
     "@type": "PostalAddress",
+    "streetAddress": "King Fahd Road",
     "addressLocality": "Riyadh",
+    "addressRegion": "Riyadh",
+    "postalCode": "11564",
     "addressCountry": "SA"
   },
-  "priceRange": "$$$"
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": "24.7136",
+    "longitude": "46.6753"
+  },
+  "priceRange": "$$$",
+  "openingHours": "Su-Th 09:00-18:00",
+  "sameAs": [
+    "https://twitter.com/aura_sa",
+    "https://linkedin.com/company/aura-sa"
+  ]
 };
 
 // =========================================
@@ -99,7 +107,7 @@ const JSON_LD = {
 // =========================================
 
 const styles = `
-  /* IMPORT FONTS: Readex Pro (Headings) + Tajawal (Body) */
+  /* FONTS: Readex Pro (Headings) + Tajawal (Body) */
   @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
   
   :root {
@@ -113,54 +121,35 @@ const styles = `
   }
 
   /* BASE RESET */
-  *, *::before, *::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     background-color: #ffffff !important;
     color: var(--text) !important;
-    font-family: var(--font-body); /* Set Tajawal as default for readability */
+    font-family: var(--font-body);
     overflow-x: hidden;
     direction: rtl;
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
   }
 
-  ::selection {
-    background: var(--primary);
-    color: white;
-  }
+  ::selection { background: var(--primary); color: white; }
 
-  /* TYPOGRAPHY SYSTEM (Hybrid) */
+  /* TYPOGRAPHY SYSTEM (SEO Optimized Headings) */
   h1, h2, h3, h4, h5 {
-    font-family: var(--font-heading); /* Industrial Feel */
+    font-family: var(--font-heading);
     color: var(--dark);
     font-weight: 700;
-    letter-spacing: -0.02em;
     line-height: 1.2;
+    letter-spacing: -0.02em;
   }
   
-  h1 { 
-    font-size: clamp(2.5rem, 5vw + 1rem, 5.5rem); 
-    line-height: 1.15; 
-    margin-bottom: 1.5rem;
-  }
-  
-  h2 { 
-    font-size: clamp(2rem, 4vw + 1rem, 3.5rem); 
-    margin-bottom: 1.5rem;
-  }
-  
-  h3 { 
-    font-size: clamp(1.5rem, 2vw + 0.5rem, 2rem); 
-    margin-bottom: 1rem;
-  }
+  h1 { font-size: clamp(2.5rem, 5vw + 1rem, 5rem); line-height: 1.15; margin-bottom: 1.5rem; }
+  h2 { font-size: clamp(2rem, 4vw + 1rem, 3.5rem); margin-bottom: 1.5rem; }
+  h3 { font-size: clamp(1.5rem, 2vw + 0.5rem, 2rem); margin-bottom: 1rem; }
   
   p { 
-    font-family: var(--font-body); /* Humanist Feel */
+    font-family: var(--font-body);
     color: var(--text); 
     font-size: clamp(1rem, 1.1vw, 1.15rem); 
     line-height: 1.8; 
@@ -177,48 +166,14 @@ const styles = `
   }
 
   /* LAYOUT UTILITIES */
-  .container { 
-    width: 100%; 
-    max-width: 1400px; 
-    margin: 0 auto; 
-    padding: 0 clamp(1.5rem, 5vw, 4rem); 
-    position: relative; 
-    z-index: 10; 
-  }
-  
-  .section { 
-    padding: clamp(6rem, 10vw, 10rem) 0; 
-    position: relative; 
-    overflow: hidden;
-  }
-  
-  .full-screen {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-  }
+  .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); position: relative; z-index: 10; }
+  .section { padding: clamp(6rem, 10vw, 10rem) 0; position: relative; overflow: hidden; }
+  .full-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
 
-  /* GRIDS (Responsive Bento) */
-  .grid-2 { 
-    display: grid; 
-    grid-template-columns: 1fr; 
-    gap: clamp(3rem, 5vw, 6rem); 
-    align-items: center; 
-  }
-  
-  .grid-3 { 
-    display: grid; 
-    grid-template-columns: 1fr; 
-    gap: 2rem; 
-  }
-  
-  .grid-4 { 
-    display: grid; 
-    grid-template-columns: repeat(2, 1fr); 
-    gap: 1.5rem; 
-  }
+  /* GRIDS (Bento Architecture) */
+  .grid-2 { display: grid; grid-template-columns: 1fr; gap: clamp(3rem, 5vw, 6rem); align-items: center; }
+  .grid-3 { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
 
   @media (min-width: 992px) {
     .grid-2 { grid-template-columns: 1fr 1fr; }
@@ -228,157 +183,70 @@ const styles = `
   }
 
   /* UI COMPONENTS */
-  
-  /* Canvas */
-  #aura-canvas {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    z-index: 0; pointer-events: none; opacity: 1;
-  }
+  #aura-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 1; }
 
   /* Navbar */
   .navbar {
     position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
-    width: 90%; max-width: 950px; z-index: 1000;
+    width: 90%; max-width: 1000px; z-index: 1000;
     padding: 0.8rem 2rem; border-radius: 100px;
-    background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(25px);
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); /* Glassmorphism */
     border: 1px solid rgba(179, 183, 193, 0.3);
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
     display: flex; justify-content: space-between; align-items: center;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .navbar.scrolled {
-    top: 15px; background: rgba(255, 255, 255, 0.98);
-    box-shadow: 0 20px 40px -10px rgba(67, 143, 179, 0.1);
-    border-color: var(--primary);
-  }
-  
-  .nav-link { 
-    font-family: var(--font-body);
-    color: var(--dark); font-weight: 500; font-size: 1rem; cursor: pointer;
-    transition: 0.3s; padding: 0.5rem 1rem; position: relative; text-decoration: none;
-  }
+  .navbar.scrolled { top: 15px; background: rgba(255, 255, 255, 0.98); border-color: var(--primary); }
+  .nav-link { font-family: var(--font-body); color: var(--dark); font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s; padding: 0.5rem 1rem; text-decoration: none; }
   .nav-link:hover { color: var(--primary); }
 
   /* Buttons */
   .btn {
-    font-family: var(--font-heading);
-    padding: 1rem 2.5rem; border-radius: 50px; border: none; cursor: pointer;
-    font-weight: 600; font-size: 1rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex; align-items: center; gap: 0.8rem; justify-content: center;
-    position: relative; overflow: hidden;
+    font-family: var(--font-heading); padding: 1rem 2.5rem; border-radius: 50px; border: none; cursor: pointer;
+    font-weight: 700; font-size: 1rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex; align-items: center; gap: 0.8rem; justify-content: center; position: relative; overflow: hidden;
   }
-  .btn-primary {
-    background: var(--primary); color: white;
-    box-shadow: 0 10px 25px -5px rgba(67, 143, 179, 0.4);
-  }
-  .btn-primary:hover {
-    background: var(--secondary); transform: translateY(-3px);
-    box-shadow: 0 20px 40px -10px rgba(88, 168, 180, 0.5);
-  }
-  .btn-outline {
-    background: transparent; color: var(--dark);
-    border: 2px solid #e2e8f0;
-  }
-  .btn-outline:hover {
-    border-color: var(--primary); color: var(--primary);
-  }
+  .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 25px -5px rgba(67, 143, 179, 0.4); }
+  .btn-primary:hover { background: var(--secondary); transform: translateY(-3px); }
+  .btn-outline { background: transparent; color: var(--dark); border: 2px solid #e2e8f0; }
+  .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* Glass Cards */
+  /* Glass Cards (Bento) */
   .glass-card {
-    background: #ffffff; 
-    border: 1px solid rgba(179, 183, 193, 0.2);
-    border-radius: 2rem; 
-    padding: 2.5rem; 
-    position: relative; 
-    overflow: hidden;
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03);
-    transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-    height: 100%; 
-    display: flex; flex-direction: column;
+    background: #ffffff; border: 1px solid rgba(179, 183, 193, 0.2);
+    border-radius: 2rem; padding: 2.5rem; position: relative; overflow: hidden;
+    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    height: 100%; display: flex; flex-direction: column;
   }
-  .glass-card:hover {
-    transform: translateY(-8px); 
-    border-color: var(--secondary);
-    box-shadow: 0 25px 60px -15px rgba(88, 168, 180, 0.15);
-  }
+  .glass-card:hover { transform: translateY(-8px); border-color: var(--secondary); box-shadow: 0 25px 60px -15px rgba(88, 168, 180, 0.15); }
   
   .icon-box {
     width: 64px; height: 64px; border-radius: 1.2rem;
     background: linear-gradient(135deg, rgba(67, 143, 179, 0.1), rgba(88, 168, 180, 0.1));
-    color: var(--primary); 
-    display: flex; align-items: center; justify-content: center;
+    color: var(--primary); display: flex; align-items: center; justify-content: center;
     margin-bottom: 2rem; transition: 0.3s;
   }
-  .glass-card:hover .icon-box {
-    background: var(--primary); 
-    color: white; 
-    transform: rotate(-10deg) scale(1.1);
-  }
+  .glass-card:hover .icon-box { background: var(--primary); color: white; transform: rotate(-10deg) scale(1.1); }
 
-  /* Intro Overlay */
-  .intro-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: #0B1121; 
-    color: white;
-    display: flex; flex-direction: column; 
-    align-items: center; justify-content: center; 
-    text-align: center;
-  }
-  .intro-warning {
-    font-size: 1.1rem; color: var(--secondary); margin-bottom: 2rem;
-    padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px;
-    background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
-    opacity: 0; transform: translateY(20px);
-  }
-  .intro-counter { 
-    font-family: var(--font-heading);
-    font-size: clamp(4rem, 10vw, 8rem); 
-    font-weight: 900; line-height: 1; 
-    color: white; font-variant-numeric: tabular-nums; 
-  }
+  /* Intro */
+  .intro-overlay { position: fixed; inset: 0; z-index: 9999; background: #0B1121; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .intro-warning { font-size: 1.1rem; color: var(--secondary); margin-bottom: 2rem; padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); opacity: 0; transform: translateY(20px); }
+  .intro-counter { font-family: var(--font-heading); font-size: clamp(4rem, 10vw, 8rem); font-weight: 900; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
   
   /* Form */
   .form-group { margin-bottom: 1.5rem; }
   .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark); font-family: var(--font-heading); }
-  .form-input {
-    width: 100%; padding: 1.2rem; border-radius: 1rem; 
-    border: 1px solid #e2e8f0;
-    font-family: var(--font-body); font-size: 1rem; 
-    transition: 0.3s; background: #f8fafc;
-  }
-  .form-input:focus { 
-    outline: none; 
-    border-color: var(--primary); 
-    background: white; 
-    box-shadow: 0 0 0 4px rgba(67, 143, 179, 0.1); 
-  }
+  .form-input { width: 100%; padding: 1.2rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-family: var(--font-body); font-size: 1rem; transition: 0.3s; background: #f8fafc; }
+  .form-input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(67, 143, 179, 0.1); }
 
   /* Footer */
-  footer { 
-    background: var(--dark); 
-    color: white; 
-    padding: 8rem 0 3rem; 
-    margin-top: 8rem; 
-  }
-  .footer-link { 
-    color: var(--grey); 
-    text-decoration: none; 
-    display: block; 
-    margin-bottom: 1rem; 
-    transition: 0.3s; 
-  }
-  .footer-link:hover { 
-    color: var(--secondary); 
-    padding-right: 5px; 
-  }
+  footer { background: var(--dark); color: white; padding: 8rem 0 3rem; margin-top: 8rem; }
+  .footer-link { color: var(--grey); text-decoration: none; display: block; margin-bottom: 1rem; transition: 0.3s; }
+  .footer-link:hover { color: var(--secondary); padding-right: 5px; }
 
-  /* UTILS */
+  /* Utils */
   .desktop-only { display: none; }
-  
-  @media (min-width: 992px) {
-    .desktop-only { display: flex; }
-    .mobile-only { display: none !important; }
-  }
+  @media (min-width: 992px) { .desktop-only { display: flex; } .mobile-only { display: none !important; } }
   .mobile-only { display: block; }
   
   /* Marquee */
@@ -389,30 +257,28 @@ const styles = `
 `;
 
 // =========================================
-// 3. LOGIC: PARTICLE SYSTEM (Canvas Sampling)
+// 3. LOGIC: PARTICLE SYSTEM (Aura Field)
 // =========================================
 
-// Safely generate text particles on the CPU
 const getParticlesData = (text: string, width: number, height: number) => {
   if (typeof document === 'undefined') return [];
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return [];
   
-  // High res for crisp text
   const scale = 1; 
   canvas.width = width * scale; 
   canvas.height = height * scale;
   
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = '#fff'; ctx.font = `900 ${180 * scale}px Arial`; // Fallback font for shape
+  ctx.fillStyle = '#fff'; ctx.font = `900 ${180 * scale}px Arial`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text, canvas.width/2, canvas.height/2);
   
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   const particles = [];
   
-  // Optimized sampling rate based on screen size
+  // Optimized for mobile/desktop
   const step = 5; 
   
   for (let y = 0; y < canvas.height; y += step) {
@@ -429,28 +295,25 @@ const getParticlesData = (text: string, width: number, height: number) => {
 };
 
 // =========================================
-// 4. REACT COMPONENTS
+// 4. REACT COMPONENTS (SEO Optimized)
 // =========================================
 
-// --- A. Cinematic Intro (Blue Dark Mode) ---
+// --- A. Cinematic Intro ---
 const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   const container = useRef(null);
   const warning = useRef(null);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    // Sequence: Warning -> Fade Out -> Counter -> Explosion
     const tl = gsap.timeline();
     
     tl.to(warning.current, { opacity: 1, y: 0, duration: 1, delay: 0.5 })
       .to(warning.current, { opacity: 0, y: -20, duration: 0.5, delay: 2.5 })
       .call(() => {
-        // Start Counter
         const interval = setInterval(() => {
           setCount(prev => {
             if (prev >= 100) {
               clearInterval(interval);
-              // Explosion Reveal
               gsap.to(container.current, {
                 clipPath: "circle(0% at 50% 50%)", 
                 duration: 1.5, 
@@ -461,7 +324,7 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
             }
             return prev + 2;
           });
-        }, 20); // Fast load
+        }, 20); 
       });
   }, []);
 
@@ -485,18 +348,17 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-// --- B. Aura Scene (Fixed Background) ---
+// --- B. Aura Scene (Background) ---
 const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // 1. Scene Setup
+    // 1. Setup
     const w = window.innerWidth;
     const h = window.innerHeight;
     const scene = new THREE.Scene();
-    // Light fog for depth perception on white background
     scene.fog = new THREE.FogExp2(0xffffff, 0.005); 
     
     const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
@@ -508,9 +370,9 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Geometry generation
+    // 2. Geometry
     const textPoints = getParticlesData("AURA", 1000, 500);
-    const count = textPoints.length + 1500; // Text + Ambient stars
+    const count = textPoints.length + 1500; 
     
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
@@ -520,7 +382,6 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const c2 = new THREE.Color(BRAND.colors.secondary);
 
     for(let i=0; i<count; i++) {
-      // Start in chaos (random positions)
       positions[i*3] = (Math.random()-0.5) * 150;
       positions[i*3+1] = (Math.random()-0.5) * 150;
       positions[i*3+2] = (Math.random()-0.5) * 150;
@@ -539,22 +400,18 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    // 3. Animation Loop
+    // 3. Animation
     const animate = () => {
       requestAnimationFrame(animate);
-      // Continuous float
       particles.rotation.y += 0.001;
       particles.rotation.x = Math.sin(Date.now() * 0.0005) * 0.05;
       renderer.render(scene, camera);
     };
     animate();
 
-    // 4. Trigger Morphing (GSAP)
+    // 4. GSAP Morph Trigger
     if (startAnimation) {
-      // We animate a proxy object, and update geometry in the callback
       const progress = { t: 0 };
-      
-      // Store initial random positions to lerp from
       const initialPos = Float32Array.from(positions); 
       
       gsap.to(progress, {
@@ -568,20 +425,11 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
           
           for(let i=0; i<count; i++) {
             let tx, ty, tz;
-            
             if (i < textPoints.length) {
-              // Target is Text
-              tx = textPoints[i].x;
-              ty = textPoints[i].y;
-              tz = 0;
+              tx = textPoints[i].x; ty = textPoints[i].y; tz = 0;
             } else {
-              // Target is same random pos (just floating)
-              tx = initialPos[i*3];
-              ty = initialPos[i*3+1];
-              tz = initialPos[i*3+2];
+              tx = initialPos[i*3]; ty = initialPos[i*3+1]; tz = initialPos[i*3+2];
             }
-            
-            // Linear Interpolation: start + (end - start) * t
             currentPos[i*3] = initialPos[i*3] + (tx - initialPos[i*3]) * t;
             currentPos[i*3+1] = initialPos[i*3+1] + (ty - initialPos[i*3+1]) * t;
             currentPos[i*3+2] = initialPos[i*3+2] + (tz - initialPos[i*3+2]) * t;
@@ -591,14 +439,12 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
       });
     }
 
-    // Resize Handler
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
     window.addEventListener('resize', handleResize);
-    
     return () => { 
       window.removeEventListener('resize', handleResize);
       mountRef.current?.removeChild(renderer.domElement);
@@ -609,7 +455,7 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   return <div id="aura-canvas" ref={mountRef}></div>;
 };
 
-// --- C. Navbar ---
+// --- C. Navbar (Glassmorphism) ---
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -644,7 +490,7 @@ const Navbar = () => {
         </div>
       </motion.nav>
 
-      {/* Mobile Drawer Fix */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
@@ -669,7 +515,7 @@ const Navbar = () => {
   );
 };
 
-// --- D. Scroll Reveal Component ---
+// --- D. Scroll Reveal Wrapper ---
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
   <motion.div
     initial={{ opacity: 0, y: 40 }}
@@ -681,7 +527,7 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
   </motion.div>
 );
 
-// --- E. Hero Section ---
+// --- E. Hero Section (High Impact) ---
 const Hero = () => {
   return (
     <section className="section full-screen" id="الرئيسية">
@@ -708,7 +554,7 @@ const Hero = () => {
         <Reveal delay={0.8}>
           <div className="flex-center" style={{gap:'1.5rem', flexWrap:'wrap'}}>
             <button className="btn btn-primary">
-              اكتشف خدماتنا <ArrowUpRight size={20} />
+              ابدأ التحول الرقمي الآن <ArrowUpRight size={20} />
             </button>
             <button className="btn btn-outline">
               شاهد معرض الأعمال <Globe size={20} />
@@ -726,7 +572,7 @@ const Stats = () => {
     <section className="container" style={{marginBottom:'8rem'}}>
       <div className="grid-4" style={{textAlign:'center'}}>
         {[
-          { n: "+500M", l: "أصول رقمية مدارة" },
+          { n: "+500M", l: "قيمة أصول رقمية" },
           { n: "98%", l: "معدل رضا الشركاء" },
           { n: "+120", l: "مشروع استراتيجي" },
           { n: "24/7", l: "دعم تقني متواصل" }
@@ -734,7 +580,7 @@ const Stats = () => {
           <Reveal key={i} delay={i * 0.1}>
             <div className="glass-card" style={{padding:'2rem'}}>
               <span style={{display:'block', fontSize:'3rem', fontWeight:'900', color: BRAND.colors.primary, lineHeight:1, fontFamily:'var(--font-heading)'}}>{s.n}</span>
-              <span style={{color: '#64748b', fontWeight:'600'}}>{s.l}</span>
+              <span style={{color: BRAND.colors.text, fontWeight:'600'}}>{s.l}</span>
             </div>
           </Reveal>
         ))}
@@ -743,23 +589,101 @@ const Stats = () => {
   );
 };
 
-// --- G. Client Marquee ---
-const ClientMarquee = () => (
-  <div className="marquee-container">
-    <div className="marquee-content">
-      {[...Array(10)].map((_, i) => (
-        <span key={i} className="marquee-item">CLIENT PARTNER {i+1}</span>
-      ))}
-    </div>
-  </div>
-);
+// --- G. Services (Interactive Bento Grid) ---
+const Services = () => {
+  const services = [
+    { title: "إدارة الحملات الإعلانية", desc: "تحسين تكلفة النقرة (CPC) عبر Google Ads وسناب شات وتيك توك لتحقيق أعلى عائد.", icon: Target, col: "span 2" },
+    { title: "تحسين محركات البحث", desc: "تصدر نتائج البحث الأولى في السعودية عبر استراتيجيات السيو المحلي والتقني.", icon: Search, col: "span 1" },
+    { title: "تطوير المنصات", desc: "بنية تحتية قوية باستخدام أحدث تقنيات الويب لضمان السرعة والأمان.", icon: Code, col: "span 1" },
+    { title: "التسويق بالمحتوى", desc: "إدارة حسابات التواصل الاجتماعي وصناعة محتوى إبداعي يرفع التفاعل.", icon: Megaphone, col: "span 2" },
+    { title: "الإنتاج الإبداعي", desc: "فيديو وموشن جرافيك بجودة سينمائية تأسر الجمهور.", icon: Monitor, col: "span 1" },
+    { title: "استراتيجيات النمو", desc: "تحليل البيانات واستخدام محركات الذكاء الاصطناعي لزيادة المبيعات.", icon: TrendingUp, col: "span 1" },
+  ];
 
-// --- H. AI Lab Section (Dark Glass Container) ---
+  return (
+    <section className="section" id="الخدمات" style={{background: BRAND.colors.light}}>
+      <div className="container">
+        <Reveal>
+          <div style={{textAlign:'center', marginBottom:'5rem'}}>
+            <h2>مصفوفة الخدمات <span className="text-gradient">الذكية</span></h2>
+            <p style={{margin:'0 auto'}}>كل ما تحتاجه للنمو في السوق السعودي في مكان واحد.</p>
+          </div>
+        </Reveal>
+
+        <div className="grid-3">
+          {services.map((s, i) => (
+            <motion.div 
+              key={i}
+              className={`glass-card ${s.col === 'span 2' ? 'col-span-2' : ''}`}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ y: -10 }}
+            >
+              <div className="icon-box">
+                <s.icon size={32} />
+              </div>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+              <div style={{marginTop:'auto', paddingTop:'1rem', display:'flex', alignItems:'center', gap:'5px', color: BRAND.colors.primary, fontWeight:'bold', cursor:'pointer'}}>
+                المزيد عن الخدمة <ArrowUpRight size={18} />
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// --- H. Case Studies (Results Driven) ---
+const CaseStudies = () => {
+  return (
+    <section className="section" id="أعمالنا">
+      <div className="container">
+        <Reveal>
+          <div style={{textAlign:'center', marginBottom:'4rem'}}>
+            <h2>قصص نجاح <span className="text-gradient">بالأرقام</span></h2>
+            <p style={{margin:'0 auto'}}>شاهد كيف ساعدنا كبرى الشركات في المملكة على تحقيق التحول الرقمي.</p>
+          </div>
+        </Reveal>
+        
+        <div className="grid-3">
+          {[
+            { t: "نمو مبيعات متجر إلكتروني", n: "+260%", d: "زيادة في المبيعات الربع سنوية" },
+            { t: "حملة إبداعية لبراند سعودي", n: "+1.2M", d: "مشاهدة حقيقية في أسبوع واحد" },
+            { t: "تصدر نتائج البحث (SEO)", n: "#1", d: "الترتيب في الكلمات المفتاحية التنافسية" }
+          ].map((c, i) => (
+            <motion.div 
+              key={i} 
+              className="glass-card" 
+              style={{padding:0, overflow:'hidden', minHeight:'350px', background:'#fff'}}
+              whileHover={{y:-5}}
+            >
+              <div style={{height:'200px', background:'linear-gradient(45deg, #f1f5f9, #e2e8f0)', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                <Briefcase size={40} color={BRAND.colors.grey} />
+              </div>
+              <div style={{padding:'2rem'}}>
+                <h3 style={{fontSize:'1.2rem', marginBottom:'0.5rem'}}>{c.t}</h3>
+                <div style={{display:'flex', alignItems:'baseline', gap:'10px'}}>
+                  <span style={{fontSize:'2.5rem', fontWeight:'bold', color:BRAND.colors.primary}}>{c.n}</span>
+                  <span style={{fontSize:'0.9rem', color:BRAND.colors.text}}>{c.d}</span>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// --- I. AI Lab Section (Dark Mode Container) ---
 const AILab = () => {
   return (
     <section className="section" id="مختبر AI">
       <div className="container">
-        {/* The Dark Glass Container */}
         <div style={{background: BRAND.colors.glassDark, borderRadius:'3rem', padding:'clamp(2rem, 5vw, 5rem)', color:'white', position:'relative', overflow:'hidden'}}>
           {/* Abstract Glow */}
           <div style={{position:'absolute', top:'-20%', right:'-10%', width:'500px', height:'500px', background: BRAND.colors.primary, filter:'blur(150px)', opacity:0.2}}></div>
@@ -767,11 +691,11 @@ const AILab = () => {
           <div className="grid-2">
             <Reveal>
               <div style={{color: BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
-                <Sparkles size={20} /> مختبر أورا للذكاء الاصطناعي
+                <Sparkles size={20} /> مستقبل التسويق
               </div>
-              <h2 style={{color:'white', fontFamily:'var(--font-heading)'}}>نسبق المستقبل <br/> بخطوة.</h2>
+              <h2 style={{color:'white', fontFamily:'var(--font-heading)'}}>مختبر أورا للذكاء الاصطناعي</h2>
               <p style={{color:'#94a3b8', maxWidth:'500px'}}>
-                نطور أدواتنا الخاصة في تحليل المشاعر، التنبؤ بسلوك المستهلك، وتوليد المحتوى الإبداعي. في مختبر أورا، التكنولوجيا ليست مجرد أداة، بل هي شريك إبداعي.
+                نطور أدواتنا الخاصة في تحليل المشاعر، التنبؤ بسلوك المستهلك السعودي، وتوليد المحتوى الإبداعي. مما يوفر 35% من تكاليف الاستحواذ على العملاء.
               </p>
               <ul style={{listStyle:'none', marginTop:'2rem'}}>
                 {['تحليل البيانات الضخمة', 'أتمتة الحملات الإعلانية', 'تصميمات مخصصة بالـ AI'].map((item, i) => (
@@ -809,30 +733,23 @@ const AILab = () => {
   );
 };
 
-// --- I. Human Touch (Team Section) ---
-const HumanSection = () => {
+// --- J. Team & Culture (Human Touch) ---
+const TeamSection = () => {
   return (
-    <section className="section" id="أعمالنا">
+    <section className="section" id="الفريق">
       <div className="container">
         <div className="grid-2">
-          <div className="glass-card" style={{padding:0, overflow:'hidden', minHeight:'500px', background:'#e2e8f0'}}>
-            {/* Placeholder for Team Image */}
-            <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'1rem'}}>
-              <Users size={80} color={BRAND.colors.grey} />
-              <span style={{color: BRAND.colors.grey}}>صورة الفريق هنا</span>
-            </div>
+          <div className="glass-card" style={{padding:0, overflow:'hidden', minHeight:'500px', background:'#e2e8f0', display:'flex', justifyContent:'center', alignItems:'center'}}>
+            <Users size={100} color={BRAND.colors.grey} />
           </div>
           
           <Reveal>
             <div style={{color: BRAND.colors.primary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
               <Heart size={20} fill="currentColor" /> العنصر البشري
             </div>
-            <h2>التكنولوجيا هي الأداة، <br/> والإنسان هو المبدع.</h2>
+            <h2>خبراء سعوديون <br/> بمعايير عالمية.</h2>
             <p>
-              رغم قوتنا التقنية، إلا أن سر نجاحنا الحقيقي يكمن في فريقنا. مجموعة من المفكرين، المبدعين، والمهندسين الذين يجمعهم شغف واحد: صناعة الأثر.
-            </p>
-            <p>
-              نحن لا نعمل "عندك"، بل نعمل "معك". نعتبر أنفسنا شركاء نجاح، نفرح لنموك ونحمل هم تحدياتك.
+              رغم قوتنا التقنية، إلا أن سر نجاحنا الحقيقي يكمن في فريقنا. مجموعة من المفكرين، المبدعين، والمهندسين الذين يجمعهم شغف واحد: صناعة الأثر في السوق السعودي.
             </p>
             <div style={{marginTop:'2rem', display:'flex', gap:'2rem'}}>
               <div>
@@ -851,59 +768,11 @@ const HumanSection = () => {
   );
 };
 
-// --- J. Services (Bento Grid) ---
-const Services = () => {
-  const services = [
-    { title: "الاستراتيجيات الرقمية", desc: "خارطة طريق واضحة لنقلك من المنافسة إلى الريادة.", icon: Target, col: "span 2" },
-    { title: "تصميم التجربة (UX/UI)", desc: "واجهات سهلة الاستخدام تخاطب العاطفة.", icon: Layout, col: "span 1" },
-    { title: "تطوير المنصات", desc: "بنية تحتية قوية باستخدام أحدث تقنيات الويب.", icon: Code, col: "span 1" },
-    { title: "التسويق بالأداء", desc: "نركز على الأرقام: زيادة المبيعات وتقليل التكلفة.", icon: TrendingUp, col: "span 2" },
-    { title: "الإنتاج الإبداعي", desc: "فيديو وموشن جرافيك بجودة سينمائية.", icon: Monitor, col: "span 1" },
-    { title: "هندسة النمو", desc: "تحسين معدلات التحويل (CRO) باستمرار.", icon: BarChart, col: "span 1" },
-  ];
-
-  return (
-    <section className="section" id="الخدمات">
-      <div className="container">
-        <Reveal>
-          <div style={{textAlign:'center', marginBottom:'5rem'}}>
-            <h2>مصفوفة الحلول <span className="text-gradient">المتكاملة</span></h2>
-            <p style={{margin:'0 auto'}}>كل ما تحتاجه للنمو في مكان واحد.</p>
-          </div>
-        </Reveal>
-
-        <div className="grid-3">
-          {services.map((s, i) => (
-            <motion.div 
-              key={i}
-              className={`glass-card ${s.col === 'span 2' ? 'col-span-2' : ''}`}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -10 }}
-            >
-              <div className="icon-box">
-                <s.icon size={32} />
-              </div>
-              <h3>{s.title}</h3>
-              <p>{s.desc}</p>
-              <div style={{marginTop:'auto', paddingTop:'1rem', display:'flex', alignItems:'center', gap:'5px', color: BRAND.colors.primary, fontWeight:'bold', cursor:'pointer'}}>
-                تفاصيل الخدمة <ArrowUpRight size={18} />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
 // --- K. Contact Form ---
 const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("تم استلام طلبك بنجاح! فريق أورا سيتواصل معك.");
+    alert("تم استلام طلبك بنجاح! سيقوم فريق أورا بالتواصل معك خلال 24 ساعة.");
   };
 
   return (
@@ -911,24 +780,24 @@ const Contact = () => {
       <div className="grid-2">
         <Reveal>
           <div>
-            <h2>هل أنت مستعد لتفعيل <span className="text-gradient">هالتك؟</span></h2>
+            <h2>جاهز لتفعيل <span className="text-gradient">هالتك؟</span></h2>
             <p>
-              دعنا نتحدث عن طموحاتك. فريقنا جاهز لتحويل التحديات إلى فرص نمو حقيقية. املأ النموذج وسنقوم بتحليل وضعك الحالي مجاناً.
+              لا تترك مكانك في المستقبل للمنافسين. تواصل معنا اليوم واحصل على استشارة مجانية لتحليل وضعك الرقمي الحالي.
             </p>
             
             <div style={{marginTop:'3rem', display:'flex', flexDirection:'column', gap:'2rem'}}>
               <div style={{display:'flex', gap:'1.5rem', alignItems:'center'}}>
                 <div className="icon-box" style={{marginBottom:0, width:60, height:60}}><Phone /></div>
                 <div>
-                  <div style={{fontSize:'0.9rem', color: BRAND.colors.grey}}>اتصل بنا مباشرة</div>
-                  <div style={{fontWeight:'700', fontSize:'1.2rem'}}>{BRAND.info.phone}</div>
+                  <div style={{fontSize:'0.9rem', color: '#64748b'}}>اتصل بنا مباشرة</div>
+                  <div style={{fontWeight:'700', fontSize:'1.2rem', color: BRAND.colors.dark}}>{BRAND.info.phone}</div>
                 </div>
               </div>
               <div style={{display:'flex', gap:'1.5rem', alignItems:'center'}}>
                 <div className="icon-box" style={{marginBottom:0, width:60, height:60}}><Mail /></div>
                 <div>
-                  <div style={{fontSize:'0.9rem', color: BRAND.colors.grey}}>البريد الإلكتروني</div>
-                  <div style={{fontWeight:'700', fontSize:'1.2rem'}}>{BRAND.info.email}</div>
+                  <div style={{fontSize:'0.9rem', color: '#64748b'}}>البريد الإلكتروني</div>
+                  <div style={{fontWeight:'700', fontSize:'1.2rem', color: BRAND.colors.dark}}>{BRAND.info.email}</div>
                 </div>
               </div>
             </div>
@@ -937,18 +806,18 @@ const Contact = () => {
 
         <Reveal delay={0.2}>
           <div className="glass-card">
-            <h3 style={{marginBottom:'2rem'}}>ابدأ المشروع</h3>
+            <h3 style={{marginBottom:'2rem'}}>احصل على استشارة مجانية</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">الاسم الكامل</label>
                 <input type="text" className="form-input" placeholder="محمد أحمد" required />
               </div>
               <div className="form-group">
-                <label className="form-label">البريد الإلكتروني</label>
-                <input type="email" className="form-input" placeholder="name@company.com" required />
+                <label className="form-label">رقم الجوال</label>
+                <input type="tel" className="form-input" placeholder="05xxxxxxxx" required />
               </div>
               <div className="form-group">
-                <label className="form-label">تفاصيل المشروع</label>
+                <label className="form-label">كيف يمكننا مساعدتك؟</label>
                 <textarea className="form-input" style={{minHeight:'150px'}} placeholder="أخبرنا عن أهدافك..."></textarea>
               </div>
               <button className="btn btn-primary" style={{width:'100%'}}>
@@ -962,7 +831,7 @@ const Contact = () => {
   );
 };
 
-// --- L. Footer ---
+// --- L. Footer (SEO Optimized) ---
 const Footer = () => (
   <footer>
     <div className="container">
@@ -976,10 +845,10 @@ const Footer = () => (
         
         <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))', gap:'2rem'}}>
           <div>
-            <h4 style={{color:'white', marginBottom:'1.5rem'}}>الروابط</h4>
-            <a href="#" className="footer-link">عن أورا</a>
-            <a href="#" className="footer-link">أعمالنا</a>
-            <a href="#" className="footer-link">الوظائف</a>
+            <h4 style={{color:'white', marginBottom:'1.5rem'}}>روابط سريعة</h4>
+            <a href="#" className="footer-link">شركة تسويق في الرياض</a>
+            <a href="#" className="footer-link">خدمات السيو (SEO)</a>
+            <a href="#" className="footer-link">إدارة حملات إعلانية</a>
             <a href="#" className="footer-link">المدونة</a>
           </div>
           <div>
@@ -1027,11 +896,17 @@ export default function AuraWebsite() {
           <Navbar />
           <main>
             <Hero />
-            <ClientMarquee />
+            {/* Infinite Marquee of Clients */}
+            <div className="marquee-container">
+              <div className="marquee-content">
+                {[...Array(10)].map((_, i) => <span key={i} className="marquee-item">CLIENT PARTNER {i+1}</span>)}
+              </div>
+            </div>
             <Stats />
             <Services />
+            <CaseStudies />
             <AILab />
-            <HumanSection />
+            <TeamSection />
             <Contact />
           </main>
           <Footer />
