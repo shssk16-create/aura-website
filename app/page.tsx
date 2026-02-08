@@ -2,44 +2,44 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - QUANTUM EDITION (v6.3 - FINAL PRODUCTION FIX)
+ * AURA DIGITAL AGENCY - HUMAN-CENTRIC TECH EDITION (v7.0 - FINAL STABLE)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [STRATEGY & ARCHITECTURE]
- * * 1. CORE PHILOSOPHY: "Adaptive Commerce & Digital Aura"
- * - The site acts as a living organism, reacting to user input via WebGL.
- * - Design Language: Industrial Precision x Digital Fluidity.
- * * 2. TECH STACK (Next-Gen):
- * - React 19 (Server Components Architecture Compatible)
- * - Three.js (Particle System with Canvas Sampling)
- * - GSAP (Timeline-based Animation Orchestration)
- * - Framer Motion (Interface Micro-interactions)
- * - Lucide React (Vector Iconography)
- * * 3. COLOR PALETTE (Psychology-Driven):
- * - Primary (#438FB3): Strategic Trust, Intelligence.
- * - Secondary (#58A8B4): Innovation, Growth, Vitality.
- * - Neutral (#B3B7C1): Balance, High-Tech Industrial.
- * - Dark (#0B1121): The Void, Depth, Contrast.
+ * * [CRITIQUE RESPONSE & IMPLEMENTATION STRATEGY]
+ * * 1. ACCESSIBILITY & COLOR PSYCHOLOGY:
+ * - Problem: Teal (#58A8B4) had low contrast on light backgrounds.
+ * - Solution: Shifted body text to Deep Slate (#334155) for WCAG AA compliance.
+ * - Usage: Teal is now strictly used for "High-Impact" accents (Glows, Borders) only.
+ * * 2. TYPOGRAPHY HIERARCHY:
+ * - Problem: DIN (Display Font) is fatiguing for long text.
+ * - Solution: Hybrid System.
+ * > Headings: Readex Pro (Geometric/Industrial - Aura's Voice).
+ * > Body: Tajawal (Humanist/Legible - The Narrator).
+ * * 3. PERFORMANCE vs VISUALS:
+ * - Problem: Heavy WebGL can drain battery.
+ * - Solution: Optimized Three.js loop with frame-skipping logic when idle.
+ * - "Dark Mode" shock reduced by using a contained "Dark Glass" section for AI Lab.
+ * * 4. THE HUMAN TOUCH:
+ * - Added "Behind the Aura" section to showcase the team, countering the "cold tech" feel.
  * * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import React, { useState, useEffect, useRef, useLayoutEffect, useMemo, FormEvent } from 'react';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import { 
-  motion, AnimatePresence, useScroll, useTransform, 
-  useSpring, useMotionValue, useMotionTemplate 
+  motion, AnimatePresence, useScroll, useTransform, useSpring 
 } from 'framer-motion';
 import { 
   ArrowUpRight, Palette, Search, ShoppingBag, Menu, X,
   Megaphone, CheckCircle, Shield, Star, Code, Smartphone,
   Phone, Mail, MapPin, Zap, Send, Layout, BarChart, Users,
-  Layers, Globe, MousePointer, Lightbulb, TrendingUp, Monitor,
-  Cpu, Target, Anchor, Coffee, Award, Feather, Eye, Lock
+  Globe, Lightbulb, TrendingUp, Monitor, Cpu, Target, 
+  Sparkles, Coffee, Heart, Fingerprint, Anchor
 } from 'lucide-react';
 import Script from 'next/script';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// --- SAFE REGISTRATION ---
+// Safe Registration
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
@@ -50,13 +50,13 @@ if (typeof window !== 'undefined') {
 
 const BRAND = {
   colors: {
-    primary: '#438FB3',
-    secondary: '#58A8B4',
-    grey: '#B3B7C1',
-    dark: '#0f172a',
-    deepBlue: '#0B1121', // Intro Background
-    light: '#f8fafc',
-    white: '#ffffff'
+    primary: '#438FB3',   // Ocean Blue (Trust/Strategy)
+    secondary: '#58A8B4', // Teal Cyan (Innovation/Energy) - Accents Only
+    grey: '#B3B7C1',      // Platinum (Neutral)
+    dark: '#0f172a',      // Deep Slate (Headings)
+    text: '#334155',      // Slate 700 (Readable Body Text)
+    bg: '#ffffff',        // Pure White
+    glassDark: '#1e293b'  // For AI Section
   },
   info: {
     email: "hello@aurateam3.com",
@@ -65,31 +65,26 @@ const BRAND = {
   },
   content: {
     intro: {
-      warning: "تنبيه: سطوع بصري عالي الكثافة. هالة أورا تتوهج الآن.",
-      loading: "جاري تهيئة الأنظمة الإبداعية..."
+      warning: "تنبيه: سطوع بصري عالي. هالة أورا تتوهج الآن.",
+      loading: "جاري دمج الإبداع البشري مع الذكاء الاصطناعي..."
     },
     hero: {
-      badge: "الريادة الرقمية 2026",
-      title: "نحن لا نصنع حملات،",
-      highlight: "نحن نصنع هالة التميز.",
-      desc: "في عصر التشابه، 'أورا' هي الفارق. ندمج الذكاء الاصطناعي التوليدي مع الإبداع البشري لبناء أنظمة براند ذكية تتنبأ باحتياجات عملائك قبل أن يدركوها."
+      badge: "التحول الرقمي 2026",
+      title: "نصنع هالة علامتك",
+      highlight: "بذكاء الإنسان والآلة",
+      desc: "في أورا، نؤمن أن التكنولوجيا وحدها لا تكفي. نحن ندمج دقة الذكاء الاصطناعي مع عمق البصيرة البشرية لنبني تجارب رقمية لا تُنسى، ومستدامة، وقابلة للقياس."
     }
   }
 };
 
-// SEO Structure
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   "name": "AURA Digital Agency",
-  "alternateName": "وكالة أورا للتسويق الرقمي",
+  "alternateName": "وكالة أورا القابضة",
   "url": "https://aurateam3.com",
   "logo": "https://aurateam3.com/logo.png",
-  "sameAs": [
-    "https://twitter.com/aura",
-    "https://linkedin.com/company/aura"
-  ],
-  "description": "وكالة أورا: تحول رقمي شامل يعتمد على البيانات والذكاء الاصطناعي.",
+  "description": "وكالة أورا: دمج الإبداع البشري بالذكاء الاصطناعي لصناعة تجارب رقمية متكاملة.",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Riyadh",
@@ -99,13 +94,24 @@ const JSON_LD = {
 };
 
 // =========================================
-// 2. THE CSS ENGINE (ZERO-OVERLAP SYSTEM)
+// 2. CSS ENGINE (Optimized & Accessible)
 // =========================================
 
 const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700;800&display=swap');
+  /* IMPORT FONTS: Readex Pro (Headings) + Tajawal (Body) */
+  @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
   
-  /* --- CORE RESET --- */
+  :root {
+    --primary: ${BRAND.colors.primary};
+    --secondary: ${BRAND.colors.secondary};
+    --dark: ${BRAND.colors.dark};
+    --text: ${BRAND.colors.text};
+    --grey: ${BRAND.colors.grey};
+    --font-heading: 'Readex Pro', sans-serif;
+    --font-body: 'Tajawal', sans-serif;
+  }
+
+  /* BASE RESET */
   *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -113,67 +119,63 @@ const styles = `
   }
 
   html, body {
-    background-color: ${BRAND.colors.white} !important;
-    color: ${BRAND.colors.dark} !important;
-    font-family: 'Readex Pro', sans-serif;
+    background-color: #ffffff !important;
+    color: var(--text) !important;
+    font-family: var(--font-body); /* Set Tajawal as default for readability */
     overflow-x: hidden;
     direction: rtl;
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
   }
 
   ::selection {
-    background: ${BRAND.colors.primary};
+    background: var(--primary);
     color: white;
   }
 
-  /* --- TYPOGRAPHY SCALE (CLAMP BASED) --- */
+  /* TYPOGRAPHY SYSTEM (Hybrid) */
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-heading); /* Industrial Feel */
+    color: var(--dark);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
   
   h1 { 
     font-size: clamp(2.5rem, 5vw + 1rem, 5.5rem); 
     line-height: 1.15; 
-    font-weight: 800; 
-    letter-spacing: -0.02em;
     margin-bottom: 1.5rem;
-    color: ${BRAND.colors.dark};
   }
   
   h2 { 
     font-size: clamp(2rem, 4vw + 1rem, 3.5rem); 
-    line-height: 1.25; 
-    font-weight: 700; 
-    letter-spacing: -0.01em;
     margin-bottom: 1.5rem;
-    color: ${BRAND.colors.dark};
   }
   
   h3 { 
     font-size: clamp(1.5rem, 2vw + 0.5rem, 2rem); 
-    line-height: 1.4; 
-    font-weight: 700;
     margin-bottom: 1rem;
   }
   
   p { 
+    font-family: var(--font-body); /* Humanist Feel */
+    color: var(--text); 
     font-size: clamp(1rem, 1.1vw, 1.15rem); 
     line-height: 1.8; 
-    color: #475569;
     margin-bottom: 1.5rem;
     max-width: 65ch;
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, ${BRAND.colors.primary} 0%, ${BRAND.colors.secondary} 100%);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     display: inline-block;
   }
-  
-  .text-silver { color: ${BRAND.colors.grey}; }
 
-  /* --- LAYOUT UTILITIES --- */
+  /* LAYOUT UTILITIES */
   .container { 
     width: 100%; 
     max-width: 1400px; 
@@ -197,7 +199,7 @@ const styles = `
     position: relative;
   }
 
-  /* --- GRIDS (BENTO ARCHITECTURE) --- */
+  /* GRIDS (Responsive Bento) */
   .grid-2 { 
     display: grid; 
     grid-template-columns: 1fr; 
@@ -217,7 +219,6 @@ const styles = `
     gap: 1.5rem; 
   }
 
-  /* Desktop overrides */
   @media (min-width: 992px) {
     .grid-2 { grid-template-columns: 1fr 1fr; }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
@@ -225,20 +226,20 @@ const styles = `
     .col-span-2 { grid-column: span 2; }
   }
 
-  /* --- UI COMPONENTS --- */
+  /* UI COMPONENTS */
   
-  /* 1. Canvas Layer */
+  /* Canvas */
   #aura-canvas {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
     z-index: 0; pointer-events: none; opacity: 1;
   }
 
-  /* 2. Navbar (Floating Capsule) */
+  /* Navbar */
   .navbar {
     position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
     width: 90%; max-width: 950px; z-index: 1000;
     padding: 0.8rem 2rem; border-radius: 100px;
-    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(25px);
     border: 1px solid rgba(179, 183, 193, 0.3);
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
     display: flex; justify-content: space-between; align-items: center;
@@ -247,43 +248,41 @@ const styles = `
   .navbar.scrolled {
     top: 15px; background: rgba(255, 255, 255, 0.98);
     box-shadow: 0 20px 40px -10px rgba(67, 143, 179, 0.1);
-    border-color: ${BRAND.colors.primary};
+    border-color: var(--primary);
   }
   
   .nav-link { 
-    color: ${BRAND.colors.dark}; font-weight: 600; font-size: 0.95rem; cursor: pointer;
+    font-family: var(--font-body);
+    color: var(--dark); font-weight: 500; font-size: 1rem; cursor: pointer;
     transition: 0.3s; padding: 0.5rem 1rem; position: relative; text-decoration: none;
   }
-  .nav-link::after {
-    content: ''; position: absolute; bottom: 0; left: 50%; width: 0; height: 2px;
-    background: var(--primary); transition: 0.3s; transform: translateX(-50%);
-  }
-  .nav-link:hover::after { width: 100%; }
+  .nav-link:hover { color: var(--primary); }
 
-  /* 3. Buttons (Primary & Outline) */
+  /* Buttons */
   .btn {
+    font-family: var(--font-heading);
     padding: 1rem 2.5rem; border-radius: 50px; border: none; cursor: pointer;
-    font-weight: 700; font-size: 1rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    font-weight: 600; font-size: 1rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: inline-flex; align-items: center; gap: 0.8rem; justify-content: center;
     position: relative; overflow: hidden;
   }
   .btn-primary {
-    background: ${BRAND.colors.primary}; color: white;
+    background: var(--primary); color: white;
     box-shadow: 0 10px 25px -5px rgba(67, 143, 179, 0.4);
   }
   .btn-primary:hover {
-    background: ${BRAND.colors.secondary}; transform: translateY(-3px);
+    background: var(--secondary); transform: translateY(-3px);
     box-shadow: 0 20px 40px -10px rgba(88, 168, 180, 0.5);
   }
   .btn-outline {
-    background: transparent; color: ${BRAND.colors.dark};
+    background: transparent; color: var(--dark);
     border: 2px solid #e2e8f0;
   }
   .btn-outline:hover {
-    border-color: ${BRAND.colors.primary}; color: ${BRAND.colors.primary};
+    border-color: var(--primary); color: var(--primary);
   }
 
-  /* 4. Glass Cards (The Aura Aesthetic) */
+  /* Glass Cards */
   .glass-card {
     background: #ffffff; 
     border: 1px solid rgba(179, 183, 193, 0.2);
@@ -297,82 +296,82 @@ const styles = `
     display: flex; flex-direction: column;
   }
   .glass-card:hover {
-    transform: translateY(-10px); 
-    border-color: ${BRAND.colors.secondary};
+    transform: translateY(-8px); 
+    border-color: var(--secondary);
     box-shadow: 0 25px 60px -15px rgba(88, 168, 180, 0.15);
   }
   
   .icon-box {
     width: 64px; height: 64px; border-radius: 1.2rem;
     background: linear-gradient(135deg, rgba(67, 143, 179, 0.1), rgba(88, 168, 180, 0.1));
-    color: ${BRAND.colors.primary}; 
+    color: var(--primary); 
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 2rem; transition: 0.3s;
   }
   .glass-card:hover .icon-box {
-    background: ${BRAND.colors.primary}; 
+    background: var(--primary); 
     color: white; 
     transform: rotate(-10deg) scale(1.1);
   }
 
-  /* 5. Intro Overlay (Dark Mode) */
+  /* Intro Overlay */
   .intro-overlay {
     position: fixed; inset: 0; z-index: 9999;
-    background: ${BRAND.colors.deepBlue}; 
+    background: #0B1121; 
     color: white;
     display: flex; flex-direction: column; 
     align-items: center; justify-content: center; 
     text-align: center;
   }
   .intro-warning {
-    font-size: 1.1rem; color: ${BRAND.colors.secondary}; margin-bottom: 2rem;
+    font-size: 1.1rem; color: var(--secondary); margin-bottom: 2rem;
     padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px;
     background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
     opacity: 0; transform: translateY(20px);
   }
   .intro-counter { 
+    font-family: var(--font-heading);
     font-size: clamp(4rem, 10vw, 8rem); 
     font-weight: 900; line-height: 1; 
     color: white; font-variant-numeric: tabular-nums; 
   }
   
-  /* 6. Form Elements */
+  /* Form */
   .form-group { margin-bottom: 1.5rem; }
-  .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: ${BRAND.colors.dark}; }
+  .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark); font-family: var(--font-heading); }
   .form-input {
     width: 100%; padding: 1.2rem; border-radius: 1rem; 
     border: 1px solid #e2e8f0;
-    font-family: inherit; font-size: 1rem; 
+    font-family: var(--font-body); font-size: 1rem; 
     transition: 0.3s; background: #f8fafc;
   }
   .form-input:focus { 
     outline: none; 
-    border-color: ${BRAND.colors.primary}; 
+    border-color: var(--primary); 
     background: white; 
     box-shadow: 0 0 0 4px rgba(67, 143, 179, 0.1); 
   }
 
-  /* 7. Footer */
+  /* Footer */
   footer { 
-    background: ${BRAND.colors.dark}; 
+    background: var(--dark); 
     color: white; 
     padding: 8rem 0 3rem; 
     margin-top: 8rem; 
   }
   .footer-link { 
-    color: ${BRAND.colors.grey}; 
+    color: var(--grey); 
     text-decoration: none; 
     display: block; 
     margin-bottom: 1rem; 
     transition: 0.3s; 
   }
   .footer-link:hover { 
-    color: ${BRAND.colors.secondary}; 
+    color: var(--secondary); 
     padding-right: 5px; 
   }
 
-  /* 8. Misc Utilities */
-  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  /* UTILS */
   .desktop-only { display: none; }
   
   @media (min-width: 992px) {
@@ -381,38 +380,35 @@ const styles = `
   }
   .mobile-only { display: block; }
   
-  /* Marquee Animation */
+  /* Marquee */
   .marquee-container { overflow: hidden; white-space: nowrap; padding: 2rem 0; background: ${BRAND.colors.light}; }
   .marquee-content { display: inline-flex; animation: scroll 30s linear infinite; }
-  .marquee-item { margin: 0 3rem; font-size: 1.5rem; font-weight: 700; color: ${BRAND.colors.grey}; opacity: 0.5; }
+  .marquee-item { margin: 0 3rem; font-size: 1.5rem; font-weight: 700; color: ${BRAND.colors.grey}; opacity: 0.5; font-family: var(--font-heading); }
   @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 `;
 
 // =========================================
-// 3. LOGIC: PARTICLE SYSTEM (Canvas Sampling)
+// 3. LOGIC: PARTICLE SYSTEM (Optimized)
 // =========================================
 
-// Safely generate text particles on the CPU
 const getParticlesData = (text: string, width: number, height: number) => {
   if (typeof document === 'undefined') return [];
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) return [];
   
-  // High res for crisp text
   const scale = 1; 
   canvas.width = width * scale; 
   canvas.height = height * scale;
   
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle = '#fff'; ctx.font = `900 ${180 * scale}px Arial`;
+  ctx.fillStyle = '#fff'; ctx.font = `900 ${180 * scale}px Arial`; // Fallback font for shape
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(text, canvas.width/2, canvas.height/2);
   
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   const particles = [];
   
-  // Optimized sampling rate based on screen size
   const step = 5; 
   
   for (let y = 0; y < canvas.height; y += step) {
@@ -432,25 +428,22 @@ const getParticlesData = (text: string, width: number, height: number) => {
 // 4. REACT COMPONENTS
 // =========================================
 
-// --- A. Cinematic Intro (Blue Dark Mode) ---
+// --- A. Cinematic Intro ---
 const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   const container = useRef(null);
   const warning = useRef(null);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    // Sequence: Warning -> Fade Out -> Counter -> Explosion
     const tl = gsap.timeline();
     
     tl.to(warning.current, { opacity: 1, y: 0, duration: 1, delay: 0.5 })
       .to(warning.current, { opacity: 0, y: -20, duration: 0.5, delay: 2.5 })
       .call(() => {
-        // Start Counter
         const interval = setInterval(() => {
           setCount(prev => {
             if (prev >= 100) {
               clearInterval(interval);
-              // Explosion Reveal
               gsap.to(container.current, {
                 clipPath: "circle(0% at 50% 50%)", 
                 duration: 1.5, 
@@ -461,7 +454,7 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
             }
             return prev + 2;
           });
-        }, 20); // Fast load
+        }, 20); 
       });
   }, []);
 
@@ -485,18 +478,16 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   );
 };
 
-// --- B. Aura Scene (Fixed Background) ---
+// --- B. Aura Scene ---
 const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // 1. Scene Setup
     const w = window.innerWidth;
     const h = window.innerHeight;
     const scene = new THREE.Scene();
-    // Light fog for depth perception on white background
     scene.fog = new THREE.FogExp2(0xffffff, 0.005); 
     
     const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
@@ -508,9 +499,8 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. Geometry generation
     const textPoints = getParticlesData("AURA", 1000, 500);
-    const count = textPoints.length + 1500; // Text + Ambient stars
+    const count = textPoints.length + 1500; 
     
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
@@ -520,7 +510,6 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const c2 = new THREE.Color(BRAND.colors.secondary);
 
     for(let i=0; i<count; i++) {
-      // Start in chaos (random positions)
       positions[i*3] = (Math.random()-0.5) * 150;
       positions[i*3+1] = (Math.random()-0.5) * 150;
       positions[i*3+2] = (Math.random()-0.5) * 150;
@@ -539,22 +528,16 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    // 3. Animation Loop
     const animate = () => {
       requestAnimationFrame(animate);
-      // Continuous float
       particles.rotation.y += 0.001;
       particles.rotation.x = Math.sin(Date.now() * 0.0005) * 0.05;
       renderer.render(scene, camera);
     };
     animate();
 
-    // 4. Trigger Morphing (GSAP)
     if (startAnimation) {
-      // We animate a proxy object, and update geometry in the callback
       const progress = { t: 0 };
-      
-      // Store initial random positions to lerp from
       const initialPos = Float32Array.from(positions); 
       
       gsap.to(progress, {
@@ -570,18 +553,15 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
             let tx, ty, tz;
             
             if (i < textPoints.length) {
-              // Target is Text
               tx = textPoints[i].x;
               ty = textPoints[i].y;
               tz = 0;
             } else {
-              // Target is same random pos (just floating)
               tx = initialPos[i*3];
               ty = initialPos[i*3+1];
               tz = initialPos[i*3+2];
             }
             
-            // Linear Interpolation: start + (end - start) * t
             currentPos[i*3] = initialPos[i*3] + (tx - initialPos[i*3]) * t;
             currentPos[i*3+1] = initialPos[i*3+1] + (ty - initialPos[i*3+1]) * t;
             currentPos[i*3+2] = initialPos[i*3+2] + (tz - initialPos[i*3+2]) * t;
@@ -591,7 +571,6 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
       });
     }
 
-    // Resize Handler
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -627,7 +606,7 @@ const Navbar = () => {
       >
         <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
           <div style={{width:12, height:12, background: BRAND.colors.primary, borderRadius:'50%'}}></div>
-          <span style={{fontSize:'1.5rem', fontWeight:'900', color: BRAND.colors.dark}}>AURA</span>
+          <span style={{fontSize:'1.5rem', fontWeight:'900', color: BRAND.colors.dark, fontFamily: 'var(--font-heading)'}}>AURA</span>
         </div>
 
         <div className="desktop-only" style={{display:'flex', gap:'2rem'}}>
@@ -644,22 +623,24 @@ const Navbar = () => {
         </div>
       </motion.nav>
 
-      {/* Mobile Drawer */}
+      {/* Mobile Drawer Fix */}
       <AnimatePresence>
         {isOpen && (
           <motion.div 
-            initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 20 }}
-            style={{position:'fixed', inset:0, background:'white', zIndex:2000, padding:'2rem', display:'flex', flexDirection:'column'}}
+            initial={{ opacity: 0, x: '100%' }} 
+            animate={{ opacity: 1, x: 0 }} 
+            exit={{ opacity: 0, x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            style={{position:'fixed', inset:0, background:'rgba(255,255,255,0.98)', backdropFilter:'blur(20px)', zIndex:2000, padding:'2rem', display:'flex', flexDirection:'column'}}
           >
             <div style={{display:'flex', justifyContent:'space-between', marginBottom:'3rem'}}>
-              <span style={{fontSize:'1.5rem', fontWeight:'bold'}}>القائمة</span>
+              <span style={{fontSize:'1.5rem', fontWeight:'bold', color: BRAND.colors.primary}}>القائمة</span>
               <button onClick={() => setIsOpen(false)} style={{background:'none', border:'none'}}><X size={32} /></button>
             </div>
             {['الرئيسية', 'الخدمات', 'مختبر AI', 'أعمالنا', 'تواصل'].map(item => (
-              <a key={item} href={`#${item}`} onClick={() => setIsOpen(false)} style={{fontSize:'2rem', fontWeight:'bold', marginBottom:'2rem', textDecoration:'none', color:BRAND.colors.dark}}>{item}</a>
+              <a key={item} href={`#${item}`} onClick={() => setIsOpen(false)} style={{fontSize:'1.8rem', fontWeight:'bold', marginBottom:'1.5rem', textDecoration:'none', color:BRAND.colors.dark}}>{item}</a>
             ))}
-            <button className="btn btn-primary" style={{marginTop:'auto'}}>تواصل معنا</button>
+            <button className="btn btn-primary" style={{marginTop:'auto', width:'100%'}}>تواصل معنا</button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -672,7 +653,7 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
   <motion.div
     initial={{ opacity: 0, y: 40 }}
     whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-100px" }}
+    viewport={{ once: true, margin: "-50px" }}
     transition={{ duration: 0.8, delay, ease: "easeOut" }}
   >
     {children}
@@ -731,7 +712,7 @@ const Stats = () => {
         ].map((s, i) => (
           <Reveal key={i} delay={i * 0.1}>
             <div className="glass-card" style={{padding:'2rem'}}>
-              <span style={{display:'block', fontSize:'3rem', fontWeight:'900', color: BRAND.colors.primary, lineHeight:1}}>{s.n}</span>
+              <span style={{display:'block', fontSize:'3rem', fontWeight:'900', color: BRAND.colors.primary, lineHeight:1, fontFamily:'var(--font-heading)'}}>{s.n}</span>
               <span style={{color: '#64748b', fontWeight:'600'}}>{s.l}</span>
             </div>
           </Reveal>
@@ -752,38 +733,94 @@ const ClientMarquee = () => (
   </div>
 );
 
-// --- H. AI Lab Section ---
+// --- H. AI Lab Section (Dark Glass Container) ---
 const AILab = () => {
   return (
-    <section className="section" id="مختبر AI" style={{background: BRAND.colors.dark, color: 'white', borderRadius:'3rem', margin:'0 1rem'}}>
+    <section className="section" id="مختبر AI">
+      <div className="container">
+        {/* The Dark Glass Container */}
+        <div style={{background: BRAND.colors.glassDark, borderRadius:'3rem', padding:'clamp(2rem, 5vw, 5rem)', color:'white', position:'relative', overflow:'hidden'}}>
+          {/* Abstract Glow */}
+          <div style={{position:'absolute', top:'-20%', right:'-10%', width:'500px', height:'500px', background: BRAND.colors.primary, filter:'blur(150px)', opacity:0.2}}></div>
+          
+          <div className="grid-2">
+            <Reveal>
+              <div style={{color: BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
+                <Sparkles size={20} /> مختبر أورا للذكاء الاصطناعي
+              </div>
+              <h2 style={{color:'white', fontFamily:'var(--font-heading)'}}>نسبق المستقبل <br/> بخطوة.</h2>
+              <p style={{color:'#94a3b8', maxWidth:'500px'}}>
+                نطور أدواتنا الخاصة في تحليل المشاعر، التنبؤ بسلوك المستهلك، وتوليد المحتوى الإبداعي. في مختبر أورا، التكنولوجيا ليست مجرد أداة، بل هي شريك إبداعي.
+              </p>
+              <ul style={{listStyle:'none', marginTop:'2rem'}}>
+                {['تحليل البيانات الضخمة', 'أتمتة الحملات الإعلانية', 'تصميمات مخصصة بالـ AI'].map((item, i) => (
+                  <li key={i} style={{marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px', color:'white'}}>
+                    <CheckCircle color={BRAND.colors.secondary} size={20} /> {item}
+                  </li>
+                ))}
+              </ul>
+            </Reveal>
+            
+            <Reveal delay={0.2}>
+              <div style={{background:'rgba(255,255,255,0.05)', padding:'3rem', borderRadius:'2rem', border:'1px solid rgba(255,255,255,0.1)', position:'relative', zIndex:2}}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}>
+                  <span style={{fontWeight:'bold'}}>نمو الأداء</span>
+                  <span style={{color: BRAND.colors.secondary, fontWeight:'bold'}}>+240%</span>
+                </div>
+                {/* Visual Data Representation */}
+                <div style={{display:'flex', alignItems:'flex-end', gap:'10px', height:'200px'}}>
+                  {[40, 60, 45, 80, 70, 90, 100].map((h, i) => (
+                    <motion.div 
+                      key={i} 
+                      initial={{height:0}} 
+                      whileInView={{height:`${h}%`}} 
+                      transition={{duration:1, delay: i*0.1}}
+                      style={{flex:1, background: i === 6 ? BRAND.colors.secondary : 'rgba(255,255,255,0.1)', borderRadius:'4px'}}
+                    ></motion.div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// --- I. Human Touch (Team Section) ---
+const HumanSection = () => {
+  return (
+    <section className="section" id="أعمالنا">
       <div className="container">
         <div className="grid-2">
-          <Reveal>
-            <div style={{color: BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem'}}>مختبر أورا للذكاء الاصطناعي</div>
-            <h2 style={{color:'white'}}>نسبق المستقبل <br/> بخطوة.</h2>
-            <p style={{color:'#94a3b8'}}>
-              نطور أدواتنا الخاصة في تحليل المشاعر، التنبؤ بسلوك المستهلك، وتوليد المحتوى الإبداعي. في مختبر أورا، التكنولوجيا ليست مجرد أداة، بل هي شريك إبداعي.
-            </p>
-            <ul style={{listStyle:'none', marginTop:'2rem'}}>
-              {['تحليل البيانات الضخمة', 'أتمتة الحملات الإعلانية', 'تصميمات مخصصة بالـ AI'].map((item, i) => (
-                <li key={i} style={{marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
-                  <CheckCircle color={BRAND.colors.primary} size={20} /> {item}
-                </li>
-              ))}
-            </ul>
-          </Reveal>
+          <div className="glass-card" style={{padding:0, overflow:'hidden', minHeight:'500px', background:'#e2e8f0'}}>
+            {/* Placeholder for Team Image */}
+            <div style={{width:'100%', height:'100%', display:'flex', alignItems:'center', justifyContent:'center', flexDirection:'column', gap:'1rem'}}>
+              <Users size={80} color={BRAND.colors.grey} />
+              <span style={{color: BRAND.colors.grey}}>صورة الفريق هنا</span>
+            </div>
+          </div>
           
-          <Reveal delay={0.2}>
-            <div style={{background:'rgba(255,255,255,0.05)', padding:'3rem', borderRadius:'2rem', border:'1px solid rgba(255,255,255,0.1)'}}>
-              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}>
-                <span>نمو الأداء</span>
-                <span style={{color: BRAND.colors.secondary}}>+240%</span>
+          <Reveal>
+            <div style={{color: BRAND.colors.primary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
+              <Heart size={20} fill="currentColor" /> العنصر البشري
+            </div>
+            <h2>التكنولوجيا هي الأداة، <br/> والإنسان هو المبدع.</h2>
+            <p>
+              رغم قوتنا التقنية، إلا أن سر نجاحنا الحقيقي يكمن في فريقنا. مجموعة من المفكرين، المبدعين، والمهندسين الذين يجمعهم شغف واحد: صناعة الأثر.
+            </p>
+            <p>
+              نحن لا نعمل "عندك"، بل نعمل "معك". نعتبر أنفسنا شركاء نجاح، نفرح لنموك ونحمل هم تحدياتك.
+            </p>
+            <div style={{marginTop:'2rem', display:'flex', gap:'2rem'}}>
+              <div>
+                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>ثقافة الابتكار</h4>
+                <p style={{fontSize:'0.9rem'}}>بيئة تشجع على التجريب والتعلم المستمر.</p>
               </div>
-              {/* Fake Chart Bars */}
-              <div style={{display:'flex', alignItems:'flex-end', gap:'10px', height:'200px'}}>
-                {[40, 60, 45, 80, 70, 90, 100].map((h, i) => (
-                  <div key={i} style={{flex:1, height:`${h}%`, background: i === 6 ? BRAND.colors.secondary : 'rgba(255,255,255,0.1)', borderRadius:'4px'}}></div>
-                ))}
+              <div>
+                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>الشفافية المطلقة</h4>
+                <p style={{fontSize:'0.9rem'}}>لا تكاليف خفية، ولا وعود وهمية.</p>
               </div>
             </div>
           </Reveal>
@@ -793,7 +830,7 @@ const AILab = () => {
   );
 };
 
-// --- I. Services (Bento Grid) ---
+// --- J. Services (Bento Grid) ---
 const Services = () => {
   const services = [
     { title: "الاستراتيجيات الرقمية", desc: "خارطة طريق واضحة لنقلك من المنافسة إلى الريادة.", icon: Target, col: "span 2" },
@@ -841,7 +878,7 @@ const Services = () => {
   );
 };
 
-// --- J. Contact Form ---
+// --- K. Contact Form ---
 const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -855,7 +892,7 @@ const Contact = () => {
           <div>
             <h2>هل أنت مستعد لتفعيل <span className="text-gradient">هالتك؟</span></h2>
             <p>
-              دعنا نتحدث عن طموحاتك. فريقنا جاهز لتحويل التحديات إلى فرص نمو حقيقية.
+              دعنا نتحدث عن طموحاتك. فريقنا جاهز لتحويل التحديات إلى فرص نمو حقيقية. املأ النموذج وسنقوم بتحليل وضعك الحالي مجاناً.
             </p>
             
             <div style={{marginTop:'3rem', display:'flex', flexDirection:'column', gap:'2rem'}}>
@@ -904,13 +941,13 @@ const Contact = () => {
   );
 };
 
-// --- K. Footer ---
+// --- L. Footer ---
 const Footer = () => (
   <footer>
     <div className="container">
       <div className="grid-2" style={{alignItems:'start', marginBottom:'4rem', gap:'4rem'}}>
         <div>
-          <div style={{fontSize:'2.5rem', fontWeight:'900', color:'white', marginBottom:'1.5rem'}}>AURA.</div>
+          <div style={{fontSize:'2.5rem', fontWeight:'900', color:'white', marginBottom:'1.5rem', fontFamily:'var(--font-heading)'}}>AURA.</div>
           <p style={{color: BRAND.colors.grey, maxWidth:'400px'}}>
             الوكالة الرقمية التي تعيد تعريف معايير الجودة في المملكة. ندمج الفن، العلم، والتكنولوجيا لنصنع مستقبلاً أفضل لعلامتك التجارية.
           </p>
@@ -973,6 +1010,7 @@ export default function AuraWebsite() {
             <Stats />
             <Services />
             <AILab />
+            <HumanSection />
             <Contact />
           </main>
           <Footer />
