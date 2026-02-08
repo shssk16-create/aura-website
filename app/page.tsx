@@ -2,7 +2,7 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - QUANTUM EDITION (v6.2 - PRODUCTION BUILD FIXED)
+ * AURA DIGITAL AGENCY - QUANTUM EDITION (v6.3 - FINAL PRODUCTION FIX)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  * * [STRATEGY & ARCHITECTURE]
  * * 1. CORE PHILOSOPHY: "Adaptive Commerce & Digital Aura"
@@ -71,7 +71,7 @@ const BRAND = {
     hero: {
       badge: "الريادة الرقمية 2026",
       title: "نحن لا نصنع حملات،",
-      highlight: "نحن نصنع هالة التميز.", // FIXED: Changed from 'subtitle' to 'highlight'
+      highlight: "نحن نصنع هالة التميز.",
       desc: "في عصر التشابه، 'أورا' هي الفارق. ندمج الذكاء الاصطناعي التوليدي مع الإبداع البشري لبناء أنظمة براند ذكية تتنبأ باحتياجات عملائك قبل أن يدركوها."
     }
   }
@@ -433,7 +433,7 @@ const getParticlesData = (text: string, width: number, height: number) => {
 // =========================================
 
 // --- A. Cinematic Intro (Blue Dark Mode) ---
-const Intro = ({ onComplete }: { onComplete: () => void }) => {
+const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   const container = useRef(null);
   const warning = useRef(null);
   const [count, setCount] = useState(0);
