@@ -2,28 +2,24 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - KINETIC MASTERPIECE EDITION (v11.0)
+ * AURA DIGITAL AGENCY - CONNECTED UNIVERSE EDITION (v12.0)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [ARCHITECTURE & ENGINEERING LOG]
- * * 1. KINETIC PHYSICS ENGINE:
- * - Implemented GSAP Proxy for scroll velocity tracking.
- * - Applied SkewY transformation to cards based on scroll delta.
- * * 2. STAGGERED REVEAL SYSTEM:
- * - Client logos use a sequential timeline trigger for a "musical" visual entry.
- * * 3. TYPOGRAPHY & LAYOUT:
- * - Fluid Clamp() typography for zero-overlap guarantee.
- * - "Bento Grid" layout for services.
- * * 4. PERFORMANCE:
- * - React.memo() for static components.
- * - Three.js resource disposal to prevent WebGL context loss.
- * * 5. CONTENT STRATEGY:
- * - Shifted from "Features" to "Outcome-based" copywriting.
+ * * [CORE UPGRADES]
+ * * 1. DEEP LINKING (ScrollTrigger x Three.js):
+ * - The 3D Camera Z-position and Scene Rotation are directly controlled
+ * by the page scroll percentage using GSAP Scrub.
+ * * 2. VELOCITY PHYSICS:
+ * - Elements skew and distort based on how fast the user scrolls.
+ * * 3. IMMERSIVE STORYTELLING:
+ * - As you scroll down, you physically "enter" the Aura particle field.
+ * * 4. ROBUST ARCHITECTURE:
+ * - React 19 safe, Memory managed, SEO optimized.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
 import React, { useState, useEffect, useRef, useLayoutEffect, FormEvent } from 'react';
 import { 
-  motion, AnimatePresence, useScroll, useTransform, useSpring 
+  motion, AnimatePresence, useScroll, useTransform 
 } from 'framer-motion';
 import { 
   ArrowUpRight, Palette, Search, ShoppingBag, Menu, X,
@@ -32,7 +28,7 @@ import {
   Globe, Lightbulb, TrendingUp, Monitor, Cpu, Target, 
   Sparkles, Heart, Briefcase, Eye, Anchor, Feather, Award,
   Hexagon, Triangle, Circle, Box, Layers, ArrowRight,
-  MousePointer2, Fingerprint
+  MousePointer2, Fingerprint, Activity
 } from 'lucide-react';
 import Script from 'next/script';
 import * as THREE from 'three';
@@ -50,14 +46,14 @@ if (typeof window !== 'undefined') {
 
 const BRAND = {
   colors: {
-    primary: '#438FB3',   // Strategic Blue (Trust)
-    secondary: '#58A8B4', // Innovation Teal (Growth)
-    grey: '#B3B7C1',      // Platinum (Balance)
-    dark: '#0f172a',      // Deep Slate (Authority)
-    text: '#334155',      // Slate 700 (Readability)
-    bg: '#ffffff',        // Pure White
-    light: '#f8fafc',     // Soft Gray Background
-    glassDark: '#1e293b'  // AI Lab Background
+    primary: '#438FB3',   // Strategic Blue
+    secondary: '#58A8B4', // Innovation Teal
+    grey: '#B3B7C1',      // Platinum
+    dark: '#0f172a',      // Deep Slate
+    text: '#334155',      // Readable Slate
+    bg: '#ffffff',        // White
+    light: '#f8fafc',     // Soft Background
+    glassDark: '#1e293b'  // AI Lab
   },
   info: {
     email: "growth@aurateam3.com",
@@ -66,21 +62,21 @@ const BRAND = {
   },
   content: {
     intro: {
-      warning: "تنبيه: أنت على وشك دخول تجربة رقمية عالية الأداء.",
-      loading: "جاري تحميل أصول النجاح..."
+      warning: "النظام جاهز. استعد للدخول إلى هالة أورا.",
+      loading: "جاري ربط البيانات..."
     },
     hero: {
-      badge: "شريك النمو الاستراتيجي 2026",
-      title: "لا تبحث عن مجرد وكالة،",
-      highlight: "امتلك شريكاً يصنع الفرق.",
-      desc: "في عالم يضج بالضجيج، نحن نمنح علامتك التجارية صوتاً مسموعاً، وحضوراً لا يُمحى، وأرقاماً تتحدث عن نفسها. دعنا نحول طموحك إلى هيمنة سوقية."
+      badge: "التحول الرقمي 2026",
+      title: "لا تكن مجرد شركة،",
+      highlight: "كن ظاهرة رقمية.",
+      desc: "نحن ندمج الإبداع البشري مع خوارزميات الذكاء الاصطناعي لنخلق لك تواجداً رقمياً لا يمكن تجاهله. أهلاً بك في الجيل القادم من التسويق."
     },
     cta: {
-      main: "استشر خبراؤنا الآن",
-      secondary: "احجز مكالمة اكتشاف"
+      main: "ابدأ الهيمنة الآن",
+      secondary: "احجز استشارة"
     }
   },
-  // --- REAL CLIENT LOGOS (AS REQUESTED) ---
+  // Real Logos
   clients: [
     "https://aurateam3.com/wp-content/uploads/2025/10/kidana-logo-gold-06-1.png",
     "https://aurateam3.com/wp-content/uploads/2025/09/اورا-جامعة-الملك-عبد-العزيز.webp",
@@ -93,10 +89,7 @@ const BRAND = {
     "https://aurateam3.com/wp-content/uploads/2025/09/أورا-وزارة-الاتصالات.webp",
     "https://aurateam3.com/wp-content/uploads/2020/08/اعمار.webp",
     "https://aurateam3.com/wp-content/uploads/2024/02/20231126102247شعار_نادي_الوحدة_السعودية-1.webp",
-    "https://aurateam3.com/wp-content/uploads/2020/08/Aldrees_logo.png",
-    "https://aurateam3.com/wp-content/uploads/2024/01/الهلال-الاحمر.webp",
-    "https://aurateam3.com/wp-content/uploads/2024/02/وارقة.webp",
-    "https://aurateam3.com/wp-content/uploads/2024/02/جولفن.webp"
+    "https://aurateam3.com/wp-content/uploads/2020/08/Aldrees_logo.png"
   ]
 };
 
@@ -105,10 +98,8 @@ const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
   "name": "AURA Digital Agency",
-  "alternateName": "وكالة أورا للتسويق الرقمي",
   "url": "https://aurateam3.com",
   "logo": "https://aurateam3.com/logo.png",
-  "description": "أورا هي الوكالة الرقمية الرائدة في السعودية.",
   "address": {
     "@type": "PostalAddress",
     "addressLocality": "Riyadh",
@@ -118,11 +109,10 @@ const JSON_LD = {
 };
 
 // =========================================
-// 2. CSS ENGINE (Responsive & Kinetic)
+// 2. CSS ENGINE (Zero-Layout Shift)
 // =========================================
 
 const styles = `
-  /* FONTS */
   @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
   
   :root {
@@ -134,9 +124,6 @@ const styles = `
     --font-heading: 'Readex Pro', sans-serif;
     --font-body: 'Tajawal', sans-serif;
   }
-
-  /* BASE RESET */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   html, body {
     background-color: #ffffff !important;
@@ -150,8 +137,8 @@ const styles = `
 
   ::selection { background: var(--primary); color: white; }
 
-  /* TYPOGRAPHY SYSTEM (Fluid & Robust) */
-  h1, h2, h3, h4, h5 {
+  /* TYPOGRAPHY */
+  h1, h2, h3, h4 {
     font-family: var(--font-heading);
     color: var(--dark);
     font-weight: 700;
@@ -174,40 +161,36 @@ const styles = `
 
   .text-gradient {
     background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: inline-block;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;
   }
 
-  /* LAYOUT UTILITIES */
+  /* LAYOUT */
   .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 clamp(1.5rem, 5vw, 4rem); position: relative; z-index: 10; }
-  .section { padding: clamp(6rem, 8vw, 10rem) 0; position: relative; overflow: hidden; }
+  .section { padding: clamp(6rem, 10vw, 12rem) 0; position: relative; overflow: hidden; }
   .full-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
 
-  /* GRIDS */
+  /* GRID SYSTEMS */
   .grid-2 { display: grid; grid-template-columns: 1fr; gap: clamp(3rem, 5vw, 6rem); align-items: center; }
   .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
-  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
   
-  /* Staggered Client Grid */
   .grid-clients { 
     display: grid; 
     grid-template-columns: repeat(2, 1fr); 
-    gap: 2rem; 
+    gap: 1.5rem; 
     align-items: center; 
     justify-items: center; 
   }
 
   @media (min-width: 768px) {
     .grid-2 { grid-template-columns: 1fr 1fr; }
-    .grid-clients { grid-template-columns: repeat(4, 1fr); gap: 4rem; }
+    .grid-clients { grid-template-columns: repeat(4, 1fr); gap: 3rem; }
   }
 
   /* UI COMPONENTS */
   #aura-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 1; }
 
-  /* Navbar (Floating) */
+  /* Navbar */
   .navbar {
     position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
     width: 90%; max-width: 1000px; z-index: 1000;
@@ -218,9 +201,8 @@ const styles = `
     display: flex; justify-content: space-between; align-items: center;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  .navbar.scrolled { top: 15px; background: rgba(255, 255, 255, 0.98); border-color: var(--primary); box-shadow: 0 20px 40px -10px rgba(67, 143, 179, 0.15); }
-  
-  .nav-link { font-family: var(--font-body); color: var(--dark); font-weight: 600; font-size: 1rem; cursor: pointer; transition: 0.3s; padding: 0.5rem 1rem; text-decoration: none; }
+  .navbar.scrolled { top: 15px; background: rgba(255, 255, 255, 0.98); border-color: var(--primary); }
+  .nav-link { font-family: var(--font-body); color: var(--dark); font-weight: 600; cursor: pointer; transition: 0.3s; padding: 0.5rem 1rem; text-decoration: none; }
   .nav-link:hover { color: var(--primary); }
 
   /* Mobile Drawer */
@@ -234,9 +216,8 @@ const styles = `
   /* Buttons */
   .btn {
     font-family: var(--font-heading); padding: 0.8rem 2rem; border-radius: 50px; border: none; cursor: pointer;
-    font-weight: 700; font-size: 1rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: inline-flex; align-items: center; gap: 0.8rem; justify-content: center; position: relative; overflow: hidden;
-    white-space: nowrap;
+    font-weight: 700; font-size: 1rem; transition: all 0.3s;
+    display: inline-flex; align-items: center; gap: 0.8rem; justify-content: center; white-space: nowrap;
   }
   .btn-primary { background: var(--primary); color: white; box-shadow: 0 10px 25px -5px rgba(67, 143, 179, 0.4); }
   .btn-primary:hover { background: var(--secondary); transform: translateY(-3px); }
@@ -246,10 +227,10 @@ const styles = `
   /* Glass Cards */
   .glass-card {
     background: #ffffff; border: 1px solid rgba(179, 183, 193, 0.2);
-    border-radius: 2rem; padding: 2rem; position: relative; overflow: hidden;
+    border-radius: 2rem; padding: 2.5rem; position: relative; overflow: hidden;
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     height: 100%; display: flex; flex-direction: column;
-    will-change: transform; /* Hint for browser optimization */
+    will-change: transform; 
   }
   .glass-card:hover { transform: translateY(-8px); border-color: var(--secondary); box-shadow: 0 25px 60px -15px rgba(88, 168, 180, 0.15); }
   
@@ -263,10 +244,10 @@ const styles = `
 
   /* Intro */
   .intro-overlay { position: fixed; inset: 0; z-index: 9999; background: #0B1121; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-  .intro-warning { font-size: 1.1rem; color: var(--secondary); margin-bottom: 2rem; padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); opacity: 0; transform: translateY(20px); }
+  .intro-warning { font-size: 1.1rem; color: var(--secondary); margin-bottom: 2rem; padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); }
   .intro-counter { font-family: var(--font-heading); font-size: clamp(4rem, 10vw, 8rem); font-weight: 900; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
   
-  /* Client Logos (Staggered Grid) */
+  /* Client Logo Style */
   .client-card {
     background: #ffffff; border: 1px solid #f1f5f9;
     border-radius: 1.5rem; padding: 1.5rem;
@@ -280,25 +261,22 @@ const styles = `
   .client-img { max-width: 80%; max-height: 80%; object-fit: contain; filter: grayscale(100%); transition: 0.4s; opacity: 0.6; }
   .client-card:hover .client-img { filter: grayscale(0%); opacity: 1; transform: scale(1.1); }
 
-  /* Form */
-  .form-group { margin-bottom: 1.5rem; }
-  .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark); font-family: var(--font-heading); }
-  .form-input { width: 100%; padding: 1.2rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-family: var(--font-body); font-size: 1rem; transition: 0.3s; background: #f8fafc; }
-  .form-input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(67, 143, 179, 0.1); }
-
   /* Footer */
   footer { background: var(--dark); color: white; padding: 6rem 0 2rem; margin-top: 6rem; }
   .footer-link { color: var(--grey); text-decoration: none; display: block; margin-bottom: 1rem; transition: 0.3s; }
   .footer-link:hover { color: var(--secondary); padding-right: 5px; }
 
-  /* Utils */
   .desktop-only { display: none; }
   @media (min-width: 992px) { .desktop-only { display: flex; } .mobile-only { display: none !important; } }
   .mobile-only { display: block; }
+  
+  /* Form */
+  .form-input { width: 100%; padding: 1.2rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-family: var(--font-body); font-size: 1rem; transition: 0.3s; background: #f8fafc; margin-bottom: 1.5rem; }
+  .form-input:focus { outline: none; border-color: var(--primary); background: white; box-shadow: 0 0 0 4px rgba(67, 143, 179, 0.1); }
 `;
 
 // =========================================
-// 3. LOGIC: PARTICLE SYSTEM (Optimized)
+// 3. LOGIC: PARTICLE SYSTEM (Canvas Sampling)
 // =========================================
 
 const getParticlesData = (text: string, width: number, height: number) => {
@@ -340,56 +318,36 @@ const getParticlesData = (text: string, width: number, height: number) => {
 // --- A. Cinematic Intro ---
 const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
   const container = useRef(null);
-  const warning = useRef(null);
   const [count, setCount] = useState(0);
 
   useEffect(() => {
-    const tl = gsap.timeline();
-    
-    tl.to(warning.current, { opacity: 1, y: 0, duration: 1, delay: 0.5 })
-      .to(warning.current, { opacity: 0, y: -20, duration: 0.5, delay: 2.5 })
-      .call(() => {
-        const interval = setInterval(() => {
-          setCount(prev => {
-            if (prev >= 100) {
-              clearInterval(interval);
-              gsap.to(container.current, {
-                clipPath: "circle(0% at 50% 50%)", 
-                duration: 1.5, 
-                ease: "expo.inOut", 
-                onComplete: onComplete
-              });
-              return 100;
-            }
-            return prev + 2;
-          });
-        }, 20); 
+    const interval = setInterval(() => {
+      setCount(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          gsap.to(container.current, { clipPath: "circle(0% at 50% 50%)", duration: 1.5, ease: "expo.inOut", onComplete });
+          return 100;
+        }
+        return prev + 2;
       });
+    }, 20);
+    return () => clearInterval(interval);
   }, []);
 
   return (
     <div ref={container} className="intro-overlay" style={{clipPath: "circle(150% at 50% 50%)"}}>
-      <div ref={warning} className="intro-warning">
-        <Lightbulb size={20} style={{display:'inline', marginLeft:'10px', verticalAlign:'middle'}} />
-        {BRAND.content.intro.warning}
-      </div>
-      
-      {count > 0 && (
-        <div style={{position:'relative'}}>
-          <div className="intro-counter">{count}%</div>
-          <div style={{width:'200px', height:'4px', background:'rgba(255,255,255,0.1)', marginTop:'1rem', borderRadius:'2px', overflow:'hidden'}}>
-            <div style={{width: `${count}%`, height:'100%', background: BRAND.colors.primary, transition:'width 0.1s linear'}}></div>
-          </div>
-          <p style={{marginTop:'1rem', color: BRAND.colors.grey, fontSize:'0.9rem', letterSpacing:'2px'}}>SYSTEM INITIALIZATION</p>
-        </div>
-      )}
+      <div className="intro-warning">{BRAND.content.intro.warning}</div>
+      <div className="intro-counter">{count}%</div>
+      <p style={{marginTop:'1rem', color: BRAND.colors.grey, letterSpacing:'2px'}}>{BRAND.content.intro.loading}</p>
     </div>
   );
 };
 
-// --- B. Aura Scene (Background) ---
+// --- B. Aura Scene (CONNECTED TO SCROLL) ---
 const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const sceneRef = useRef<THREE.Scene | null>(null);
+  const particlesRef = useRef<THREE.Points | null>(null);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -398,10 +356,11 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const w = window.innerWidth;
     const h = window.innerHeight;
     const scene = new THREE.Scene();
+    sceneRef.current = scene;
     scene.fog = new THREE.FogExp2(0xffffff, 0.005); 
     
     const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
-    camera.position.z = window.innerWidth < 768 ? 55 : 40; 
+    camera.position.z = 40;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(w, h);
@@ -416,7 +375,6 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
-
     const c1 = new THREE.Color(BRAND.colors.primary);
     const c2 = new THREE.Color(BRAND.colors.secondary);
 
@@ -424,7 +382,6 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
       positions[i*3] = (Math.random()-0.5) * 150;
       positions[i*3+1] = (Math.random()-0.5) * 150;
       positions[i*3+2] = (Math.random()-0.5) * 150;
-      
       const col = Math.random() > 0.5 ? c1 : c2;
       colors[i*3] = col.r; colors[i*3+1] = col.g; colors[i*3+2] = col.b;
     }
@@ -432,50 +389,68 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
     
-    const material = new THREE.PointsMaterial({
-      size: 0.2, vertexColors: true, transparent: true, opacity: 0.8
-    });
-    
+    const material = new THREE.PointsMaterial({ size: 0.2, vertexColors: true, transparent: true, opacity: 0.8 });
     const particles = new THREE.Points(geometry, material);
+    particlesRef.current = particles;
     scene.add(particles);
 
-    // 3. Animation
+    // 3. Animation Loop
     const animate = () => {
       requestAnimationFrame(animate);
-      particles.rotation.y += 0.001;
-      particles.rotation.x = Math.sin(Date.now() * 0.0005) * 0.05;
+      particles.rotation.y += 0.0005; // Base rotation
       renderer.render(scene, camera);
     };
     animate();
 
-    // 4. GSAP Morph Trigger
+    // 4. GSAP Morph (Initial)
     if (startAnimation) {
       const progress = { t: 0 };
       const initialPos = Float32Array.from(positions); 
-      
       gsap.to(progress, {
-        t: 1,
-        duration: 3.5,
-        ease: "power3.inOut",
-        delay: 0.5,
+        t: 1, duration: 3.5, ease: "power3.inOut", delay: 0.5,
         onUpdate: () => {
           const currentPos = geometry.attributes.position.array as Float32Array;
-          const t = progress.t;
-          
           for(let i=0; i<count; i++) {
             let tx, ty, tz;
-            if (i < textPoints.length) {
-              tx = textPoints[i].x; ty = textPoints[i].y; tz = 0;
-            } else {
-              tx = initialPos[i*3]; ty = initialPos[i*3+1]; tz = initialPos[i*3+2];
-            }
-            currentPos[i*3] = initialPos[i*3] + (tx - initialPos[i*3]) * t;
-            currentPos[i*3+1] = initialPos[i*3+1] + (ty - initialPos[i*3+1]) * t;
-            currentPos[i*3+2] = initialPos[i*3+2] + (tz - initialPos[i*3+2]) * t;
+            if (i < textPoints.length) { tx = textPoints[i].x; ty = textPoints[i].y; tz = 0; }
+            else { tx = initialPos[i*3]; ty = initialPos[i*3+1]; tz = initialPos[i*3+2]; }
+            currentPos[i*3] = initialPos[i*3] + (tx - initialPos[i*3]) * progress.t;
+            currentPos[i*3+1] = initialPos[i*3+1] + (ty - initialPos[i*3+1]) * progress.t;
+            currentPos[i*3+2] = initialPos[i*3+2] + (tz - initialPos[i*3+2]) * progress.t;
           }
           geometry.attributes.position.needsUpdate = true;
         }
       });
+    }
+
+    // 5. CONNECT SCROLL TO THREE.JS (The Magic Link)
+    if (typeof window !== 'undefined') {
+      const ctx = gsap.context(() => {
+        // Rotate the entire particle cloud based on scroll
+        gsap.to(particles.rotation, {
+          y: Math.PI * 2, // Full rotation over the page
+          ease: "none",
+          scrollTrigger: {
+            trigger: document.body,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: 1 // Smooth connection
+          }
+        });
+
+        // Zoom camera in/out based on sections
+        gsap.to(camera.position, {
+          z: 20, // Zoom in
+          ease: "power2.inOut",
+          scrollTrigger: {
+            trigger: "#خدماتنا", // Target services section
+            start: "top center",
+            end: "bottom center",
+            scrub: 1
+          }
+        });
+      });
+      return () => ctx.revert();
     }
 
     const handleResize = () => {
@@ -508,16 +483,14 @@ const Navbar = () => {
     <>
       <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
         <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-          <div style={{width:10, height:10, background: BRAND.colors.primary, borderRadius:'50%'}}></div>
+          <div style={{width:12, height:12, background: BRAND.colors.primary, borderRadius:'50%'}}></div>
           <span style={{fontSize:'1.5rem', fontWeight:'900', color: BRAND.colors.dark, fontFamily: 'var(--font-heading)'}}>AURA</span>
         </div>
-
         <div className="desktop-only" style={{display:'flex', gap:'2rem'}}>
           {['الرئيسية', 'الخدمات', 'مختبر AI', 'أعمالنا', 'تواصل'].map(item => (
             <a key={item} href={`#${item}`} className="nav-link">{item}</a>
           ))}
         </div>
-
         <div style={{display:'flex', gap:'1rem'}}>
           <button className="btn btn-primary desktop-only">{BRAND.content.cta.secondary}</button>
           <button className="mobile-only" onClick={() => setIsOpen(!isOpen)} style={{background:'none', border:'none'}}>
@@ -525,8 +498,7 @@ const Navbar = () => {
           </button>
         </div>
       </nav>
-
-      {/* Mobile Drawer */}
+      {/* Drawer */}
       <div className={`mobile-menu ${isOpen ? 'open' : ''}`}>
         <div style={{display:'flex', flexDirection:'column', gap:'2rem', textAlign:'center'}}>
           {['الرئيسية', 'الخدمات', 'مختبر AI', 'أعمالنا', 'تواصل'].map(item => (
@@ -539,77 +511,39 @@ const Navbar = () => {
   );
 };
 
-// --- D. Scroll Reveal Wrapper ---
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 40 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, margin: "-50px" }}
-    transition={{ duration: 0.8, delay, ease: "easeOut" }}
-  >
+  <motion.div initial={{opacity:0, y:40}} whileInView={{opacity:1, y:0}} viewport={{once:true}} transition={{duration:0.8, delay}}>
     {children}
   </motion.div>
 );
 
-// --- E. Hero Section ---
-const Hero = () => {
-  return (
-    <section className="section full-screen" id="الرئيسية">
-      <div className="container" style={{textAlign:'center'}}>
-        <Reveal delay={0.2}>
-          <div style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'0.5rem 1.5rem', background:'#f1f5f9', borderRadius:'50px', color:BRAND.colors.primary, fontWeight:'700', marginBottom:'2rem', border:`1px solid ${BRAND.colors.grey}30`}}>
-            <Zap size={16} fill="currentColor" /> {BRAND.content.hero.badge}
-          </div>
-        </Reveal>
-        
-        <Reveal delay={0.4}>
-          <h1>
-            {BRAND.content.hero.title} <br/>
-            <span className="text-gradient">{BRAND.content.hero.highlight}</span>
-          </h1>
-        </Reveal>
-        
-        <Reveal delay={0.6}>
-          <p style={{margin:'0 auto 3rem'}}>
-            {BRAND.content.hero.desc}
-          </p>
-        </Reveal>
+// --- D. Hero ---
+const Hero = () => (
+  <section className="section full-screen" id="الرئيسية">
+    <div className="container" style={{textAlign:'center'}}>
+      <Reveal>
+        <div style={{display:'inline-flex', padding:'0.5rem 1.5rem', background:'#f1f5f9', borderRadius:'50px', color:BRAND.colors.primary, fontWeight:'700', marginBottom:'2rem'}}>
+          <Zap size={16} style={{marginLeft:'8px'}} /> {BRAND.content.hero.badge}
+        </div>
+        <h1>{BRAND.content.hero.title} <br/> <span className="text-gradient">{BRAND.content.hero.highlight}</span></h1>
+        <p style={{margin:'0 auto 3rem'}}>{BRAND.content.hero.desc}</p>
+        <div style={{display:'flex', justifyContent:'center', gap:'1rem'}}>
+          <button className="btn btn-primary">{BRAND.content.cta.main} <ArrowUpRight size={20}/></button>
+        </div>
+      </Reveal>
+    </div>
+  </section>
+);
 
-        <Reveal delay={0.8}>
-          <div className="flex-center" style={{gap:'1.5rem', flexWrap:'wrap'}}>
-            <button className="btn btn-primary">
-              {BRAND.content.cta.main} <ArrowUpRight size={20} />
-            </button>
-            <button className="btn btn-outline">
-              مشاهدة الأعمال <Globe size={20} />
-            </button>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-};
-
-// --- F. GSAP Staggered Client Grid (New Ascending Reveal) ---
+// --- E. Staggered Client Grid ---
 const ClientGrid = () => {
   const sectionRef = useRef(null);
-  
   useLayoutEffect(() => {
-    // Only run GSAP on client
     if (typeof window === 'undefined') return;
-
     const ctx = gsap.context(() => {
-      // Staggered Reveal Animation for Logos
       gsap.to(".client-card", {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        stagger: 0.1, // This creates the ascending musical effect
-        ease: "power3.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-        }
+        opacity: 1, y: 0, duration: 0.8, stagger: 0.1, ease: "power3.out",
+        scrollTrigger: { trigger: sectionRef.current, start: "top 80%" }
       });
     }, sectionRef);
     return () => ctx.revert();
@@ -619,13 +553,11 @@ const ClientGrid = () => {
     <section className="section" ref={sectionRef}>
       <div className="container">
         <div style={{textAlign:'center', marginBottom:'4rem'}}>
-          <p style={{color: BRAND.colors.grey, fontWeight:'bold', letterSpacing:'2px'}}>نخبة الشركاء</p>
+          <p style={{color: BRAND.colors.grey, fontWeight:'bold', letterSpacing:'2px'}}>شركاء النجاح</p>
         </div>
         <div className="grid-clients">
           {BRAND.clients.map((url, i) => (
-            <div key={i} className="client-card">
-              <img src={url} alt={`Client ${i}`} className="client-img" />
-            </div>
+            <div key={i} className="client-card"><img src={url} alt="Client" className="client-img" /></div>
           ))}
         </div>
       </div>
@@ -633,103 +565,61 @@ const ClientGrid = () => {
   );
 };
 
-// --- G. Stats Section ---
-const Stats = () => {
-  return (
-    <section className="container" style={{marginBottom:'8rem'}}>
-      <div className="grid-4" style={{textAlign:'center'}}>
-        {[
-          { n: "+500M", l: "عائدات عملاء" },
-          { n: "98%", l: "نسبة رضا" },
-          { n: "+120", l: "مشروع ناجح" },
-          { n: "24/7", l: "دعم فني" }
-        ].map((s, i) => (
-          <Reveal key={i} delay={i * 0.1}>
-            <div className="glass-card" style={{padding:'2rem'}}>
-              <span style={{display:'block', fontSize:'3rem', fontWeight:'900', color: BRAND.colors.primary, lineHeight:1, fontFamily:'var(--font-heading)'}}>{s.n}</span>
-              <span style={{color: '#64748b', fontWeight:'600'}}>{s.l}</span>
-            </div>
-          </Reveal>
-        ))}
-      </div>
-    </section>
-  );
-};
-
-// --- H. Services (Client-Centric Copy) ---
-const Services = () => {
-  const services = [
-    { title: "هيمنة رقمية شاملة", desc: "لا نكتفي بإنشاء موقع، بل نبني منظومة متكاملة تضمن لك التفوق على المنافسين.", icon: Target, col: "span 2" },
-    { title: "تصدر محركات البحث", desc: "نجعل عميلك يجدك أولاً، دائماً.", icon: Search, col: "span 1" },
-    { title: "منصات عالية التحويل", desc: "تصميم يركز على تحويل الزائر إلى عميل دافع.", icon: Code, col: "span 1" },
-    { title: "تسويق الأداء (Performance)", desc: "كل ريال تنفقه يعود عليك بأضعاف. إدارة ميزانيات ذكية.", icon: TrendingUp, col: "span 2" },
-    { title: "هوية بصرية خالدة", desc: "نصنع لك صورة ذهنية لا تمحى.", icon: Palette, col: "span 1" },
-    { title: "ذكاء أعمال", desc: "قراراتك القادمة ستكون مبنية على أرقام دقيقة، لا تخمينات.", icon: BarChart, col: "span 1" },
-  ];
-
-  return (
-    <section className="section" id="الخدمات" style={{background: BRAND.colors.light}}>
-      <div className="container">
-        <Reveal>
-          <div style={{textAlign:'center', marginBottom:'5rem'}}>
-            <h2>كيف نصنع <span className="text-gradient">الفرق؟</span></h2>
-            <p style={{margin:'0 auto'}}>حلول مصممة لتحديات السوق السعودي.</p>
+// --- F. Stats ---
+const Stats = () => (
+  <section className="container" style={{marginBottom:'8rem'}}>
+    <div className="grid-4" style={{textAlign:'center'}}>
+      {[{n:'+500M',l:'عائدات عملاء'}, {n:'98%',l:'نسبة رضا'}, {n:'+120',l:'مشروع ناجح'}, {n:'10x',l:'عائد إعلاني'}].map((s,i) => (
+        <Reveal key={i} delay={i*0.1}>
+          <div className="glass-card" style={{padding:'2rem'}}>
+            <span style={{fontSize:'3rem', fontWeight:'900', color:BRAND.colors.primary, display:'block'}}>{s.n}</span>
+            <span style={{color:'#64748b', fontWeight:'600'}}>{s.l}</span>
           </div>
         </Reveal>
+      ))}
+    </div>
+  </section>
+);
 
-        <div className="grid-3">
-          {services.map((s, i) => (
-            <motion.div 
-              key={i}
-              className={`glass-card ${s.col === 'span 2' ? 'col-span-2' : ''}`}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              whileHover={{ y: -10 }}
-            >
-              <div className="icon-box">
-                <s.icon size={32} />
-              </div>
-              <h3>{s.title}</h3>
-              <p>{s.desc}</p>
-              <div style={{marginTop:'auto', paddingTop:'1rem', display:'flex', alignItems:'center', gap:'5px', color: BRAND.colors.primary, fontWeight:'bold', cursor:'pointer'}}>
-                اكتشف المزيد <ArrowUpRight size={18} />
-              </div>
-            </motion.div>
-          ))}
-        </div>
+// --- G. Services ---
+const Services = () => (
+  <section className="section" id="خدماتنا" style={{background: BRAND.colors.light}}>
+    <div className="container">
+      <Reveal><div style={{textAlign:'center', marginBottom:'5rem'}}><h2>خدمات <span className="text-gradient">للنمو الأسي</span></h2></div></Reveal>
+      <div className="grid-3">
+        {[
+          {t:'إدارة الحملات', d:'نحول ميزانيتك لأرباح. إدارة CPC و CPA.', i:Target},
+          {t:'هيمنة السيو', d:'تصدر نتائج البحث الأولى في السعودية.', i:Search},
+          {t:'منصات تبيع', d:'مواقع مصممة للتحويل والسرعة.', i:Code},
+          {t:'محتوى فيروسي', d:'قصص تلهم وتصاميم تخطف الأنظار.', i:Megaphone},
+          {t:'إنتاج سينمائي', d:'موشن جرافيك بجودة عالمية.', i:Monitor},
+          {t:'ذكاء أعمال', d:'قرارات مبنية على الأرقام لا التخمين.', i:TrendingUp}
+        ].map((s,i) => (
+          <motion.div key={i} className="glass-card" whileHover={{y:-10}} transition={{delay: i*0.1}}>
+            <div className="icon-box"><s.i size={32}/></div>
+            <h3>{s.t}</h3>
+            <p>{s.d}</p>
+          </motion.div>
+        ))}
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
-// --- I. Kinetic Case Studies (GSAP Velocity Skew) ---
+// --- H. Kinetic Case Studies (Velocity Skew) ---
 const CaseStudies = () => {
   const sectionRef = useRef(null);
-  
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-
     const ctx = gsap.context(() => {
-      let proxy = { skew: 0 },
-      skewSetter = gsap.quickSetter(".work-card", "skewY", "deg"), 
-      clamp = gsap.utils.clamp(-10, 10); 
-
+      let proxy = { skew: 0 }, skewSetter = gsap.quickSetter(".work-card", "skewY", "deg"), clamp = gsap.utils.clamp(-10, 10);
       ScrollTrigger.create({
         trigger: sectionRef.current,
         onUpdate: (self) => {
           let skew = clamp(self.getVelocity() / -300);
-          // Apply Kinetic Physics
           if (Math.abs(skew) > Math.abs(proxy.skew)) {
             proxy.skew = skew;
-            gsap.to(proxy, {
-              skew: 0, 
-              duration: 0.8, 
-              ease: "power3", 
-              overwrite: true, 
-              onUpdate: () => skewSetter(proxy.skew)
-            });
+            gsap.to(proxy, {skew: 0, duration: 0.8, ease: "power3", overwrite: true, onUpdate: () => skewSetter(proxy.skew)});
           }
         }
       });
@@ -740,29 +630,16 @@ const CaseStudies = () => {
   return (
     <section className="section" id="أعمالنا" ref={sectionRef}>
       <div className="container">
-        <Reveal>
-          <div style={{textAlign:'center', marginBottom:'4rem'}}>
-            <h2>نتائج تتحدث <span className="text-gradient">عن نفسها</span></h2>
-            <p style={{margin:'0 auto'}}>قصص نجاح حقيقية، أرقام موثقة، وعوائد قياسية.</p>
-          </div>
-        </Reveal>
-        
+        <Reveal><div style={{textAlign:'center', marginBottom:'4rem'}}><h2>نتائج تتحدث <span className="text-gradient">عن نفسها</span></h2></div></Reveal>
         <div className="grid-3">
-          {[
-            { t: "نمو متجر أزياء", n: "+300%", d: "زيادة المبيعات الربع سنوية" },
-            { t: "تطبيق توصيل", n: "50K", d: "تحميل في الشهر الأول" },
-            { t: "مجموعة طبية", n: "#1", d: "تصدر نتائج بحث جوجل في الرياض" }
-          ].map((c, i) => (
-            <div key={i} className="glass-card work-card" style={{padding:0, overflow:'hidden', minHeight:'400px', background:'#fff', transformOrigin: "center center", willChange: "transform"}}>
-              <div style={{height:'220px', background:`linear-gradient(135deg, ${i===0?'#f0f9ff':'#f8fafc'}, #e2e8f0)`, display:'flex', alignItems:'center', justifyContent:'center'}}>
-                <Briefcase size={60} color={BRAND.colors.grey} style={{opacity:0.5}} />
-              </div>
-              <div style={{padding:'2.5rem'}}>
-                <span style={{fontSize:'0.9rem', color:BRAND.colors.primary, fontWeight:'bold'}}>دراسة حالة</span>
-                <h3 style={{fontSize:'1.4rem', margin:'0.5rem 0'}}>{c.t}</h3>
-                <div style={{marginTop:'1rem', display:'flex', alignItems:'baseline', gap:'10px'}}>
-                  <span style={{fontSize:'3rem', fontWeight:'900', color:BRAND.colors.dark, lineHeight:1}}>{c.n}</span>
-                  <span style={{fontSize:'0.9rem', color:BRAND.colors.text}}>{c.d}</span>
+          {[{t:"متجر أزياء",n:"+300%",d:"نمو المبيعات"}, {t:"تطبيق عقاري",n:"50K",d:"تحميل"}, {t:"شركة طبية",n:"#1",d:"في جوجل"}].map((c,i) => (
+            <div key={i} className="glass-card work-card" style={{padding:0, minHeight:'400px', transformOrigin:"center center", willChange:"transform"}}>
+              <div style={{height:'220px', background:'#e2e8f0', display:'flex', alignItems:'center', justifyContent:'center'}}><Briefcase size={60} color={BRAND.colors.grey}/></div>
+              <div style={{padding:'2rem'}}>
+                <h3 style={{marginBottom:'0.5rem'}}>{c.t}</h3>
+                <div style={{display:'flex', alignItems:'baseline', gap:'10px'}}>
+                  <span style={{fontSize:'3rem', fontWeight:'900', color:BRAND.colors.dark}}>{c.n}</span>
+                  <span>{c.d}</span>
                 </div>
               </div>
             </div>
@@ -773,165 +650,67 @@ const CaseStudies = () => {
   );
 };
 
-// --- J. AI Lab Section ---
-const AILab = () => {
-  return (
-    <section className="section" id="مختبر AI">
-      <div className="container">
-        <div style={{background: BRAND.colors.glassDark, borderRadius:'3rem', padding:'clamp(2rem, 5vw, 5rem)', color:'white', position:'relative', overflow:'hidden'}}>
-          {/* Abstract Glow */}
-          <div style={{position:'absolute', top:'-20%', right:'-10%', width:'500px', height:'500px', background: BRAND.colors.primary, filter:'blur(150px)', opacity:0.2}}></div>
-          
-          <div className="grid-2">
-            <Reveal>
-              <div style={{color: BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
-                <Sparkles size={20} /> مختبر أورا للذكاء الاصطناعي
-              </div>
-              <h2 style={{color:'white', fontFamily:'var(--font-heading)'}}>نسبق المستقبل <br/> بخطوة.</h2>
-              <p style={{color:'#94a3b8', maxWidth:'500px'}}>
-                نحن لا نستخدم أدوات الـ AI فقط، نحن نطوعها لخدمتك. نطور خوارزميات مخصصة لتحليل مشاعر الجمهور السعودي، والتنبؤ بالترندات قبل حدوثها.
-              </p>
-              <ul style={{listStyle:'none', marginTop:'2rem'}}>
-                {['تحليل البيانات الضخمة (Big Data)', 'أتمتة الحملات الإعلانية', 'تصميمات مخصصة بالـ AI'].map((item, i) => (
-                  <li key={i} style={{marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px', color:'white'}}>
-                    <CheckCircle color={BRAND.colors.secondary} size={20} /> {item}
-                  </li>
-                ))}
-              </ul>
-            </Reveal>
-            
-            <Reveal delay={0.2}>
-              <div style={{background:'rgba(255,255,255,0.05)', padding:'3rem', borderRadius:'2rem', border:'1px solid rgba(255,255,255,0.1)', position:'relative', zIndex:2}}>
-                <div style={{display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}>
-                  <span style={{fontWeight:'bold'}}>كفاءة الاستهداف</span>
-                  <span style={{color: BRAND.colors.secondary, fontWeight:'bold'}}>+240%</span>
-                </div>
-                <div style={{display:'flex', alignItems:'flex-end', gap:'10px', height:'200px'}}>
-                  {[40, 60, 45, 80, 70, 90, 100].map((h, i) => (
-                    <motion.div 
-                      key={i} 
-                      initial={{height:0}} 
-                      whileInView={{height:`${h}%`}} 
-                      transition={{duration:1, delay: i*0.1}}
-                      style={{flex:1, background: i === 6 ? BRAND.colors.secondary : 'rgba(255,255,255,0.1)', borderRadius:'4px'}}
-                    ></motion.div>
-                  ))}
-                </div>
-              </div>
-            </Reveal>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- K. Contact Form ---
-const Contact = () => {
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert("شكراً لثقتك بنا. سيقوم مستشارونا بالتواصل معك قريباً لرسم خارطة طريق نجاحك.");
-  };
-
-  return (
-    <section className="section container" id="تواصل">
-      <div className="grid-2">
-        <Reveal>
-          <div>
-            <h2>هل أنت مستعد للهيمنة <span className="text-gradient">السوقية؟</span></h2>
-            <p>
-              المنافسة لا تنتظر. تواصل معنا اليوم واحصل على تحليل رقمي شامل لوضع علامتك الحالي، وخطة عمل مخصصة للنمو.
-            </p>
-            
-            <div style={{marginTop:'3rem', display:'flex', flexDirection:'column', gap:'2rem'}}>
-              <div style={{display:'flex', gap:'1.5rem', alignItems:'center'}}>
-                <div className="icon-box" style={{marginBottom:0, width:60, height:60}}><Phone /></div>
-                <div>
-                  <div style={{fontSize:'0.9rem', color: '#64748b'}}>اتصل بنا</div>
-                  <div style={{fontWeight:'700', fontSize:'1.2rem', color: BRAND.colors.dark}}>{BRAND.info.phone}</div>
-                </div>
-              </div>
-              <div style={{display:'flex', gap:'1.5rem', alignItems:'center'}}>
-                <div className="icon-box" style={{marginBottom:0, width:60, height:60}}><Mail /></div>
-                <div>
-                  <div style={{fontSize:'0.9rem', color: '#64748b'}}>البريد الإلكتروني</div>
-                  <div style={{fontWeight:'700', fontSize:'1.2rem', color: BRAND.colors.dark}}>{BRAND.info.email}</div>
-                </div>
+// --- I. AI Lab ---
+const AILab = () => (
+  <section className="section" id="مختبر AI">
+    <div className="container">
+      <div style={{background: BRAND.colors.glassDark, borderRadius:'3rem', padding:'clamp(2rem, 5vw, 5rem)', color:'white', position:'relative', overflow:'hidden'}}>
+        <div style={{position:'absolute', top:'-20%', right:'-10%', width:'500px', height:'500px', background: BRAND.colors.primary, filter:'blur(150px)', opacity:0.2}}></div>
+        <div className="grid-2">
+          <Reveal>
+            <div style={{color:BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}><Sparkles size={20}/> مختبر أورا</div>
+            <h2 style={{color:'white'}}>نسبق المستقبل بخطوة.</h2>
+            <p style={{color:'#94a3b8'}}>نستخدم خوارزمياتنا الخاصة لتحليل المشاعر والتنبؤ بالترندات في السوق السعودي.</p>
+            <ul style={{marginTop:'2rem', listStyle:'none'}}>{['تحليل البيانات الضخمة', 'أتمتة الحملات', 'تصاميم AI'].map((t,i)=><li key={i} style={{marginBottom:'1rem', display:'flex', gap:'10px'}}><CheckCircle color={BRAND.colors.secondary}/> {t}</li>)}</ul>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <div style={{background:'rgba(255,255,255,0.05)', padding:'2rem', borderRadius:'2rem', border:'1px solid rgba(255,255,255,0.1)', position:'relative', zIndex:2}}>
+              <div style={{display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}><span>كفاءة الاستهداف</span><span style={{color:BRAND.colors.secondary}}>+240%</span></div>
+              <div style={{display:'flex', alignItems:'flex-end', gap:'10px', height:'200px'}}>
+                {[40,60,45,80,70,90,100].map((h,i) => <motion.div key={i} initial={{height:0}} whileInView={{height:`${h}%`}} transition={{duration:1, delay:i*0.1}} style={{flex:1, background: i===6?BRAND.colors.secondary:'rgba(255,255,255,0.1)', borderRadius:'4px'}}></motion.div>)}
               </div>
             </div>
-          </div>
-        </Reveal>
-
-        <Reveal delay={0.2}>
-          <div className="glass-card">
-            <h3 style={{marginBottom:'2rem'}}>ابدأ رحلة التحول</h3>
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label">الاسم الكامل</label>
-                <input type="text" className="form-input" placeholder="محمد أحمد" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">البريد المهني</label>
-                <input type="email" className="form-input" placeholder="name@company.com" required />
-              </div>
-              <div className="form-group">
-                <label className="form-label">ما هو التحدي الأكبر الذي تواجهه؟</label>
-                <textarea className="form-input" style={{minHeight:'150px'}} placeholder="أخبرنا عن أهدافك..."></textarea>
-              </div>
-              <button className="btn btn-primary" style={{width:'100%'}}>
-                طلب استشارة استراتيجية <Send size={18} />
-              </button>
-            </form>
-          </div>
-        </Reveal>
-      </div>
-    </section>
-  );
-};
-
-// --- L. Footer ---
-const Footer = () => (
-  <footer>
-    <div className="container">
-      <div className="grid-2" style={{alignItems:'start', marginBottom:'4rem', gap:'4rem'}}>
-        <div>
-          <div style={{fontSize:'2.5rem', fontWeight:'900', color:'white', marginBottom:'1.5rem', fontFamily:'var(--font-heading)'}}>AURA.</div>
-          <p style={{color: BRAND.colors.grey, maxWidth:'400px'}}>
-            أورا ليست مجرد وكالة، بل هي ذراعك الاستثماري في العالم الرقمي. نبتكر، ننفذ، ونحقق النتائج.
-          </p>
-        </div>
-        
-        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))', gap:'2rem'}}>
-          <div>
-            <h4 style={{color:'white', marginBottom:'1.5rem'}}>الشركة</h4>
-            <a href="#" className="footer-link">من نحن</a>
-            <a href="#" className="footer-link">قصص النجاح</a>
-            <a href="#" className="footer-link">انضم للفريق</a>
-          </div>
-          <div>
-            <h4 style={{color:'white', marginBottom:'1.5rem'}}>الخدمات</h4>
-            <a href="#" className="footer-link">استراتيجيات النمو</a>
-            <a href="#" className="footer-link">تطوير المنصات</a>
-            <a href="#" className="footer-link">التسويق الرقمي</a>
-          </div>
-        </div>
-      </div>
-      
-      <div style={{borderTop:'1px solid rgba(255,255,255,0.1)', paddingTop:'2rem', textAlign:'center', color: BRAND.colors.grey, fontSize:'0.9rem', display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:'1rem'}}>
-        <span>© 2026 Aura Digital Agency. جميع الحقوق محفوظة.</span>
-        <div style={{display:'flex', gap:'1.5rem'}}>
-          <span>Twitter</span>
-          <span>LinkedIn</span>
-          <span>Instagram</span>
+          </Reveal>
         </div>
       </div>
     </div>
-  </footer>
+  </section>
 );
 
-// =========================================
-// 5. MAIN ENTRY POINT (The App)
-// =========================================
+// --- J. Contact ---
+const Contact = () => (
+  <section className="section container" id="تواصل">
+    <div className="grid-2">
+      <Reveal>
+        <div>
+          <h2>جاهز لتفعيل <span className="text-gradient">هالتك؟</span></h2>
+          <p>تواصل معنا اليوم واحصل على تحليل رقمي شامل لوضع علامتك الحالي.</p>
+          <div style={{marginTop:'2rem'}}>
+            <div style={{fontWeight:'700', fontSize:'1.2rem'}}>{BRAND.info.phone}</div>
+            <div style={{color:'#64748b'}}>{BRAND.info.email}</div>
+          </div>
+        </div>
+      </Reveal>
+      <div className="glass-card">
+        <form onSubmit={(e)=>{e.preventDefault(); alert('تم الإرسال!')}}>
+          <div className="form-group"><label className="form-label">الاسم</label><input className="form-input"/></div>
+          <div className="form-group"><label className="form-label">البريد</label><input className="form-input"/></div>
+          <button className="btn-primary" style={{width:'100%'}}>طلب استشارة <Send size={18}/></button>
+        </form>
+      </div>
+    </div>
+  </section>
+);
+
+const Footer = () => (
+  <footer>
+    <div className="container" style={{textAlign:'center'}}>
+      <h2 style={{color:'white'}}>AURA</h2>
+      <p style={{color:'#94a3b8'}}>نصنع المستقبل الرقمي.</p>
+      <div style={{marginTop:'3rem', color:'#64748b'}}>© 2026 Aura Agency.</div>
+    </div>
+  </footer>
+);
 
 export default function AuraWebsite() {
   const [introFinished, setIntroFinished] = useState(false);
@@ -940,13 +719,9 @@ export default function AuraWebsite() {
     <>
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <Script id="json-ld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
-      
-      {/* 1. Cinematic Intro */}
       <AnimatePresence>
         {!introFinished && <IntroOverlay onComplete={() => setIntroFinished(true)} />}
       </AnimatePresence>
-
-      {/* 2. Main Site */}
       {introFinished && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <AuraScene startAnimation={introFinished} />
