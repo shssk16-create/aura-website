@@ -1,365 +1,375 @@
-'use client';
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { Menu, ArrowDown, Zap, Target, BarChart3, Fingerprint, Sparkles, Gem, Users, Layers, Lightbulb, Rocket, Plus } from 'lucide-react';
 
-/**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - LIVING NEBULA EDITION (v20.0)
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [ENGINEERING LOG]
- * * 1. VISUAL CORE: "Smart Nebula" - 4000+ Particles with depth-based gradient.
- * * 2. PHYSICS: GSAP quickTo() for magnetic mouse interaction.
- * * 3. PERFORMANCE: Unified GSAP Ticker driving Three.js render loop.
- * * 4. TYPOGRAPHY: Kinetic variable font weight reaction on Hero text.
- * * 5. STABILITY: Zero build errors, SSR safe.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- */
-
-import React, { useState, useEffect, useRef, useLayoutEffect, FormEvent } from 'react';
-import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
-import { Readex_Pro } from 'next/font/google';
-import { 
-  ArrowUpRight, Palette, Search, Megaphone, Code, 
-  Smartphone, Monitor, TrendingUp, Target, Globe, 
-  CheckCircle, Zap, Shield, Menu, X, ArrowRight,
-  Layers, Building2, Briefcase, BarChart3, Activity,
-  MousePointer2, Phone, MapPin, Mail, Star,
-  Sparkles, Lightbulb, Send
-} from 'lucide-react';
-import Script from 'next/script';
-import * as THREE from 'three';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-// --- FONT LOADING (Variable Weight for Kinetic Effect) ---
-const fontMain = Readex_Pro({ 
-  subsets: ['arabic', 'latin'],
-  // Loading range of weights for smooth animation
-  weight: ['200', '300', '400', '500', '600', '700'], 
-  variable: '--font-main',
-  display: 'swap',
-});
-
-// --- GSAP REGISTRATION ---
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
-// =========================================
-// 1. BRAND DNA
-// =========================================
-
-const BRAND = {
-  palette: {
-    primary: '#438FB3',   // Ocean Blue
-    accent: '#58A8B4',    // Soft Teal (Glow)
-    dark: '#0B1120',      // Deep Void
-    surface: '#ffffff',   // White
-    text: '#334155',      // Slate
-    platinum: '#E2E8F0'
-  },
-  content: {
-    intro: {
-      warning: "تنبيه: أنت تدخل منطقة الهالة.",
-      loading: "جاري تفعيل السديم الرقمي..."
-    },
-    hero: {
-      badge: "الريادة الرقمية 2026",
-      // Text split for animation
-      titlePart1: "هالتك",
-      titlePart2: "الفارقة",
-      desc: "نحن ندمج الإبداع البشري مع دقة الذكاء الاصطناعي لنبني لك منظومة رقمية تسبق المنافسين بخطوة."
-    },
-    cta: {
-      main: "ابدأ التحول",
-      secondary: "اكتشف المزيد"
-    }
-  },
-  assets: {
-    logos: [
-      "https://aurateam3.com/wp-content/uploads/2025/10/kidana-logo-gold-06-1.png",
-      "https://aurateam3.com/wp-content/uploads/2025/09/اورا-جامعة-الملك-عبد-العزيز.webp",
-      "https://aurateam3.com/wp-content/uploads/2025/09/اورا-الجمعية-للتربية-الخاصة.webp",
-      "https://aurateam3.com/wp-content/uploads/2020/08/اعمار.webp",
-      "https://aurateam3.com/wp-content/uploads/2024/02/وارقة.webp"
-    ]
-  }
+// --- مساعد تحميل المكتبات ---
+const useScript = (url) => {
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = url;
+    script.async = true;
+    script.onload = () => setLoaded(true);
+    document.head.appendChild(script);
+    return () => { document.head.removeChild(script); };
+  }, [url]);
+  return loaded;
 };
 
-const JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "Corporation",
-  "name": "Aura Holding",
-  "url": "https://aurateam3.com",
-  "logo": "https://aurateam3.com/logo.png"
-};
-
-// =========================================
-// 2. STYLING ENGINE
-// =========================================
-
-const styles = `
-  :root {
-    --primary: ${BRAND.palette.primary};
-    --accent: ${BRAND.palette.accent};
-    --dark: ${BRAND.palette.dark};
-    --font-main: ${fontMain.style.fontFamily};
-  }
-
-  html { scroll-behavior: smooth; }
+// ==========================================
+// Advanced Physics Shaders (Curl Noise)
+// ==========================================
+const particleVertexShader = `
+  uniform float uTime;
+  uniform float uProgress; 
   
-  body {
-    background-color: #ffffff;
-    color: var(--dark);
-    font-family: var(--font-main), sans-serif;
-    margin: 0; padding: 0;
-    overflow-x: hidden;
-    cursor: none; 
-  }
-
-  ::selection { background: var(--primary); color: white; }
-
-  /* Kinetic Typography */
-  h1 { 
-    font-size: clamp(3.5rem, 9vw, 8rem); 
-    line-height: 1; 
-    letter-spacing: -2px; 
-    margin-bottom: 1.5rem; 
-    transition: font-weight 0.3s ease; /* For kinetic hover */
-  }
+  attribute vec3 aRandomPos;
+  attribute vec3 aTargetPos;
+  attribute float aSize;
   
-  h2 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.2; font-weight: 700; margin-bottom: 2rem; }
-  h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
-  p { font-size: 1.125rem; line-height: 1.8; color: #64748b; max-width: 65ch; }
+  varying float vAlpha;
+  varying vec3 vPos;
 
-  .gradient-text {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  vec3 snoiseVec3( vec3 x ){
+    float s  = sin(x.x); float c  = cos(x.x);
+    float s1 = sin(x.y); float c1 = cos(x.y);
+    float s2 = sin(x.z); float c2 = cos(x.z);
+    return vec3(c*s1 + s*c2, s*c1 + c*s2, c*s2 + s*c1);
   }
 
-  /* Kinetic Word Class */
-  .kinetic-word {
-    display: inline-block;
-    cursor: default;
-    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
-  }
-  .kinetic-word:hover {
-    font-weight: 700; /* Increase weight on hover */
-    color: var(--accent);
-    transform: scale(1.05);
-    text-shadow: 0 0 20px rgba(88, 168, 180, 0.4); /* Glow Effect */
-  }
-
-  /* Layout */
-  .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 2; }
-  .section { padding: 10rem 0; position: relative; }
-  .full-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
-
-  /* Custom Cursor */
-  .cursor-dot { position: fixed; top:0; left:0; width:8px; height:8px; background:var(--dark); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%, -50%); }
-  .cursor-outline { position: fixed; top:0; left:0; width:40px; height:40px; border:1px solid rgba(11,17,32,0.5); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%, -50%); transition: width 0.2s, height 0.2s; }
-
-  /* Navbar */
-  .navbar {
-    position: fixed; top: 2rem; left: 50%; transform: translateX(-50%);
-    width: 90%; max-width: 1200px; padding: 1rem 2rem;
-    background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px);
-    border: 1px solid rgba(255,255,255,0.6); border-radius: 100px;
-    display: flex; justify-content: space-between; align-items: center;
-    z-index: 100; transition: all 0.3s ease;
-    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
-  }
-  .navbar.scrolled { padding: 0.8rem 2rem; background: rgba(255,255,255,0.95); box-shadow: 0 20px 50px -15px rgba(0,0,0,0.1); }
-
-  /* Buttons */
-  .btn-primary {
-    background: var(--dark); color: white; padding: 1rem 2.5rem;
-    border-radius: 50px; font-weight: 600; border: none; cursor: pointer;
-    transition: all 0.3s; display: inline-flex; align-items: center; gap: 10px;
-  }
-  .btn-primary:hover { background: var(--primary); box-shadow: 0 15px 30px rgba(67, 143, 179, 0.4); transform: translateY(-2px); }
-
-  /* Bento Grid */
-  .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
-  .card {
-    background: #ffffff; border-radius: 2rem; padding: 3rem;
-    border: 1px solid #f1f5f9; position: relative; overflow: hidden;
-    transition: all 0.5s ease; display: flex; flex-direction: column; justify-content: space-between;
-  }
-  .card:hover { transform: translateY(-10px); box-shadow: 0 25px 60px -15px rgba(0,0,0,0.15); border-color: var(--primary); }
-  
-  /* Intro */
-  .intro-overlay { position: fixed; inset: 0; z-index: 9999; background: #0B1121; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-  
-  /* Utils */
-  .col-span-2 { grid-column: span 2; }
-  .desktop-only { display: flex; }
-  .mobile-only { display: none; }
-
-  @media (max-width: 1024px) {
-    .bento-grid { grid-template-columns: 1fr; }
-    .col-span-2 { grid-column: span 1; }
-    .desktop-only { display: none; }
-    .mobile-only { display: flex; }
-    .navbar { width: 95%; top: 1rem; }
+  vec3 curlNoise( vec3 p ){
+    const float e = 0.1;
+    vec3 dx = vec3( e, 0.0, 0.0 );
+    vec3 dy = vec3( 0.0, e, 0.0 );
+    vec3 dz = vec3( 0.0, 0.0, e );
+    vec3 p_x0 = snoiseVec3( p - dx );
+    vec3 p_x1 = snoiseVec3( p + dx );
+    vec3 p_y0 = snoiseVec3( p - dy );
+    vec3 p_y1 = snoiseVec3( p + dy );
+    vec3 p_z0 = snoiseVec3( p - dz );
+    vec3 p_z1 = snoiseVec3( p + dz );
+    float x = p_y1.z - p_y0.z - p_z1.y + p_z0.y;
+    float y = p_z1.x - p_z0.x - p_x1.z + p_x0.z;
+    float z = p_x1.y - p_x0.y - p_y1.x + p_y0.x;
+    const float divisor = 1.0 / ( 2.0 * e );
+    return normalize( vec3( x , y , z ) * divisor );
   }
 
-  #webgl-nebula { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  void main() {
+    float t = uProgress;
+    float ease = 1.0 - pow(1.0 - t, 3.0); 
+    vec3 target = mix(aRandomPos, aTargetPos, ease);
+    float noiseStrength = (1.0 - ease) * 2.0 + 0.2; 
+    vec3 curl = curlNoise(target * 0.5 + uTime * 0.1);
+    vec3 finalPos = target + curl * noiseStrength;
+    float angle = uTime * 0.1 * (1.0 - ease);
+    float s = sin(angle);
+    float c = cos(angle);
+    float nx = finalPos.x * c - finalPos.z * s;
+    float nz = finalPos.x * s + finalPos.z * c;
+    finalPos.x = nx;
+    finalPos.z = nz;
+    vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    gl_PointSize = (aSize * 2.5) * (1.0 + ease) * (20.0 / -mvPosition.z);
+    vAlpha = 0.4 + ease * 0.6;
+    vPos = finalPos;
+  }
 `;
 
-// =========================================
-// 3. INTERACTIVE CURSOR
-// =========================================
+const particleFragmentShader = `
+  uniform vec3 uColorPrimary; 
+  uniform vec3 uColorSecondary; 
+  varying float vAlpha;
+  varying vec3 vPos;
+  void main() {
+    float d = distance(gl_PointCoord, vec2(0.5));
+    float glow = exp(-d * 4.0); 
+    if (glow < 0.05) discard;
+    float mixFactor = smoothstep(0.0, 5.0, length(vPos));
+    vec3 finalColor = mix(uColorSecondary, uColorPrimary, mixFactor * 0.5);
+    if (d < 0.1) finalColor = mix(finalColor, vec3(1.0), 0.8);
+    gl_FragColor = vec4(finalColor, vAlpha * glow);
+  }
+`;
 
-const CustomCursor = () => {
-  const dotRef = useRef<HTMLDivElement>(null);
-  const outlineRef = useRef<HTMLDivElement>(null);
+// --- النافبار ---
+const Navbar = () => (
+  <nav className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4">
+    <div className="water-nav flex items-center px-6 py-3 gap-6 md:gap-12 transition-all duration-500">
+      <div className="flex items-center gap-2 pr-2 border-l border-slate-300/50 ml-2">
+        <div className="w-2.5 h-2.5 bg-[#4390b3] rounded-full shadow-[0_0_15px_rgba(67,144,179,0.8)] animate-pulse"></div>
+        <span className="font-din font-bold text-sm text-slate-800 tracking-tighter">أورا</span>
+      </div>
+      <div className="hidden md:flex items-center gap-8">
+        {['الرئيسية', 'خدماتنا', 'أعمالنا', 'شركاء النجاح'].map((item) => (
+          <a key={item} href={`#${item}`} className="text-xs font-bold text-slate-500 hover:text-[#4390b3] transition-colors relative group font-din">
+            {item}
+            <span className="absolute -bottom-1 right-0 w-0 h-0.5 bg-[#4390b3] transition-all duration-300 group-hover:w-full"></span>
+          </a>
+        ))}
+      </div>
+      <button className="md:hidden p-1 text-slate-600"><Menu size={18} /></button>
+    </div>
+  </nav>
+);
 
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const moveCursor = (e: MouseEvent) => {
-      const { clientX, clientY } = e;
-      if (dotRef.current) {
-        dotRef.current.style.left = `${clientX}px`;
-        dotRef.current.style.top = `${clientY}px`;
-      }
-      if (outlineRef.current) {
-        outlineRef.current.animate({
-          left: `${clientX}px`,
-          top: `${clientY}px`
-        }, { duration: 500, fill: "forwards" });
-      }
-    };
-
-    window.addEventListener("mousemove", moveCursor);
-    return () => window.removeEventListener("mousemove", moveCursor);
-  }, []);
+// --- قسم الأعمال (Portfolio Section) ---
+const PortfolioSection = () => {
+  const projects = [
+    { title: "مشروع النخبة", category: "تطوير عقاري", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" },
+    { title: "تطبيق مدى", category: "تكنولوجيا مالية", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" },
+    { title: "منصة تعلم", category: "تعليم إلكتروني", img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80" },
+    { title: "هوية بصرية", category: "تصميم وإبداع", img: "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&w=800&q=80" },
+  ];
 
   return (
-    <>
-      <div ref={dotRef} className="cursor-dot desktop-only"></div>
-      <div ref={outlineRef} className="cursor-outline desktop-only"></div>
-    </>
+    <div id="أعمالنا" className="relative py-32 px-4 bg-slate-50 z-20 overflow-hidden">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#2d2d2d] font-din mb-6 portfolio-title opacity-0 translate-y-10">
+            أحدث <span className="text-[#4390b3]">إبداعاتنا</span>
+          </h2>
+          <p className="text-lg text-slate-500 font-din max-w-2xl mx-auto portfolio-desc opacity-0 translate-y-10">
+            نحول الأفكار إلى مشاريع رقمية استثنائية تترك أثراً.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+          {projects.map((project, index) => (
+            <div 
+              key={index} 
+              className={`portfolio-card group relative rounded-[2rem] overflow-hidden shadow-lg cursor-pointer transform transition-all duration-700 hover:-translate-y-2 hover:shadow-2xl opacity-0 translate-y-20 ${index % 2 !== 0 ? 'md:translate-y-16' : ''}`}
+            >
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity duration-500 group-hover:opacity-90"></div>
+              <img 
+                src={project.img} 
+                alt={project.title} 
+                className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-110"
+              />
+              <div className="absolute bottom-0 right-0 p-8 z-20 w-full transform translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
+                <span className="inline-block px-3 py-1 mb-3 text-xs font-bold text-white bg-[#4390b3] rounded-full font-din opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
+                  {project.category}
+                </span>
+                <h3 className="text-2xl font-bold text-white font-din mb-2">{project.title}</h3>
+                <div className="h-0.5 w-0 bg-[#4390b3] transition-all duration-500 group-hover:w-20"></div>
+              </div>
+              <div className="absolute top-6 left-6 z-20 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 opacity-0 -translate-y-4 transition-all duration-500 group-hover:opacity-100 group-hover:translate-y-0 delay-200">
+                <ArrowDown className="transform -rotate-135" size={20} />
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="text-center mt-24">
+           <button className="px-10 py-4 bg-white text-[#2d2d2d] font-bold rounded-full border border-slate-200 shadow-md hover:shadow-xl hover:border-[#4390b3] hover:text-[#4390b3] transition-all duration-300 font-din portfolio-btn opacity-0 translate-y-10">
+             عرض جميع المشاريع
+           </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-// =========================================
-// 4. THE SMART NEBULA ENGINE (Three.js + GSAP Ticker)
-// =========================================
+// --- المشهد التفاعلي (Scrollytelling) ---
+const AuraScene = () => {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const auraGlowRef = useRef(null);
+  
+  const threeLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+  const gsapLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js');
+  const scrollTriggerLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js');
 
-const SmartNebula = () => {
-  const mountRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    if (!threeLoaded || !gsapLoaded || !scrollTriggerLoaded || !canvasRef.current) return;
 
-  useEffect(() => {
-    if (!mountRef.current) return;
+    const THREE = window.THREE;
+    const gsap = window.gsap;
+    const ScrollTrigger = window.ScrollTrigger;
+    gsap.registerPlugin(ScrollTrigger);
 
-    // --- SETUP ---
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xffffff, 0.001); // Soft atmospheric fog
-
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 40;
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.z = 12;
+    
+    const renderer = new THREE.WebGLRenderer({ 
+      canvas: canvasRef.current, 
+      alpha: true, 
+      antialias: true,
+      powerPreference: "high-performance"
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.innerHTML = '';
-    mountRef.current.appendChild(renderer.domElement);
 
-    // --- PARTICLES (The Nebula) ---
-    const count = 4000;
+    const count = 5000;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    
-    // Colors
-    const c1 = new THREE.Color(BRAND.palette.primary);
-    const c2 = new THREE.Color(BRAND.palette.accent);
+    const aRandomPos = new Float32Array(count * 3);
+    const aTargetPos = new Float32Array(count * 3);
+    const aSize = new Float32Array(count);
+
+    const targetGeom = new THREE.OctahedronGeometry(2.2, 1);
+    const targetVerts = targetGeom.attributes.position.array;
+    const tCount = targetVerts.length / 3;
 
     for (let i = 0; i < count; i++) {
-      // Create a "Cloud" distribution instead of a perfect sphere
-      const r = 20 + Math.random() * 20; // Spread out radius
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
+      aRandomPos[i * 3] = (Math.random() - 0.5) * 40;
+      aRandomPos[i * 3 + 1] = (Math.random() - 0.5) * 40;
+      aRandomPos[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-      const x = r * Math.sin(phi) * Math.cos(theta);
-      const y = r * Math.sin(phi) * Math.sin(theta);
-      const z = r * Math.cos(phi) * 0.5; // Flatten slightly for nebula feel
+      const idx = i % tCount;
+      const jitter = 0.5 + Math.random() * 0.5;
+      aTargetPos[i * 3] = targetVerts[idx * 3] * jitter;
+      aTargetPos[i * 3 + 1] = targetVerts[idx * 3 + 1] * jitter;
+      aTargetPos[i * 3 + 2] = targetVerts[idx * 3 + 2] * jitter;
 
-      positions[i*3] = x;
-      positions[i*3+1] = y;
-      positions[i*3+2] = z;
-
-      // Color Gradient based on position (Fresnel Simulation)
-      const mixedColor = Math.random() > 0.6 ? c1 : c2;
-      colors[i*3] = mixedColor.r;
-      colors[i*3+1] = mixedColor.g;
-      colors[i*3+2] = mixedColor.b;
+      aSize[i] = Math.random() * 2.0 + 0.5;
+      positions[i * 3] = 0; positions[i * 3 + 1] = 0; positions[i * 3 + 2] = 0;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('aRandomPos', new THREE.BufferAttribute(aRandomPos, 3));
+    geometry.setAttribute('aTargetPos', new THREE.BufferAttribute(aTargetPos, 3));
+    geometry.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
 
-    // Glow Material
-    const material = new THREE.PointsMaterial({
-      size: 0.18,
-      vertexColors: true,
+    const material = new THREE.ShaderMaterial({
+      vertexShader: particleVertexShader,
+      fragmentShader: particleFragmentShader,
+      uniforms: {
+        uTime: { value: 0 },
+        uProgress: { value: 0 },
+        uColorPrimary: { value: new THREE.Color('#4390b3') },
+        uColorSecondary: { value: new THREE.Color('#5fc2d0') }
+      },
       transparent: true,
-      opacity: 0.8,
-      blending: THREE.AdditiveBlending // Adds glow when particles overlap
+      depthWrite: false,
+      blending: THREE.AdditiveBlending
     });
 
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    // --- INTERACTION LOGIC (Magnetic + Scroll) ---
-    
-    // Mouse Tracking Variables
-    const mouse = { x: 0, y: 0 };
-    const targetRotation = { x: 0, y: 0 };
+    let isVisible = true;
+    const observer = new IntersectionObserver((entries) => {
+      isVisible = entries[0].isIntersecting;
+    }, { threshold: 0.1 });
+    observer.observe(canvasRef.current);
 
-    const handleMouseMove = (e: MouseEvent) => {
-      // Normalize mouse (-1 to 1)
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-
-    // GSAP Ticker: The Unified Loop
-    // Driving Three.js render loop via GSAP for perfect sync
-    gsap.ticker.add((time, deltaTime, frame) => {
-      // 1. Magnetic Physics (Smooth damping)
-      targetRotation.x += (mouse.y * 0.5 - targetRotation.x) * 0.05;
-      targetRotation.y += (mouse.x * 0.5 - targetRotation.y) * 0.05;
-
-      particles.rotation.x = targetRotation.x + (time * 0.05); // Add constant drift
-      particles.rotation.y = targetRotation.y + (time * 0.03);
-
-      // 2. Pulse Effect (Breathing Aura)
-      const scale = 1 + Math.sin(time * 0.5) * 0.05;
-      particles.scale.set(scale, scale, scale);
-
-      renderer.render(scene, camera);
-    });
-
-    // --- SCROLL TRIGGER (Diving into the Aura) ---
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: document.body,
+          trigger: containerRef.current,
           start: "top top",
-          end: "bottom bottom",
+          end: "+=600%", // مسافة السكرول
           scrub: 1.5,
+          pin: true,
+          anticipatePin: 1
         }
       });
 
-      // Camera Dive
-      tl.to(camera.position, { z: 10, ease: "power2.inOut" }, 0);
-      
-      // Nebula Expansion
-      tl.to(particles.scale, { x: 3, y: 3, z: 3, ease: "none" }, 0);
-    });
+      gsap.to(auraGlowRef.current, {
+        scale: 1.2,
+        opacity: 0.8,
+        duration: 2,
+        repeat: -1,
+        yoyo: true,
+        ease: "sine.inOut"
+      });
 
-    // Resize
+      // المشهد 1: الهيرو (تجمع الذرات)
+      tl.to(material.uniforms.uProgress, { value: 1, duration: 3, ease: "power2.inOut" }, "start");
+      tl.to(".text-1", { opacity: 0, y: -50, filter: 'blur(10px)', duration: 1 }, "start");
+      
+      // المشهد 2: ظهور العنوان "هالتك الفارقة"
+      tl.fromTo(".text-2", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 1 }, "start+=1.5");
+      
+      // المشهد 3: الانتقال للنص الثالث "نضع نجمتك"
+      tl.to(".text-2", { opacity: 0, scale: 1.1, duration: 1 }, "scene3");
+      tl.fromTo(".text-3", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1.5 }, "scene3+=0.5");
+
+      // المشهد 4: الانتقال المباشر لقسم "لماذا أورا" مع تأثير الدخول المتسلسل
+      
+      // أ. إخفاء العناصر السابقة
+      tl.to(".text-3", { opacity: 0, scale: 0.9, duration: 0.5 }, "scene4");
+      tl.to(canvasRef.current, { opacity: 0, duration: 1 }, "scene4");
+      
+      // ب. ظهور حاوية "لماذا أورا" (الخلفية البيضاء)
+      tl.fromTo(".why-aura-fullscreen", 
+        { y: "-30%", opacity: 0 }, 
+        { y: "0%", opacity: 1, duration: 2, ease: "power2.out" }, 
+        "scene4+=0.2"
+      );
+
+      // ج. ظهور العناصر الداخلية بترتيب (Title -> Text -> Message -> Cards)
+      tl.fromTo(".why-tag", 
+        { y: 20, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8, ease: "back.out(1.2)" }, 
+        "-=1.2"
+      );
+      
+      tl.fromTo(".why-title", 
+        { y: 30, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 
+        "-=0.6"
+      );
+      
+      tl.fromTo(".why-text", 
+        { y: 20, opacity: 0 }, 
+        { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 
+        "-=0.6"
+      );
+      
+      tl.fromTo(".why-message", 
+        { x: -30, opacity: 0 }, 
+        { x: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 
+        "-=0.6"
+      );
+      
+      // تحريك الكروت بتتابع (Stagger)
+      tl.fromTo(".why-card", 
+        { x: 50, opacity: 0 }, 
+        { x: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power2.out" }, 
+        "-=0.8"
+      );
+
+      // ============================================
+      // ScrollTrigger for Portfolio Section
+      // ============================================
+      const portfolioTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#أعمالنا", // ID of the portfolio section
+          start: "top 80%", // Start when top of section hits 80% of viewport
+          end: "bottom bottom",
+          toggleActions: "play none none reverse"
+        }
+      });
+
+      portfolioTl
+        .to(".portfolio-title", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" })
+        .to(".portfolio-desc", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, "-=0.6")
+        .to(".portfolio-card", { 
+          opacity: 1, 
+          y: 0, 
+          duration: 1, 
+          stagger: 0.2, // Stagger effect for cards
+          ease: "power3.out" 
+        }, "-=0.4")
+        .to(".portfolio-btn", { opacity: 1, y: 0, duration: 0.8, ease: "back.out(1.7)" }, "-=0.2");
+
+    }, containerRef);
+
+    const clock = new THREE.Clock();
+    const animate = () => {
+      if (isVisible) {
+        const time = clock.getElapsedTime();
+        material.uniforms.uTime.value = time;
+        particles.rotation.y = time * 0.05;
+        renderer.render(scene, camera);
+      }
+      requestAnimationFrame(animate);
+    };
+    animate();
+
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
@@ -368,229 +378,248 @@ const SmartNebula = () => {
     window.addEventListener('resize', handleResize);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
-      gsap.ticker.remove(() => {}); // Generic removal, cleaner in v3
-      mountRef.current?.removeChild(renderer.domElement);
-      renderer.dispose();
+      observer.disconnect();
       ctx.revert();
+      renderer.dispose();
     };
-  }, []);
-
-  return <div id="webgl-nebula" ref={mountRef}></div>;
-};
-
-// =========================================
-// 5. UI COMPONENTS
-// =========================================
-
-const IntroScreen = ({ onComplete }: { onComplete: () => void }) => {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setProgress(old => {
-        if (old >= 100) {
-          clearInterval(interval);
-          setTimeout(onComplete, 800);
-          return 100;
-        }
-        return old + 2;
-      });
-    }, 20);
-    return () => clearInterval(interval);
-  }, []);
+  }, [threeLoaded, gsapLoaded, scrollTriggerLoaded]);
 
   return (
-    <motion.div 
-      initial={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)" }}
-      transition={{ duration: 0.8 }}
-      className="intro-overlay"
-    >
-      <div className="intro-warning">
-        <Lightbulb size={18} style={{display:'inline', marginLeft:'10px'}} />
-        {BRAND.content.intro.warning}
+    <div ref={containerRef} className="relative w-full h-screen bg-[#F8F8F8]">
+      
+      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none overflow-hidden">
+        <div ref={auraGlowRef} className="w-[70vw] h-[70vw] rounded-full bg-gradient-to-tr from-[#4390b3]/15 via-[#5fc2d0]/10 to-transparent blur-[100px] opacity-60"></div>
+        <div className="absolute inset-0 bg-radial-gradient-vignette opacity-30"></div>
       </div>
-      <div className="intro-counter">{progress}%</div>
-      <p style={{marginTop:'1rem', color: BRAND.palette.platinum, letterSpacing:'2px'}}>{BRAND.content.intro.loading}</p>
-    </motion.div>
-  );
-};
 
-const Navbar = () => {
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-        <div style={{width:12, height:12, background:BRAND.palette.primary, borderRadius:'50%'}}></div>
-        <span style={{fontSize:'1.5rem', fontWeight:'800'}}>AURA</span>
-      </div>
-      <div className="desktop-only" style={{gap:'2rem'}}>
-        {['الرؤية', 'الخدمات', 'الأعمال', 'تواصل'].map(item => (
-          <a key={item} href={`#${item}`} className="nav-link" style={{textDecoration:'none', color:BRAND.palette.dark}}>{item}</a>
-        ))}
-      </div>
-      <button className="btn-primary desktop-only">{BRAND.content.cta.main}</button>
-      <button className="mobile-only" style={{background:'none', border:'none'}}><Menu size={28}/></button>
-    </nav>
-  );
-};
-
-const Hero = () => {
-  return (
-    <section className="full-screen section" id="الرؤية">
-      <div className="container" style={{textAlign:'center'}}>
-        <motion.div 
-          initial={{opacity:0, y:50}} animate={{opacity:1, y:0}} 
-          transition={{duration:1.2, ease:[0.22, 1, 0.36, 1]}}
-        >
-          <div style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'0.6rem 1.8rem', background:'#f1f5f9', borderRadius:'100px', marginBottom:'2.5rem', color:BRAND.palette.primary, fontWeight:'700', fontSize:'0.9rem'}}>
-            <Sparkles size={16}/> {BRAND.content.hero.badge}
+      <canvas ref={canvasRef} className="absolute inset-0 z-1 w-full h-full transition-opacity duration-1000" />
+      
+      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center px-4 pointer-events-none">
+        
+        <div className="text-1 absolute transition-opacity duration-500">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#4390b3]/20 bg-white/70 backdrop-blur-md text-[#4390b3] font-bold text-xs mb-6 shadow-sm">
+            <Sparkles size={14} className="text-[#57a8b4]" />
+            <span>نصنع جوهرك الرقمي</span>
           </div>
-          
-          <h1 style={{maxWidth:'1000px', margin:'0 auto 2rem auto'}}>
-            {/* Kinetic Word Stagger */}
-            <span className="kinetic-word">{BRAND.content.hero.titlePart1}</span>
-            <br />
-            <span className="kinetic-word gradient-text">{BRAND.content.hero.titlePart2}</span>
+          <h1 className="text-5xl md:text-8xl lg:text-9xl font-bold text-[#2d2d2d] leading-[1.0] font-din">
+            أثرٌ لا <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#57a8b4] to-[#5fc2d0]">يُمحى</span>
           </h1>
-          
-          <p style={{margin:'0 auto 3.5rem auto'}}>
-            {BRAND.content.hero.desc}
-          </p>
+          <p className="mt-6 text-xl text-slate-500 font-medium font-din">حرك الماوس وانظر كيف تتشكل الرؤية</p>
+        </div>
 
-          <div style={{display:'flex', justifyContent:'center', gap:'1.5rem'}}>
-            <button className="btn-primary">
-              {BRAND.content.cta.main} <ArrowRight size={20}/>
-            </button>
+        <div className="text-2 absolute opacity-0 w-full max-w-4xl px-4">
+          <h2 className="text-4xl md:text-7xl font-bold text-[#2d2d2d] font-din mb-6 leading-tight">
+            هالتك <span className="text-[#4390b3]">الفارقة</span>
+          </h2>
+          <p className="text-lg md:text-xl text-slate-600 font-din bg-white/60 backdrop-blur-sm p-4 rounded-2xl inline-block shadow-sm">
+            حيث يلتقي الإبداع بالاستراتيجية ليصنع نجماً ساطعاً في السوق.
+          </p>
+        </div>
+
+        <div className="text-3 absolute opacity-0 w-full max-w-4xl px-4">
+          <h2 className="text-3xl md:text-6xl font-bold text-[#2d2d2d] font-din mb-6">
+            نضع نجمتك في<br/><span className="text-[#57a8b4]">سماء من يُقدرها</span>
+          </h2>
+        </div>
+
+        {/* قسم لماذا أورا - Fullscreen Overlay - مرتب العناصر */}
+        <div className="why-aura-fullscreen absolute inset-0 z-40 bg-white -translate-y-full opacity-0 pointer-events-auto overflow-y-auto no-scrollbar">
+          <div className="min-h-full w-full max-w-7xl mx-auto px-4 py-8 md:py-16 flex flex-col justify-center">
+            
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
+              
+              {/* المحتوى النصي */}
+              <div className="text-right order-1 lg:order-none">
+                <div className="why-tag inline-flex items-center gap-3 mb-6 bg-[#4390b3]/5 px-5 py-2 rounded-full border border-[#4390b3]/10 opacity-0">
+                  <Sparkles size={18} className="text-[#4390b3]" />
+                  <span className="text-[#4390b3] font-bold text-sm font-din tracking-wide uppercase">لماذا تختار أورا؟</span>
+                </div>
+                
+                <h2 className="why-title text-3xl md:text-5xl lg:text-6xl font-bold text-[#2d2d2d] font-din mb-8 leading-[1.2] opacity-0">
+                  بريق مبتكر في <br/>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#4390b3] to-[#5fc2d0]">عالم التسويق</span>
+                </h2>
+
+                <p className="why-text text-base md:text-lg lg:text-xl text-slate-600 font-din leading-relaxed mb-10 pl-4 md:pl-8 border-r-4 border-[#5fc2d0]/30 pr-6 text-justify opacity-0">
+                  تسعى أورا لتكون الهالة الفارقة التي تميز مشروعك. منذ انطلاقنا، عملنا بجد وفق خطط مدروسة لنطور مفهوم صناعة الدعاية والإعلان والتسويق الرقمي في الشرق الأوسط. نحن نؤمن بكل فكرة تسعى للتألق، ونحولها من مجرد خاطرة إلى واقع ملموس ويسمع ويرى.
+                </p>
+
+                <div className="why-message bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-6 transform hover:-translate-y-1 transition-transform duration-300 opacity-0">
+                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-[#4390b3] to-[#5fc2d0] flex items-center justify-center text-white shadow-lg shrink-0">
+                     <Gem size={28} />
+                   </div>
+                   <div>
+                     <h4 className="font-bold text-[#4390b3] mb-1 font-din text-lg">رسالتنا</h4>
+                     <p className="text-slate-600 font-din text-base md:text-lg">
+                       أن نكون أقرب لعملائك، لتظهر وتصل وتحقق ما يناسب طموحك.
+                     </p>
+                   </div>
+                </div>
+              </div>
+
+              {/* الكروت */}
+              <div className="why-cards flex flex-col gap-4 md:gap-6 order-2 lg:order-none">
+                 <div className="why-card bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 relative overflow-hidden group hover:border-[#4390b3]/30 transition-all duration-300 opacity-0">
+                    <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
+                    <div className="relative z-10 flex items-start gap-4 md:gap-6">
+                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#eaf6fa] flex items-center justify-center text-[#4390b3] group-hover:scale-110 transition-transform duration-300 shrink-0">
+                         <Lightbulb size={28} />
+                      </div>
+                      <div>
+                          <h4 className="font-bold text-xl md:text-2xl text-[#2d2d2d] font-din mb-2">إبداع لا محدود</h4>
+                          <p className="text-slate-500 font-din text-base md:text-lg">نبتكر حلولاً إعلانية تكسر النمطية وتلامس احتياج جمهورك بدقة.</p>
+                      </div>
+                    </div>
+                 </div>
+
+                 <div className="why-card bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 relative overflow-hidden group hover:border-[#5fc2d0]/30 transition-all duration-300 lg:translate-x-8 opacity-0">
+                    <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
+                    <div className="relative z-10 flex items-start gap-4 md:gap-6">
+                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#f0fcfd] flex items-center justify-center text-[#5fc2d0] group-hover:scale-110 transition-transform duration-300 shrink-0">
+                         <Target size={28} />
+                      </div>
+                      <div>
+                          <h4 className="font-bold text-xl md:text-2xl text-[#2d2d2d] font-din mb-2">خطط مدروسة</h4>
+                          <p className="text-slate-500 font-din text-base md:text-lg">لا نترك شيئاً للصدفة، كل خطوة مبنية على بيانات وتحليلات دقيقة.</p>
+                      </div>
+                    </div>
+                 </div>
+
+                 <div className="why-card bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 relative overflow-hidden group hover:border-[#57a8b4]/30 transition-all duration-300 opacity-0">
+                    <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
+                    <div className="relative z-10 flex items-start gap-4 md:gap-6">
+                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#f2f9fa] flex items-center justify-center text-[#57a8b4] group-hover:scale-110 transition-transform duration-300 shrink-0">
+                         <Rocket size={28} />
+                      </div>
+                      <div>
+                          <h4 className="font-bold text-xl md:text-2xl text-[#2d2d2d] font-din mb-2">واقع ملموس</h4>
+                          <p className="text-slate-500 font-din text-base md:text-lg">نحول الأفكار المجردة إلى نتائج وأرقام يمكنك رؤيتها وقياس أثرها.</p>
+                      </div>
+                    </div>
+                 </div>
+              </div>
+
+            </div>
           </div>
-        </motion.div>
+        </div>
+
       </div>
-    </section>
+    </div>
   );
 };
 
-const Services = () => {
+// --- قسم الخدمات ---
+const ServicesSection = () => {
+  const services = [
+    { t: "استراتيجيات التسويق", i: <Target />, c: "#4390b3" },
+    { t: "الهوية البصرية", i: <Fingerprint />, c: "#57a8b4" },
+    { t: "إدارة الحملات", i: <Zap />, c: "#4390b3" },
+    { t: "الإنتاج الإبداعي", i: <Layers />, c: "#57a8b4" }
+  ];
+
   return (
-    <section className="section" id="الخدمات">
-      <div className="container">
-        <div style={{marginBottom:'5rem'}}>
-          <h2>هندسة <span className="gradient-text">الحلول</span></h2>
+    <div className="relative py-32 px-4 bg-white z-20">
+      <div className="max-w-6xl mx-auto">
+        <div className="text-center mb-20">
+          <h2 className="text-4xl md:text-5xl font-bold text-[#2d2d2d] font-din mb-6">
+            منهجية <span className="text-[#4390b3]">التأثير</span>
+          </h2>
+          <p className="text-lg text-slate-500 font-din max-w-2xl mx-auto">
+            نحول الرؤية إلى واقع ملموس عبر خطوات مدروسة بدقة.
+          </p>
         </div>
-        <div className="bento-grid">
-          {[
-            {t:'التحول الرقمي', d:'منصات مؤسسية متكاملة.', i:Layers, c:'col-span-2'},
-            {t:'تسويق الأداء', d:'إدارة حملات ROI مرتفع.', i:Target, c:'span-1'},
-            {t:'تطوير WebGL', d:'تجارب ثلاثية الأبعاد.', i:Code, c:'span-1'},
-            {t:'استراتيجية AEO', d:'تصدر نتائج البحث الذكي.', i:Search, c:'col-span-2'},
-          ].map((s,i) => (
-            <motion.div 
-              key={i} 
-              className={`card ${s.c}`}
-              initial={{opacity:0, y:30}}
-              whileInView={{opacity:1, y:0}}
-              viewport={{once:true}}
-              transition={{delay:i*0.1}}
-            >
-              <div style={{marginBottom:'2rem'}}>
-                <div className="icon-box" style={{width:50, height:50, background:'#f0f9ff', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'1.5rem', color:BRAND.palette.primary}}>
-                  <s.i size={24}/>
-                </div>
-                <h3>{s.t}</h3>
-                <p style={{fontSize:'1rem'}}>{s.d}</p>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {services.map((s, i) => (
+            <div key={i} className="group p-8 rounded-[2rem] bg-[#F8F8F8] hover:bg-white border border-transparent hover:border-[#4390b3]/20 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer relative overflow-hidden">
+              <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
+              <div 
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6 text-2xl shadow-lg transition-transform duration-500 group-hover:scale-110 relative z-10"
+                style={{ backgroundColor: s.c }}
+              >
+                {s.i}
               </div>
-              <div style={{display:'flex', justifyContent:'flex-end'}}>
-                <ArrowUpRight size={24} color={BRAND.palette.primary}/>
-              </div>
-            </motion.div>
+              <h3 className="text-xl font-bold text-[#2d2d2d] mb-3 font-din relative z-10">{s.t}</h3>
+              <p className="text-sm text-slate-500 font-din relative z-10">نبتكر حلولاً مخصصة تضمن وصول رسالتك بوضوح.</p>
+            </div>
           ))}
         </div>
       </div>
-    </section>
-  );
-};
-
-const Contact = () => {
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); alert("تم الإرسال!"); };
-  return (
-    <section className="section container" id="تواصل">
-      <div className="bento-grid">
-        <div className="col-span-2">
-          <h2>جاهز <span className="gradient-text">للانطلاق؟</span></h2>
-          <p>تواصل معنا اليوم لبدء رحلة النجاح.</p>
-          <div style={{marginTop:'2rem'}}>
-             <div style={{display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem'}}>
-               <Phone color={BRAND.palette.primary} />
-               <span style={{fontWeight:'700'}}>+966 50 000 0000</span>
-             </div>
-             <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
-               <MapPin color={BRAND.palette.primary} />
-               <span style={{fontWeight:'700'}}>الرياض، المملكة العربية السعودية</span>
-             </div>
-          </div>
-        </div>
-        <div className="card">
-          <form onSubmit={handleSubmit}>
-            <input type="text" placeholder="الاسم" style={{width:'100%', padding:'1rem', marginBottom:'1rem', borderRadius:'8px', border:'1px solid #e2e8f0', background:'#f8fafc'}} />
-            <input type="email" placeholder="البريد" style={{width:'100%', padding:'1rem', marginBottom:'1rem', borderRadius:'8px', border:'1px solid #e2e8f0', background:'#f8fafc'}} />
-            <button className="btn-primary" style={{width:'100%'}}>إرسال <Send size={18}/></button>
-          </form>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-const Footer = () => (
-  <footer style={{background:BRAND.palette.dark, color:'white', padding:'6rem 0 2rem'}}>
-    <div className="container" style={{textAlign:'center'}}>
-      <h2 style={{color:'white', fontSize:'2rem', marginBottom:'1rem'}}>AURA.</h2>
-      <p style={{color:'#94a3b8'}}>نصنع المستقبل الرقمي.</p>
-      <div style={{marginTop:'3rem', paddingTop:'2rem', borderTop:'1px solid #334155', color:'#64748b', fontSize:'0.9rem'}}>© 2026 Aura Holding. All Rights Reserved.</div>
     </div>
-  </footer>
-);
+  );
+};
 
-// =========================================
-// 6. MAIN ENTRY
-// =========================================
-
-export default function AuraPage() {
-  const [loaded, setLoaded] = useState(false);
-
-  useEffect(() => {
-    setTimeout(() => setLoaded(true), 1500);
-  }, []);
-
+// --- التطبيق الرئيسي ---
+export default function App() {
   return (
-    <div className={fontMain.className} dir="rtl">
-      <style dangerouslySetInnerHTML={{ __html: styles }} />
-      <Script id="json-ld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
-      
-      <AnimatePresence>
-        {!loaded && <IntroScreen onComplete={() => setLoaded(true)} />}
-      </AnimatePresence>
+    <div className="text-[#2d2d2d] bg-[#F8F8F8] overflow-x-hidden" dir="rtl">
+      <style>{`
+        @font-face {
+          font-family: 'DINNextLTArabic';
+          src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Regular.woff2') format('woff2');
+          font-weight: normal;
+          font-style: normal;
+          font-display: swap;
+        }
+        @font-face {
+          font-family: 'DINNextLTArabic';
+          src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Bold-2.woff2') format('woff2');
+          font-weight: bold;
+          font-style: normal;
+          font-display: swap;
+        }
+        
+        body { font-family: 'DINNextLTArabic', sans-serif; margin: 0; }
+        .font-din { font-family: 'DINNextLTArabic', sans-serif !important; }
+        
+        .bg-radial-gradient-vignette {
+          background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.03) 100%);
+        }
 
-      {loaded && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
-          <CustomCursor />
-          <SmartNebula />
-          <Navbar />
-          <main style={{position:'relative', zIndex:5}}>
-            <Hero />
-            <Services />
-            <Contact />
-          </main>
-          <Footer />
-        </motion.div>
-      )}
+        /* نقش خطي هندسي للكروت */
+        .bg-pattern-lines {
+          background-image: repeating-linear-gradient(
+            45deg,
+            #4390b3 0,
+            #4390b3 1px,
+            transparent 0,
+            transparent 50%
+          );
+          background-size: 10px 10px;
+        }
+
+        .water-nav { 
+          background: rgba(255, 255, 255, 0.6); 
+          backdrop-filter: blur(20px) saturate(180%); 
+          border: 1px solid rgba(255, 255, 255, 0.8); 
+          box-shadow: 0 4px 30px rgba(0,0,0,0.03);
+          border-radius: 40px; 
+        }
+        
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #F8F8F8; }
+        ::-webkit-scrollbar-thumb { background: #4390b3; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2d6a84; }
+
+        /* إخفاء شريط التمرير لقسم لماذا أورا */
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+      `}</style>
+      
+      <Navbar />
+      <AuraScene />
+      <PortfolioSection />
+      <ServicesSection />
+      
+      <div className="h-24 bg-white flex items-center justify-center border-t border-slate-100">
+        <p className="text-xs text-slate-400 font-din">© 2026 Aura Agency. All Rights Reserved.</p>
+      </div>
     </div>
   );
 }
