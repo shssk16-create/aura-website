@@ -1,8 +1,10 @@
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Menu, ArrowDown, Zap, Target, BarChart3, Fingerprint, Sparkles, Gem, Users, Layers, Lightbulb, Rocket, Plus } from 'lucide-react';
+'use client';
 
-// --- مساعد تحميل المكتبات ---
-const useScript = (url) => {
+import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
+import { Menu, ArrowDown, Zap, Target, BarChart3, Fingerprint, Sparkles, Gem, Users, Layers, Lightbulb, Rocket, Plus, ArrowUpRight } from 'lucide-react';
+
+// --- مساعد تحميل المكتبات (CDN Loader) ---
+const useScript = (url: string) => {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     const script = document.createElement('script');
@@ -10,7 +12,12 @@ const useScript = (url) => {
     script.async = true;
     script.onload = () => setLoaded(true);
     document.head.appendChild(script);
-    return () => { document.head.removeChild(script); };
+    return () => {
+      // Clean up to prevent duplicate scripts if component remounts
+      if(document.head.contains(script)) {
+        document.head.removeChild(script);
+      }
+    };
   }, [url]);
   return loaded;
 };
@@ -113,55 +120,134 @@ const Navbar = () => (
   </nav>
 );
 
-// --- قسم الأعمال (Portfolio Section) ---
-const PortfolioSection = () => {
+// --- قسم الأعمال (Kinetic Portfolio Section) ---
+const PortfolioSection = ({ isGsapLoaded }: { isGsapLoaded: boolean }) => {
+  const containerRef = useRef(null);
+  
+  // تفعيل تأثيرات GSAP عند التحميل
+  useLayoutEffect(() => {
+    if (!isGsapLoaded || !containerRef.current) return;
+    const gsap = (window as any).gsap;
+    const ScrollTrigger = (window as any).ScrollTrigger;
+
+    const ctx = gsap.context(() => {
+      // 1. Skew Effect on Scroll (انحناء أثناء التمرير السريع)
+      let proxy = { skew: 0 };
+      const skewSetter = gsap.quickSetter(".portfolio-grid", "skewY", "deg");
+      const clamp = gsap.utils.clamp(-5, 5); // حدد زاوية الميلان
+
+      ScrollTrigger.create({
+        trigger: containerRef.current,
+        onUpdate: (self: any) => {
+          let skew = clamp(self.getVelocity() / -300);
+          // اجعل الحركة أنعم
+          if (Math.abs(skew) > Math.abs(proxy.skew)) {
+            proxy.skew = skew;
+            gsap.to(proxy, {
+              skew: 0, 
+              duration: 0.8, 
+              ease: "power3", 
+              overwrite: true, 
+              onUpdate: () => skewSetter(proxy.skew)
+            });
+          }
+        }
+      });
+
+      // 2. Parallax Effect for Images (الصور تتحرك بسرعة مختلفة عن الإطار)
+      const images = gsap.utils.toArray(".project-img");
+      images.forEach((img: any) => {
+        gsap.to(img, {
+          yPercent: 20,
+          ease: "none",
+          scrollTrigger: {
+            trigger: img.parentElement,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: true
+          } 
+        });
+      });
+
+      // 3. Reveal Animation (ظهور متتابع)
+      gsap.from(".project-card", {
+        y: 100,
+        opacity: 0,
+        duration: 1,
+        stagger: 0.2,
+        ease: "power4.out",
+        scrollTrigger: {
+          trigger: ".portfolio-grid",
+          start: "top 75%",
+        }
+      });
+
+    }, containerRef);
+
+    return () => ctx.revert();
+  }, [isGsapLoaded]);
+
   const projects = [
-    { title: "مشروع النخبة", category: "تطوير عقاري", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" },
-    { title: "تطبيق مدى", category: "تكنولوجيا مالية", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" },
-    { title: "منصة تعلم", category: "تعليم إلكتروني", img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80" },
-    { title: "هوية بصرية", category: "تصميم وإبداع", img: "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&w=800&q=80" },
+    { title: "نيوم المستقبل", category: "استراتيجية رقمية", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" },
+    { title: "مدى تك", category: "تطوير تطبيقات", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" },
+    { title: "أكاديمية طويق", category: "تعليم إلكتروني", img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80" },
+    { title: "موسم الرياض", category: "هوية بصرية", img: "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&w=800&q=80" },
   ];
 
   return (
-    <div id="أعمالنا" className="relative py-32 px-4 bg-slate-50 z-20 overflow-hidden">
+    <div id="أعمالنا" ref={containerRef} className="relative py-32 px-4 bg-[#f8fafc] z-20 overflow-hidden">
       <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#2d2d2d] font-din mb-6 portfolio-title opacity-0 translate-y-10">
-            أحدث <span className="text-[#4390b3]">إبداعاتنا</span>
-          </h2>
-          <p className="text-lg text-slate-500 font-din max-w-2xl mx-auto portfolio-desc opacity-0 translate-y-10">
-            نحول الأفكار إلى مشاريع رقمية استثنائية تترك أثراً.
-          </p>
+        <div className="flex justify-between items-end mb-20 px-4">
+          <div>
+            <h2 className="text-5xl md:text-7xl font-bold text-[#2d2d2d] font-din mb-2">
+              أعمال <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#4390b3] to-[#5fc2d0]">فارقة</span>
+            </h2>
+            <p className="text-lg text-slate-500 font-din">قصص نجاح صنعناها بشغف ودقة.</p>
+          </div>
+          <div className="hidden md:block">
+             <button className="flex items-center gap-2 text-[#4390b3] font-bold font-din hover:gap-4 transition-all">
+                مشاهدة الأرشيف <ArrowUpRight size={20}/>
+             </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+        {/* The Grid Container for Skew Effect */}
+        <div className="portfolio-grid grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 will-change-transform">
           {projects.map((project, index) => (
             <div 
               key={index} 
-              className={`portfolio-card group relative rounded-[2rem] overflow-hidden shadow-lg cursor-pointer transform transition-all duration-700 hover:-translate-y-2 hover:shadow-2xl opacity-0 translate-y-20 ${index % 2 !== 0 ? 'md:translate-y-16' : ''}`}
+              className={`project-card group relative rounded-[2.5rem] overflow-hidden bg-white shadow-2xl shadow-slate-200/50 cursor-pointer ${index % 2 !== 0 ? 'md:translate-y-24' : ''}`}
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity duration-500 group-hover:opacity-90"></div>
-              <img 
-                src={project.img} 
-                alt={project.title} 
-                className="w-full h-[400px] object-cover transition-transform duration-700 group-hover:scale-110"
-              />
-              <div className="absolute bottom-0 right-0 p-8 z-20 w-full transform translate-y-4 transition-transform duration-500 group-hover:translate-y-0">
-                <span className="inline-block px-3 py-1 mb-3 text-xs font-bold text-white bg-[#4390b3] rounded-full font-din opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-100">
-                  {project.category}
-                </span>
-                <h3 className="text-2xl font-bold text-white font-din mb-2">{project.title}</h3>
-                <div className="h-0.5 w-0 bg-[#4390b3] transition-all duration-500 group-hover:w-20"></div>
+              {/* Image Container with Overflow Hidden for Parallax */}
+              <div className="relative h-[500px] overflow-hidden">
+                <div className="absolute inset-0 bg-[#0f172a]/20 group-hover:bg-[#0f172a]/0 transition-colors duration-500 z-10"></div>
+                <img 
+                  src={project.img} 
+                  alt={project.title} 
+                  className="project-img w-full h-[120%] object-cover object-center transform -translate-y-[10%]"
+                />
               </div>
-              <div className="absolute top-6 left-6 z-20 w-12 h-12 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/20 opacity-0 -translate-y-4 transition-all duration-500 group-hover:opacity-100 group-hover:translate-y-0 delay-200">
-                <ArrowDown className="transform -rotate-135" size={20} />
+              
+              {/* Content Overlay */}
+              <div className="absolute bottom-0 left-0 right-0 p-8 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                <div className="flex justify-between items-end transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
+                  <div>
+                    <span className="inline-block px-4 py-1.5 mb-3 text-xs font-bold text-white border border-white/30 rounded-full font-din backdrop-blur-sm">
+                      {project.category}
+                    </span>
+                    <h3 className="text-3xl font-bold text-white font-din">{project.title}</h3>
+                  </div>
+                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <ArrowUpRight />
+                  </div>
+                </div>
               </div>
             </div>
           ))}
         </div>
         
-        <div className="text-center mt-24">
-           <button className="px-10 py-4 bg-white text-[#2d2d2d] font-bold rounded-full border border-slate-200 shadow-md hover:shadow-xl hover:border-[#4390b3] hover:text-[#4390b3] transition-all duration-300 font-din portfolio-btn opacity-0 translate-y-10">
+        <div className="text-center mt-32 md:hidden">
+           <button className="px-10 py-4 bg-white text-[#2d2d2d] font-bold rounded-full border border-slate-200 shadow-md font-din">
              عرض جميع المشاريع
            </button>
         </div>
@@ -170,22 +256,18 @@ const PortfolioSection = () => {
   );
 };
 
-// --- المشهد التفاعلي (Scrollytelling) ---
-const AuraScene = () => {
+// --- المشهد التفاعلي (Three.js Aura) ---
+const AuraScene = ({ areScriptsLoaded }: { areScriptsLoaded: boolean }) => {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const auraGlowRef = useRef(null);
-  
-  const threeLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-  const gsapLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js');
-  const scrollTriggerLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js');
 
   useLayoutEffect(() => {
-    if (!threeLoaded || !gsapLoaded || !scrollTriggerLoaded || !canvasRef.current) return;
+    if (!areScriptsLoaded || !canvasRef.current) return;
 
-    const THREE = window.THREE;
-    const gsap = window.gsap;
-    const ScrollTrigger = window.ScrollTrigger;
+    const THREE = (window as any).THREE;
+    const gsap = (window as any).gsap;
+    const ScrollTrigger = (window as any).ScrollTrigger;
     gsap.registerPlugin(ScrollTrigger);
 
     const scene = new THREE.Scene();
@@ -276,85 +358,33 @@ const AuraScene = () => {
         ease: "sine.inOut"
       });
 
-      // المشهد 1: الهيرو (تجمع الذرات)
+      // المشهد 1: الهيرو
       tl.to(material.uniforms.uProgress, { value: 1, duration: 3, ease: "power2.inOut" }, "start");
       tl.to(".text-1", { opacity: 0, y: -50, filter: 'blur(10px)', duration: 1 }, "start");
       
-      // المشهد 2: ظهور العنوان "هالتك الفارقة"
+      // المشهد 2
       tl.fromTo(".text-2", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 1 }, "start+=1.5");
       
-      // المشهد 3: الانتقال للنص الثالث "نضع نجمتك"
+      // المشهد 3
       tl.to(".text-2", { opacity: 0, scale: 1.1, duration: 1 }, "scene3");
       tl.fromTo(".text-3", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1.5 }, "scene3+=0.5");
 
-      // المشهد 4: الانتقال المباشر لقسم "لماذا أورا" مع تأثير الدخول المتسلسل
-      
-      // أ. إخفاء العناصر السابقة
+      // المشهد 4: الانتقال المباشر لقسم "لماذا أورا"
       tl.to(".text-3", { opacity: 0, scale: 0.9, duration: 0.5 }, "scene4");
       tl.to(canvasRef.current, { opacity: 0, duration: 1 }, "scene4");
       
-      // ب. ظهور حاوية "لماذا أورا" (الخلفية البيضاء)
       tl.fromTo(".why-aura-fullscreen", 
         { y: "-30%", opacity: 0 }, 
         { y: "0%", opacity: 1, duration: 2, ease: "power2.out" }, 
         "scene4+=0.2"
       );
 
-      // ج. ظهور العناصر الداخلية بترتيب (Title -> Text -> Message -> Cards)
-      tl.fromTo(".why-tag", 
-        { y: 20, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.8, ease: "back.out(1.2)" }, 
-        "-=1.2"
-      );
-      
-      tl.fromTo(".why-title", 
+      // Animation for "Why Aura" content
+      tl.fromTo(".why-content", 
         { y: 30, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 
-        "-=0.6"
+        { y: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power2.out" }, 
+        "-=1.5"
       );
-      
-      tl.fromTo(".why-text", 
-        { y: 20, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 
-        "-=0.6"
-      );
-      
-      tl.fromTo(".why-message", 
-        { x: -30, opacity: 0 }, 
-        { x: 0, opacity: 1, duration: 0.8, ease: "power2.out" }, 
-        "-=0.6"
-      );
-      
-      // تحريك الكروت بتتابع (Stagger)
-      tl.fromTo(".why-card", 
-        { x: 50, opacity: 0 }, 
-        { x: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power2.out" }, 
-        "-=0.8"
-      );
-
-      // ============================================
-      // ScrollTrigger for Portfolio Section
-      // ============================================
-      const portfolioTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: "#أعمالنا", // ID of the portfolio section
-          start: "top 80%", // Start when top of section hits 80% of viewport
-          end: "bottom bottom",
-          toggleActions: "play none none reverse"
-        }
-      });
-
-      portfolioTl
-        .to(".portfolio-title", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" })
-        .to(".portfolio-desc", { opacity: 1, y: 0, duration: 0.8, ease: "power3.out" }, "-=0.6")
-        .to(".portfolio-card", { 
-          opacity: 1, 
-          y: 0, 
-          duration: 1, 
-          stagger: 0.2, // Stagger effect for cards
-          ease: "power3.out" 
-        }, "-=0.4")
-        .to(".portfolio-btn", { opacity: 1, y: 0, duration: 0.8, ease: "back.out(1.7)" }, "-=0.2");
 
     }, containerRef);
 
@@ -383,7 +413,7 @@ const AuraScene = () => {
       ctx.revert();
       renderer.dispose();
     };
-  }, [threeLoaded, gsapLoaded, scrollTriggerLoaded]);
+  }, [areScriptsLoaded]);
 
   return (
     <div ref={containerRef} className="relative w-full h-screen bg-[#F8F8F8]">
@@ -423,83 +453,54 @@ const AuraScene = () => {
           </h2>
         </div>
 
-        {/* قسم لماذا أورا - Fullscreen Overlay - مرتب العناصر */}
+        {/* قسم لماذا أورا */}
         <div className="why-aura-fullscreen absolute inset-0 z-40 bg-white -translate-y-full opacity-0 pointer-events-auto overflow-y-auto no-scrollbar">
           <div className="min-h-full w-full max-w-7xl mx-auto px-4 py-8 md:py-16 flex flex-col justify-center">
-            
             <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
-              
-              {/* المحتوى النصي */}
               <div className="text-right order-1 lg:order-none">
-                <div className="why-tag inline-flex items-center gap-3 mb-6 bg-[#4390b3]/5 px-5 py-2 rounded-full border border-[#4390b3]/10 opacity-0">
+                <div className="why-content inline-flex items-center gap-3 mb-6 bg-[#4390b3]/5 px-5 py-2 rounded-full border border-[#4390b3]/10 opacity-0">
                   <Sparkles size={18} className="text-[#4390b3]" />
                   <span className="text-[#4390b3] font-bold text-sm font-din tracking-wide uppercase">لماذا تختار أورا؟</span>
                 </div>
-                
-                <h2 className="why-title text-3xl md:text-5xl lg:text-6xl font-bold text-[#2d2d2d] font-din mb-8 leading-[1.2] opacity-0">
+                <h2 className="why-content text-3xl md:text-5xl lg:text-6xl font-bold text-[#2d2d2d] font-din mb-8 leading-[1.2] opacity-0">
                   بريق مبتكر في <br/>
                   <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#4390b3] to-[#5fc2d0]">عالم التسويق</span>
                 </h2>
-
-                <p className="why-text text-base md:text-lg lg:text-xl text-slate-600 font-din leading-relaxed mb-10 pl-4 md:pl-8 border-r-4 border-[#5fc2d0]/30 pr-6 text-justify opacity-0">
-                  تسعى أورا لتكون الهالة الفارقة التي تميز مشروعك. منذ انطلاقنا، عملنا بجد وفق خطط مدروسة لنطور مفهوم صناعة الدعاية والإعلان والتسويق الرقمي في الشرق الأوسط. نحن نؤمن بكل فكرة تسعى للتألق، ونحولها من مجرد خاطرة إلى واقع ملموس ويسمع ويرى.
+                <p className="why-content text-base md:text-lg lg:text-xl text-slate-600 font-din leading-relaxed mb-10 pl-4 md:pl-8 border-r-4 border-[#5fc2d0]/30 pr-6 text-justify opacity-0">
+                  تسعى أورا لتكون الهالة الفارقة التي تميز مشروعك. منذ انطلاقنا، عملنا بجد وفق خطط مدروسة لنطور مفهوم صناعة الدعاية والإعلان والتسويق الرقمي.
                 </p>
-
-                <div className="why-message bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-6 transform hover:-translate-y-1 transition-transform duration-300 opacity-0">
-                   <div className="w-14 h-14 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-[#4390b3] to-[#5fc2d0] flex items-center justify-center text-white shadow-lg shrink-0">
+                <div className="why-content bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-6 opacity-0">
+                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#4390b3] to-[#5fc2d0] flex items-center justify-center text-white shadow-lg shrink-0">
                      <Gem size={28} />
                    </div>
                    <div>
                      <h4 className="font-bold text-[#4390b3] mb-1 font-din text-lg">رسالتنا</h4>
-                     <p className="text-slate-600 font-din text-base md:text-lg">
-                       أن نكون أقرب لعملائك، لتظهر وتصل وتحقق ما يناسب طموحك.
-                     </p>
+                     <p className="text-slate-600 font-din text-base md:text-lg">أن نكون أقرب لعملائك، لتظهر وتصل وتحقق ما يناسب طموحك.</p>
                    </div>
                 </div>
               </div>
-
-              {/* الكروت */}
-              <div className="why-cards flex flex-col gap-4 md:gap-6 order-2 lg:order-none">
-                 <div className="why-card bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 relative overflow-hidden group hover:border-[#4390b3]/30 transition-all duration-300 opacity-0">
-                    <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
-                    <div className="relative z-10 flex items-start gap-4 md:gap-6">
-                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#eaf6fa] flex items-center justify-center text-[#4390b3] group-hover:scale-110 transition-transform duration-300 shrink-0">
-                         <Lightbulb size={28} />
-                      </div>
-                      <div>
-                          <h4 className="font-bold text-xl md:text-2xl text-[#2d2d2d] font-din mb-2">إبداع لا محدود</h4>
-                          <p className="text-slate-500 font-din text-base md:text-lg">نبتكر حلولاً إعلانية تكسر النمطية وتلامس احتياج جمهورك بدقة.</p>
-                      </div>
+              
+              <div className="flex flex-col gap-4 md:gap-6 order-2 lg:order-none">
+                 {/* Cards with staggered animation handled by same class 'why-content' */}
+                 <div className="why-content bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 opacity-0 group hover:border-[#4390b3]/30 transition-all">
+                    <div className="flex items-start gap-4 md:gap-6">
+                      <div className="w-14 h-14 rounded-2xl bg-[#eaf6fa] flex items-center justify-center text-[#4390b3] shrink-0"><Lightbulb size={28} /></div>
+                      <div><h4 className="font-bold text-xl text-[#2d2d2d] font-din mb-2">إبداع لا محدود</h4><p className="text-slate-500 font-din">نبتكر حلولاً إعلانية تكسر النمطية.</p></div>
                     </div>
                  </div>
-
-                 <div className="why-card bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 relative overflow-hidden group hover:border-[#5fc2d0]/30 transition-all duration-300 lg:translate-x-8 opacity-0">
-                    <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
-                    <div className="relative z-10 flex items-start gap-4 md:gap-6">
-                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#f0fcfd] flex items-center justify-center text-[#5fc2d0] group-hover:scale-110 transition-transform duration-300 shrink-0">
-                         <Target size={28} />
-                      </div>
-                      <div>
-                          <h4 className="font-bold text-xl md:text-2xl text-[#2d2d2d] font-din mb-2">خطط مدروسة</h4>
-                          <p className="text-slate-500 font-din text-base md:text-lg">لا نترك شيئاً للصدفة، كل خطوة مبنية على بيانات وتحليلات دقيقة.</p>
-                      </div>
+                 <div className="why-content bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 opacity-0 lg:translate-x-8">
+                    <div className="flex items-start gap-4 md:gap-6">
+                      <div className="w-14 h-14 rounded-2xl bg-[#f0fcfd] flex items-center justify-center text-[#5fc2d0] shrink-0"><Target size={28} /></div>
+                      <div><h4 className="font-bold text-xl text-[#2d2d2d] font-din mb-2">خطط مدروسة</h4><p className="text-slate-500 font-din">لا نترك شيئاً للصدفة، كل خطوة مبنية على بيانات.</p></div>
                     </div>
                  </div>
-
-                 <div className="why-card bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 relative overflow-hidden group hover:border-[#57a8b4]/30 transition-all duration-300 opacity-0">
-                    <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
-                    <div className="relative z-10 flex items-start gap-4 md:gap-6">
-                      <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-[#f2f9fa] flex items-center justify-center text-[#57a8b4] group-hover:scale-110 transition-transform duration-300 shrink-0">
-                         <Rocket size={28} />
-                      </div>
-                      <div>
-                          <h4 className="font-bold text-xl md:text-2xl text-[#2d2d2d] font-din mb-2">واقع ملموس</h4>
-                          <p className="text-slate-500 font-din text-base md:text-lg">نحول الأفكار المجردة إلى نتائج وأرقام يمكنك رؤيتها وقياس أثرها.</p>
-                      </div>
+                 <div className="why-content bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 opacity-0">
+                    <div className="flex items-start gap-4 md:gap-6">
+                      <div className="w-14 h-14 rounded-2xl bg-[#f2f9fa] flex items-center justify-center text-[#57a8b4] shrink-0"><Rocket size={28} /></div>
+                      <div><h4 className="font-bold text-xl text-[#2d2d2d] font-din mb-2">واقع ملموس</h4><p className="text-slate-500 font-din">نحول الأفكار المجردة إلى نتائج وأرقام.</p></div>
                     </div>
                  </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -509,7 +510,6 @@ const AuraScene = () => {
   );
 };
 
-// --- قسم الخدمات ---
 const ServicesSection = () => {
   const services = [
     { t: "استراتيجيات التسويق", i: <Target />, c: "#4390b3" },
@@ -552,6 +552,12 @@ const ServicesSection = () => {
 
 // --- التطبيق الرئيسي ---
 export default function App() {
+  const threeLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
+  const gsapLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js');
+  const scrollTriggerLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js');
+  
+  const areScriptsLoaded = threeLoaded && gsapLoaded && scrollTriggerLoaded;
+
   return (
     <div className="text-[#2d2d2d] bg-[#F8F8F8] overflow-x-hidden" dir="rtl">
       <style>{`
@@ -577,7 +583,6 @@ export default function App() {
           background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.03) 100%);
         }
 
-        /* نقش خطي هندسي للكروت */
         .bg-pattern-lines {
           background-image: repeating-linear-gradient(
             45deg,
@@ -602,19 +607,13 @@ export default function App() {
         ::-webkit-scrollbar-thumb { background: #4390b3; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #2d6a84; }
 
-        /* إخفاء شريط التمرير لقسم لماذا أورا */
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
       
       <Navbar />
-      <AuraScene />
-      <PortfolioSection />
+      <AuraScene areScriptsLoaded={areScriptsLoaded} />
+      <PortfolioSection isGsapLoaded={gsapLoaded && scrollTriggerLoaded} />
       <ServicesSection />
       
       <div className="h-24 bg-white flex items-center justify-center border-t border-slate-100">
