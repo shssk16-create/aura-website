@@ -1,404 +1,121 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { Menu, ArrowDown, Zap, Target, BarChart3, Fingerprint, Sparkles, Gem, Users, Layers, Lightbulb, Rocket, Plus, ArrowUpRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Readex_Pro } from 'next/font/google';
+import { 
+  ArrowUpRight, Palette, Search, Megaphone, Code, 
+  Target, Layers, Zap, Menu, X, ArrowRight,
+  Globe, Sparkles, Phone, MapPin, Send, MousePointer2
+} from 'lucide-react';
+import * as THREE from 'three';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// --- مساعد تحميل المكتبات (CDN Loader) ---
-const useScript = (url: string) => {
-  const [loaded, setLoaded] = useState(false);
+// --- إعداد الخط ---
+const fontMain = Readex_Pro({ 
+  subsets: ['arabic', 'latin'],
+  weight: ['200', '300', '400', '500', '600', '700'],
+  display: 'swap',
+});
+
+// --- تسجيل GSAP ---
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+// =========================================
+// 1. الماوس المغناطيسي (Custom Cursor)
+// =========================================
+const CustomCursor = () => {
+  const cursorRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = url;
-    script.async = true;
-    script.onload = () => setLoaded(true);
-    document.head.appendChild(script);
-    return () => {
-      // Clean up to prevent duplicate scripts if component remounts
-      if(document.head.contains(script)) {
-        document.head.removeChild(script);
+    const moveCursor = (e: MouseEvent) => {
+      if (cursorRef.current) {
+        gsap.to(cursorRef.current, {
+          x: e.clientX,
+          y: e.clientY,
+          duration: 0.2,
+          ease: 'power2.out'
+        });
       }
     };
-  }, [url]);
-  return loaded;
-};
-
-// ==========================================
-// Advanced Physics Shaders (Curl Noise)
-// ==========================================
-const particleVertexShader = `
-  uniform float uTime;
-  uniform float uProgress; 
-  
-  attribute vec3 aRandomPos;
-  attribute vec3 aTargetPos;
-  attribute float aSize;
-  
-  varying float vAlpha;
-  varying vec3 vPos;
-
-  vec3 snoiseVec3( vec3 x ){
-    float s  = sin(x.x); float c  = cos(x.x);
-    float s1 = sin(x.y); float c1 = cos(x.y);
-    float s2 = sin(x.z); float c2 = cos(x.z);
-    return vec3(c*s1 + s*c2, s*c1 + c*s2, c*s2 + s*c1);
-  }
-
-  vec3 curlNoise( vec3 p ){
-    const float e = 0.1;
-    vec3 dx = vec3( e, 0.0, 0.0 );
-    vec3 dy = vec3( 0.0, e, 0.0 );
-    vec3 dz = vec3( 0.0, 0.0, e );
-    vec3 p_x0 = snoiseVec3( p - dx );
-    vec3 p_x1 = snoiseVec3( p + dx );
-    vec3 p_y0 = snoiseVec3( p - dy );
-    vec3 p_y1 = snoiseVec3( p + dy );
-    vec3 p_z0 = snoiseVec3( p - dz );
-    vec3 p_z1 = snoiseVec3( p + dz );
-    float x = p_y1.z - p_y0.z - p_z1.y + p_z0.y;
-    float y = p_z1.x - p_z0.x - p_x1.z + p_x0.z;
-    float z = p_x1.y - p_x0.y - p_y1.x + p_y0.x;
-    const float divisor = 1.0 / ( 2.0 * e );
-    return normalize( vec3( x , y , z ) * divisor );
-  }
-
-  void main() {
-    float t = uProgress;
-    float ease = 1.0 - pow(1.0 - t, 3.0); 
-    vec3 target = mix(aRandomPos, aTargetPos, ease);
-    float noiseStrength = (1.0 - ease) * 2.0 + 0.2; 
-    vec3 curl = curlNoise(target * 0.5 + uTime * 0.1);
-    vec3 finalPos = target + curl * noiseStrength;
-    float angle = uTime * 0.1 * (1.0 - ease);
-    float s = sin(angle);
-    float c = cos(angle);
-    float nx = finalPos.x * c - finalPos.z * s;
-    float nz = finalPos.x * s + finalPos.z * c;
-    finalPos.x = nx;
-    finalPos.z = nz;
-    vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
-    gl_Position = projectionMatrix * mvPosition;
-    gl_PointSize = (aSize * 2.5) * (1.0 + ease) * (20.0 / -mvPosition.z);
-    vAlpha = 0.4 + ease * 0.6;
-    vPos = finalPos;
-  }
-`;
-
-const particleFragmentShader = `
-  uniform vec3 uColorPrimary; 
-  uniform vec3 uColorSecondary; 
-  varying float vAlpha;
-  varying vec3 vPos;
-  void main() {
-    float d = distance(gl_PointCoord, vec2(0.5));
-    float glow = exp(-d * 4.0); 
-    if (glow < 0.05) discard;
-    float mixFactor = smoothstep(0.0, 5.0, length(vPos));
-    vec3 finalColor = mix(uColorSecondary, uColorPrimary, mixFactor * 0.5);
-    if (d < 0.1) finalColor = mix(finalColor, vec3(1.0), 0.8);
-    gl_FragColor = vec4(finalColor, vAlpha * glow);
-  }
-`;
-
-// --- النافبار ---
-const Navbar = () => (
-  <nav className="fixed top-6 left-0 right-0 z-[100] flex justify-center px-4">
-    <div className="water-nav flex items-center px-6 py-3 gap-6 md:gap-12 transition-all duration-500">
-      <div className="flex items-center gap-2 pr-2 border-l border-slate-300/50 ml-2">
-        <div className="w-2.5 h-2.5 bg-[#4390b3] rounded-full shadow-[0_0_15px_rgba(67,144,179,0.8)] animate-pulse"></div>
-        <span className="font-din font-bold text-sm text-slate-800 tracking-tighter">أورا</span>
-      </div>
-      <div className="hidden md:flex items-center gap-8">
-        {['الرئيسية', 'خدماتنا', 'أعمالنا', 'شركاء النجاح'].map((item) => (
-          <a key={item} href={`#${item}`} className="text-xs font-bold text-slate-500 hover:text-[#4390b3] transition-colors relative group font-din">
-            {item}
-            <span className="absolute -bottom-1 right-0 w-0 h-0.5 bg-[#4390b3] transition-all duration-300 group-hover:w-full"></span>
-          </a>
-        ))}
-      </div>
-      <button className="md:hidden p-1 text-slate-600"><Menu size={18} /></button>
-    </div>
-  </nav>
-);
-
-// --- قسم الأعمال (Kinetic Portfolio Section) ---
-const PortfolioSection = ({ isGsapLoaded }: { isGsapLoaded: boolean }) => {
-  const containerRef = useRef(null);
-  
-  // تفعيل تأثيرات GSAP عند التحميل
-  useLayoutEffect(() => {
-    if (!isGsapLoaded || !containerRef.current) return;
-    const gsap = (window as any).gsap;
-    const ScrollTrigger = (window as any).ScrollTrigger;
-
-    const ctx = gsap.context(() => {
-      // 1. Skew Effect on Scroll (انحناء أثناء التمرير السريع)
-      let proxy = { skew: 0 };
-      const skewSetter = gsap.quickSetter(".portfolio-grid", "skewY", "deg");
-      const clamp = gsap.utils.clamp(-5, 5); // حدد زاوية الميلان
-
-      ScrollTrigger.create({
-        trigger: containerRef.current,
-        onUpdate: (self: any) => {
-          let skew = clamp(self.getVelocity() / -300);
-          // اجعل الحركة أنعم
-          if (Math.abs(skew) > Math.abs(proxy.skew)) {
-            proxy.skew = skew;
-            gsap.to(proxy, {
-              skew: 0, 
-              duration: 0.8, 
-              ease: "power3", 
-              overwrite: true, 
-              onUpdate: () => skewSetter(proxy.skew)
-            });
-          }
-        }
-      });
-
-      // 2. Parallax Effect for Images (الصور تتحرك بسرعة مختلفة عن الإطار)
-      const images = gsap.utils.toArray(".project-img");
-      images.forEach((img: any) => {
-        gsap.to(img, {
-          yPercent: 20,
-          ease: "none",
-          scrollTrigger: {
-            trigger: img.parentElement,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true
-          } 
-        });
-      });
-
-      // 3. Reveal Animation (ظهور متتابع)
-      gsap.from(".project-card", {
-        y: 100,
-        opacity: 0,
-        duration: 1,
-        stagger: 0.2,
-        ease: "power4.out",
-        scrollTrigger: {
-          trigger: ".portfolio-grid",
-          start: "top 75%",
-        }
-      });
-
-    }, containerRef);
-
-    return () => ctx.revert();
-  }, [isGsapLoaded]);
-
-  const projects = [
-    { title: "نيوم المستقبل", category: "استراتيجية رقمية", img: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=800&q=80" },
-    { title: "مدى تك", category: "تطوير تطبيقات", img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=800&q=80" },
-    { title: "أكاديمية طويق", category: "تعليم إلكتروني", img: "https://images.unsplash.com/photo-1501504905252-473c47e087f8?auto=format&fit=crop&w=800&q=80" },
-    { title: "موسم الرياض", category: "هوية بصرية", img: "https://images.unsplash.com/photo-1600607686527-6fb886090705?auto=format&fit=crop&w=800&q=80" },
-  ];
+    window.addEventListener('mousemove', moveCursor);
+    return () => window.removeEventListener('mousemove', moveCursor);
+  }, []);
 
   return (
-    <div id="أعمالنا" ref={containerRef} className="relative py-32 px-4 bg-[#f8fafc] z-20 overflow-hidden">
-      <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-end mb-20 px-4">
-          <div>
-            <h2 className="text-5xl md:text-7xl font-bold text-[#2d2d2d] font-din mb-2">
-              أعمال <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#4390b3] to-[#5fc2d0]">فارقة</span>
-            </h2>
-            <p className="text-lg text-slate-500 font-din">قصص نجاح صنعناها بشغف ودقة.</p>
-          </div>
-          <div className="hidden md:block">
-             <button className="flex items-center gap-2 text-[#4390b3] font-bold font-din hover:gap-4 transition-all">
-                مشاهدة الأرشيف <ArrowUpRight size={20}/>
-             </button>
-          </div>
-        </div>
-
-        {/* The Grid Container for Skew Effect */}
-        <div className="portfolio-grid grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16 will-change-transform">
-          {projects.map((project, index) => (
-            <div 
-              key={index} 
-              className={`project-card group relative rounded-[2.5rem] overflow-hidden bg-white shadow-2xl shadow-slate-200/50 cursor-pointer ${index % 2 !== 0 ? 'md:translate-y-24' : ''}`}
-            >
-              {/* Image Container with Overflow Hidden for Parallax */}
-              <div className="relative h-[500px] overflow-hidden">
-                <div className="absolute inset-0 bg-[#0f172a]/20 group-hover:bg-[#0f172a]/0 transition-colors duration-500 z-10"></div>
-                <img 
-                  src={project.img} 
-                  alt={project.title} 
-                  className="project-img w-full h-[120%] object-cover object-center transform -translate-y-[10%]"
-                />
-              </div>
-              
-              {/* Content Overlay */}
-              <div className="absolute bottom-0 left-0 right-0 p-8 z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                <div className="flex justify-between items-end transform translate-y-4 group-hover:translate-y-0 transition-transform duration-500">
-                  <div>
-                    <span className="inline-block px-4 py-1.5 mb-3 text-xs font-bold text-white border border-white/30 rounded-full font-din backdrop-blur-sm">
-                      {project.category}
-                    </span>
-                    <h3 className="text-3xl font-bold text-white font-din">{project.title}</h3>
-                  </div>
-                  <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <ArrowUpRight />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        
-        <div className="text-center mt-32 md:hidden">
-           <button className="px-10 py-4 bg-white text-[#2d2d2d] font-bold rounded-full border border-slate-200 shadow-md font-din">
-             عرض جميع المشاريع
-           </button>
-        </div>
-      </div>
-    </div>
+    <div 
+      ref={cursorRef} 
+      className="fixed top-0 left-0 w-8 h-8 border border-slate-800 rounded-full pointer-events-none z-[9999] hidden md:flex -translate-x-1/2 -translate-y-1/2 mix-blend-difference bg-white/20 backdrop-blur-sm"
+    />
   );
 };
 
-// --- المشهد التفاعلي (Three.js Aura) ---
-const AuraScene = ({ areScriptsLoaded }: { areScriptsLoaded: boolean }) => {
-  const containerRef = useRef(null);
-  const canvasRef = useRef(null);
-  const auraGlowRef = useRef(null);
+// =========================================
+// 2. خلفية الهالة (3D Nebula)
+// =========================================
+const KineticNebula = () => {
+  const mountRef = useRef<HTMLDivElement>(null);
 
-  useLayoutEffect(() => {
-    if (!areScriptsLoaded || !canvasRef.current) return;
+  useEffect(() => {
+    if (!mountRef.current) return;
 
-    const THREE = (window as any).THREE;
-    const gsap = (window as any).gsap;
-    const ScrollTrigger = (window as any).ScrollTrigger;
-    gsap.registerPlugin(ScrollTrigger);
-
+    // إعداد المشهد
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.z = 12;
-    
-    const renderer = new THREE.WebGLRenderer({ 
-      canvas: canvasRef.current, 
-      alpha: true, 
-      antialias: true,
-      powerPreference: "high-performance"
-    });
+    scene.fog = new THREE.FogExp2(0xffffff, 0.002);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 30;
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    mountRef.current.innerHTML = '';
+    mountRef.current.appendChild(renderer.domElement);
 
-    const count = 5000;
+    // الجسيمات
+    const count = 3000;
     const geometry = new THREE.BufferGeometry();
     const positions = new Float32Array(count * 3);
-    const aRandomPos = new Float32Array(count * 3);
-    const aTargetPos = new Float32Array(count * 3);
-    const aSize = new Float32Array(count);
+    const colors = new Float32Array(count * 3);
+    const color1 = new THREE.Color('#438FB3'); // لون الهوية
+    const color2 = new THREE.Color('#58A8B4'); // التيل
 
-    const targetGeom = new THREE.OctahedronGeometry(2.2, 1);
-    const targetVerts = targetGeom.attributes.position.array;
-    const tCount = targetVerts.length / 3;
-
-    for (let i = 0; i < count; i++) {
-      aRandomPos[i * 3] = (Math.random() - 0.5) * 40;
-      aRandomPos[i * 3 + 1] = (Math.random() - 0.5) * 40;
-      aRandomPos[i * 3 + 2] = (Math.random() - 0.5) * 20;
-
-      const idx = i % tCount;
-      const jitter = 0.5 + Math.random() * 0.5;
-      aTargetPos[i * 3] = targetVerts[idx * 3] * jitter;
-      aTargetPos[i * 3 + 1] = targetVerts[idx * 3 + 1] * jitter;
-      aTargetPos[i * 3 + 2] = targetVerts[idx * 3 + 2] * jitter;
-
-      aSize[i] = Math.random() * 2.0 + 0.5;
-      positions[i * 3] = 0; positions[i * 3 + 1] = 0; positions[i * 3 + 2] = 0;
+    for(let i=0; i<count; i++) {
+      const r = 15 + Math.random() * 10;
+      const theta = 2 * Math.PI * Math.random();
+      const phi = Math.acos(2 * Math.random() - 1);
+      
+      positions[i*3] = r * Math.sin(phi) * Math.cos(theta);
+      positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+      positions[i*3+2] = r * Math.cos(phi);
+      
+      const c = Math.random() > 0.5 ? color1 : color2;
+      colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
     }
-
+    
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('aRandomPos', new THREE.BufferAttribute(aRandomPos, 3));
-    geometry.setAttribute('aTargetPos', new THREE.BufferAttribute(aTargetPos, 3));
-    geometry.setAttribute('aSize', new THREE.BufferAttribute(aSize, 1));
-
-    const material = new THREE.ShaderMaterial({
-      vertexShader: particleVertexShader,
-      fragmentShader: particleFragmentShader,
-      uniforms: {
-        uTime: { value: 0 },
-        uProgress: { value: 0 },
-        uColorPrimary: { value: new THREE.Color('#4390b3') },
-        uColorSecondary: { value: new THREE.Color('#5fc2d0') }
-      },
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending
-    });
-
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    const material = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.8 });
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    let isVisible = true;
-    const observer = new IntersectionObserver((entries) => {
-      isVisible = entries[0].isIntersecting;
-    }, { threshold: 0.1 });
-    observer.observe(canvasRef.current);
-
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: "top top",
-          end: "+=600%", // مسافة السكرول
-          scrub: 1.5,
-          pin: true,
-          anticipatePin: 1
-        }
-      });
-
-      gsap.to(auraGlowRef.current, {
-        scale: 1.2,
-        opacity: 0.8,
-        duration: 2,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut"
-      });
-
-      // المشهد 1: الهيرو
-      tl.to(material.uniforms.uProgress, { value: 1, duration: 3, ease: "power2.inOut" }, "start");
-      tl.to(".text-1", { opacity: 0, y: -50, filter: 'blur(10px)', duration: 1 }, "start");
-      
-      // المشهد 2
-      tl.fromTo(".text-2", { opacity: 0, scale: 0.9 }, { opacity: 1, scale: 1, duration: 1 }, "start+=1.5");
-      
-      // المشهد 3
-      tl.to(".text-2", { opacity: 0, scale: 1.1, duration: 1 }, "scene3");
-      tl.fromTo(".text-3", { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1.5 }, "scene3+=0.5");
-
-      // المشهد 4: الانتقال المباشر لقسم "لماذا أورا"
-      tl.to(".text-3", { opacity: 0, scale: 0.9, duration: 0.5 }, "scene4");
-      tl.to(canvasRef.current, { opacity: 0, duration: 1 }, "scene4");
-      
-      tl.fromTo(".why-aura-fullscreen", 
-        { y: "-30%", opacity: 0 }, 
-        { y: "0%", opacity: 1, duration: 2, ease: "power2.out" }, 
-        "scene4+=0.2"
-      );
-
-      // Animation for "Why Aura" content
-      tl.fromTo(".why-content", 
-        { y: 30, opacity: 0 }, 
-        { y: 0, opacity: 1, duration: 0.8, stagger: 0.2, ease: "power2.out" }, 
-        "-=1.5"
-      );
-
-    }, containerRef);
-
-    const clock = new THREE.Clock();
+    // الحركة
     const animate = () => {
-      if (isVisible) {
-        const time = clock.getElapsedTime();
-        material.uniforms.uTime.value = time;
-        particles.rotation.y = time * 0.05;
-        renderer.render(scene, camera);
-      }
       requestAnimationFrame(animate);
+      particles.rotation.y += 0.001;
+      particles.rotation.x += 0.0005;
+      renderer.render(scene, camera);
     };
     animate();
+
+    // تفاعل GSAP مع التمرير
+    const ctx = gsap.context(() => {
+      gsap.to(particles.scale, {
+        x: 3, y: 3, z: 3,
+        scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: 1.5 }
+      });
+    });
 
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
@@ -409,216 +126,244 @@ const AuraScene = ({ areScriptsLoaded }: { areScriptsLoaded: boolean }) => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      observer.disconnect();
-      ctx.revert();
+      mountRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
+      ctx.revert();
     };
-  }, [areScriptsLoaded]);
+  }, []);
+
+  return <div ref={mountRef} className="fixed inset-0 -z-10 opacity-70 pointer-events-none" />;
+};
+
+// =========================================
+// 3. النافبار (Tailwind Styled)
+// =========================================
+const Navbar = () => {
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div ref={containerRef} className="relative w-full h-screen bg-[#F8F8F8]">
-      
-      <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none overflow-hidden">
-        <div ref={auraGlowRef} className="w-[70vw] h-[70vw] rounded-full bg-gradient-to-tr from-[#4390b3]/15 via-[#5fc2d0]/10 to-transparent blur-[100px] opacity-60"></div>
-        <div className="absolute inset-0 bg-radial-gradient-vignette opacity-30"></div>
-      </div>
-
-      <canvas ref={canvasRef} className="absolute inset-0 z-1 w-full h-full transition-opacity duration-1000" />
-      
-      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center px-4 pointer-events-none">
-        
-        <div className="text-1 absolute transition-opacity duration-500">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#4390b3]/20 bg-white/70 backdrop-blur-md text-[#4390b3] font-bold text-xs mb-6 shadow-sm">
-            <Sparkles size={14} className="text-[#57a8b4]" />
-            <span>نصنع جوهرك الرقمي</span>
-          </div>
-          <h1 className="text-5xl md:text-8xl lg:text-9xl font-bold text-[#2d2d2d] leading-[1.0] font-din">
-            أثرٌ لا <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#57a8b4] to-[#5fc2d0]">يُمحى</span>
-          </h1>
-          <p className="mt-6 text-xl text-slate-500 font-medium font-din">حرك الماوس وانظر كيف تتشكل الرؤية</p>
+    <>
+      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl backdrop-blur-xl bg-white/70 border border-white/50 rounded-full z-50 px-8 py-4 flex justify-between items-center shadow-lg shadow-slate-200/50 transition-all hover:shadow-xl">
+        <div className="flex items-center gap-3">
+          <div className="w-3 h-3 bg-[#438FB3] rounded-full animate-pulse"></div>
+          <span className="text-xl font-bold tracking-tighter text-slate-900">AURA</span>
         </div>
 
-        <div className="text-2 absolute opacity-0 w-full max-w-4xl px-4">
-          <h2 className="text-4xl md:text-7xl font-bold text-[#2d2d2d] font-din mb-6 leading-tight">
-            هالتك <span className="text-[#4390b3]">الفارقة</span>
-          </h2>
-          <p className="text-lg md:text-xl text-slate-600 font-din bg-white/60 backdrop-blur-sm p-4 rounded-2xl inline-block shadow-sm">
-            حيث يلتقي الإبداع بالاستراتيجية ليصنع نجماً ساطعاً في السوق.
-          </p>
+        <div className="hidden md:flex gap-8">
+          {['الرئيسية', 'خدماتنا', 'أعمالنا', 'تواصل'].map((item) => (
+            <a key={item} href={`#${item}`} className="text-sm font-semibold text-slate-600 hover:text-[#438FB3] transition-colors relative group">
+              {item}
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#438FB3] transition-all duration-300 group-hover:w-full"></span>
+            </a>
+          ))}
         </div>
 
-        <div className="text-3 absolute opacity-0 w-full max-w-4xl px-4">
-          <h2 className="text-3xl md:text-6xl font-bold text-[#2d2d2d] font-din mb-6">
-            نضع نجمتك في<br/><span className="text-[#57a8b4]">سماء من يُقدرها</span>
-          </h2>
-        </div>
+        <button className="bg-[#0f172a] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#438FB3] transition-colors hidden md:block shadow-lg shadow-slate-900/20">
+          ابدأ مشروعك
+        </button>
 
-        {/* قسم لماذا أورا */}
-        <div className="why-aura-fullscreen absolute inset-0 z-40 bg-white -translate-y-full opacity-0 pointer-events-auto overflow-y-auto no-scrollbar">
-          <div className="min-h-full w-full max-w-7xl mx-auto px-4 py-8 md:py-16 flex flex-col justify-center">
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-20 items-center">
-              <div className="text-right order-1 lg:order-none">
-                <div className="why-content inline-flex items-center gap-3 mb-6 bg-[#4390b3]/5 px-5 py-2 rounded-full border border-[#4390b3]/10 opacity-0">
-                  <Sparkles size={18} className="text-[#4390b3]" />
-                  <span className="text-[#4390b3] font-bold text-sm font-din tracking-wide uppercase">لماذا تختار أورا؟</span>
-                </div>
-                <h2 className="why-content text-3xl md:text-5xl lg:text-6xl font-bold text-[#2d2d2d] font-din mb-8 leading-[1.2] opacity-0">
-                  بريق مبتكر في <br/>
-                  <span className="text-transparent bg-clip-text bg-gradient-to-l from-[#4390b3] to-[#5fc2d0]">عالم التسويق</span>
-                </h2>
-                <p className="why-content text-base md:text-lg lg:text-xl text-slate-600 font-din leading-relaxed mb-10 pl-4 md:pl-8 border-r-4 border-[#5fc2d0]/30 pr-6 text-justify opacity-0">
-                  تسعى أورا لتكون الهالة الفارقة التي تميز مشروعك. منذ انطلاقنا، عملنا بجد وفق خطط مدروسة لنطور مفهوم صناعة الدعاية والإعلان والتسويق الرقمي.
-                </p>
-                <div className="why-content bg-white rounded-2xl shadow-xl shadow-slate-200/50 p-6 border border-slate-100 flex flex-col sm:flex-row items-start sm:items-center gap-6 opacity-0">
-                   <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#4390b3] to-[#5fc2d0] flex items-center justify-center text-white shadow-lg shrink-0">
-                     <Gem size={28} />
-                   </div>
-                   <div>
-                     <h4 className="font-bold text-[#4390b3] mb-1 font-din text-lg">رسالتنا</h4>
-                     <p className="text-slate-600 font-din text-base md:text-lg">أن نكون أقرب لعملائك، لتظهر وتصل وتحقق ما يناسب طموحك.</p>
-                   </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-4 md:gap-6 order-2 lg:order-none">
-                 {/* Cards with staggered animation handled by same class 'why-content' */}
-                 <div className="why-content bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 opacity-0 group hover:border-[#4390b3]/30 transition-all">
-                    <div className="flex items-start gap-4 md:gap-6">
-                      <div className="w-14 h-14 rounded-2xl bg-[#eaf6fa] flex items-center justify-center text-[#4390b3] shrink-0"><Lightbulb size={28} /></div>
-                      <div><h4 className="font-bold text-xl text-[#2d2d2d] font-din mb-2">إبداع لا محدود</h4><p className="text-slate-500 font-din">نبتكر حلولاً إعلانية تكسر النمطية.</p></div>
-                    </div>
-                 </div>
-                 <div className="why-content bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 opacity-0 lg:translate-x-8">
-                    <div className="flex items-start gap-4 md:gap-6">
-                      <div className="w-14 h-14 rounded-2xl bg-[#f0fcfd] flex items-center justify-center text-[#5fc2d0] shrink-0"><Target size={28} /></div>
-                      <div><h4 className="font-bold text-xl text-[#2d2d2d] font-din mb-2">خطط مدروسة</h4><p className="text-slate-500 font-din">لا نترك شيئاً للصدفة، كل خطوة مبنية على بيانات.</p></div>
-                    </div>
-                 </div>
-                 <div className="why-content bg-white p-6 md:p-8 rounded-[2rem] shadow-lg border border-slate-100 opacity-0">
-                    <div className="flex items-start gap-4 md:gap-6">
-                      <div className="w-14 h-14 rounded-2xl bg-[#f2f9fa] flex items-center justify-center text-[#57a8b4] shrink-0"><Rocket size={28} /></div>
-                      <div><h4 className="font-bold text-xl text-[#2d2d2d] font-din mb-2">واقع ملموس</h4><p className="text-slate-500 font-din">نحول الأفكار المجردة إلى نتائج وأرقام.</p></div>
-                    </div>
-                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <button className="md:hidden text-slate-800" onClick={() => setIsOpen(!isOpen)}>
+          {isOpen ? <X /> : <Menu />}
+        </button>
+      </nav>
 
-      </div>
-    </div>
+      {/* قائمة الجوال */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
+            className="fixed inset-0 bg-white/95 backdrop-blur-lg z-40 flex flex-col items-center justify-center gap-8 md:hidden"
+          >
+            {['الرئيسية', 'خدماتنا', 'أعمالنا', 'تواصل'].map((item) => (
+              <a key={item} href={`#${item}`} onClick={() => setIsOpen(false)} className="text-2xl font-bold text-slate-800">
+                {item}
+              </a>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
-const ServicesSection = () => {
-  const services = [
-    { t: "استراتيجيات التسويق", i: <Target />, c: "#4390b3" },
-    { t: "الهوية البصرية", i: <Fingerprint />, c: "#57a8b4" },
-    { t: "إدارة الحملات", i: <Zap />, c: "#4390b3" },
-    { t: "الإنتاج الإبداعي", i: <Layers />, c: "#57a8b4" }
+// =========================================
+// 4. الأقسام الرئيسية
+// =========================================
+
+const Hero = () => (
+  <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 relative pt-20">
+    <motion.div 
+      initial={{ opacity: 0, y: 50 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 1 }}
+      className="max-w-4xl"
+    >
+      <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-slate-50 border border-slate-200 text-[#438FB3] font-bold text-sm mb-8 shadow-sm">
+        <Sparkles size={16} /> شريك التحول الرقمي 2026
+      </div>
+      
+      <h1 className="text-5xl md:text-8xl font-bold text-slate-900 mb-6 leading-[1.1] tracking-tight">
+        هالتك <span className="bg-gradient-to-r from-[#438FB3] to-[#58A8B4] bg-clip-text text-transparent">الفارقة</span>
+        <br /> في عالم التسويق
+      </h1>
+      
+      <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
+        نحن لا نصمم المواقع فحسب، بل نهندس تجربة رقمية متكاملة تدمج الذكاء الاصطناعي بالإبداع البشري لتضعك في المقدمة.
+      </p>
+
+      <div className="flex justify-center gap-4">
+        <button className="bg-[#0f172a] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#438FB3] transition-all shadow-xl shadow-slate-900/20 flex items-center gap-2">
+          اكتشف خدماتنا <ArrowRight size={20} />
+        </button>
+      </div>
+    </motion.div>
+  </section>
+);
+
+const Stats = () => (
+  <div className="container mx-auto px-4 mb-32">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 bg-[#0f172a] rounded-[3rem] p-8 md:p-16 text-white shadow-2xl">
+      {[
+        { n: '+500M', t: 'أصول مدارة' },
+        { n: '98%', t: 'نسبة رضا' },
+        { n: '+120', t: 'شريك استراتيجي' },
+        { n: 'Top 1%', t: 'أداء سوقي' }
+      ].map((stat, i) => (
+        <div key={i} className="text-center border-l border-white/10 last:border-0">
+          <div className="text-4xl md:text-6xl font-bold text-[#438FB3] mb-2">{stat.n}</div>
+          <div className="text-slate-400 font-medium">{stat.t}</div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const Services = () => {
+  const items = [
+    { title: "التحول الرقمي", desc: "بناء منصات مؤسسية متكاملة.", icon: Layers, span: "md:col-span-2" },
+    { title: "تسويق الأداء", desc: "إدارة حملات ROI مرتفع.", icon: Target, span: "" },
+    { title: "تطوير WebGL", desc: "تجارب ثلاثية الأبعاد.", icon: Code, span: "" },
+    { title: "استراتيجية AEO", desc: "تصدر نتائج البحث الذكي.", icon: Search, span: "md:col-span-2" },
   ];
 
   return (
-    <div className="relative py-32 px-4 bg-white z-20">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#2d2d2d] font-din mb-6">
-            منهجية <span className="text-[#4390b3]">التأثير</span>
-          </h2>
-          <p className="text-lg text-slate-500 font-din max-w-2xl mx-auto">
-            نحول الرؤية إلى واقع ملموس عبر خطوات مدروسة بدقة.
-          </p>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {services.map((s, i) => (
-            <div key={i} className="group p-8 rounded-[2rem] bg-[#F8F8F8] hover:bg-white border border-transparent hover:border-[#4390b3]/20 hover:shadow-xl transition-all duration-500 hover:-translate-y-2 cursor-pointer relative overflow-hidden">
-              <div className="absolute inset-0 bg-pattern-lines opacity-[0.05] pointer-events-none"></div>
-              <div 
-                className="w-16 h-16 rounded-2xl flex items-center justify-center text-white mb-6 text-2xl shadow-lg transition-transform duration-500 group-hover:scale-110 relative z-10"
-                style={{ backgroundColor: s.c }}
-              >
-                {s.i}
-              </div>
-              <h3 className="text-xl font-bold text-[#2d2d2d] mb-3 font-din relative z-10">{s.t}</h3>
-              <p className="text-sm text-slate-500 font-din relative z-10">نبتكر حلولاً مخصصة تضمن وصول رسالتك بوضوح.</p>
-            </div>
-          ))}
-        </div>
+    <section className="py-24 px-4 max-w-7xl mx-auto" id="خدماتنا">
+      <div className="text-center mb-16">
+        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">هندسة <span className="text-[#438FB3]">الحلول</span></h2>
+        <p className="text-slate-500">خدمات مصممة لضمان نموك الأسي.</p>
       </div>
-    </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {items.map((item, i) => (
+          <motion.div 
+            key={i}
+            whileHover={{ y: -10 }}
+            className={`${item.span} bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-lg shadow-slate-100/50 hover:border-[#438FB3]/30 transition-all duration-300 group cursor-pointer relative overflow-hidden`}
+          >
+            <div className="absolute top-0 right-0 w-32 h-32 bg-[#438FB3]/5 rounded-bl-[100px] -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
+            <div className="w-14 h-14 bg-[#f0f9ff] rounded-2xl flex items-center justify-center text-[#438FB3] mb-6 relative z-10 group-hover:bg-[#438FB3] group-hover:text-white transition-colors">
+              <item.icon size={28} />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 mb-2 relative z-10">{item.title}</h3>
+            <p className="text-slate-500 relative z-10">{item.desc}</p>
+            <div className="absolute bottom-8 left-8 text-[#438FB3] opacity-0 group-hover:opacity-100 transition-opacity">
+              <ArrowUpRight />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </section>
   );
 };
 
-// --- التطبيق الرئيسي ---
-export default function App() {
-  const threeLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-  const gsapLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js');
-  const scrollTriggerLoaded = useScript('https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js');
-  
-  const areScriptsLoaded = threeLoaded && gsapLoaded && scrollTriggerLoaded;
+const Contact = () => (
+  <section className="py-24 px-4 bg-slate-50" id="تواصل">
+    <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+      <div>
+        <div className="inline-block px-4 py-1 rounded-full bg-white border border-slate-200 text-[#438FB3] font-bold text-sm mb-6">
+          تواصل معنا
+        </div>
+        <h2 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6">جاهز للبدء في <br/> <span className="text-[#438FB3]">رحلتك؟</span></h2>
+        <p className="text-slate-500 text-lg mb-8">فريقنا مستعد لتحليل احتياجاتك وبناء استراتيجية مخصصة لعلامتك التجارية.</p>
+        
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100">
+            <div className="w-12 h-12 bg-[#f0f9ff] rounded-full flex items-center justify-center text-[#438FB3]"><Phone size={20}/></div>
+            <div>
+              <div className="text-sm text-slate-400">اتصل بنا</div>
+              <div className="font-bold text-slate-900">+966 50 000 0000</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100">
+            <div className="w-12 h-12 bg-[#f0f9ff] rounded-full flex items-center justify-center text-[#438FB3]"><MapPin size={20}/></div>
+            <div>
+              <div className="text-sm text-slate-400">الموقع</div>
+              <div className="font-bold text-slate-900">الرياض، المملكة العربية السعودية</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100">
+        <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل</label>
+            <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:outline-none focus:border-[#438FB3] transition-colors" placeholder="محمد أحمد" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">البريد الإلكتروني</label>
+            <input type="email" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:outline-none focus:border-[#438FB3] transition-colors" placeholder="name@company.com" />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">رسالتك</label>
+            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:outline-none focus:border-[#438FB3] transition-colors min-h-[120px]" placeholder="كيف يمكننا مساعدتك؟"></textarea>
+          </div>
+          <button className="bg-[#438FB3] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2d6a84] transition-colors flex justify-center items-center gap-2 mt-2">
+            إرسال الطلب <Send size={20}/>
+          </button>
+        </form>
+      </div>
+    </div>
+  </section>
+);
+
+const Footer = () => (
+  <footer className="bg-[#0f172a] text-white py-20 border-t border-white/10">
+    <div className="container mx-auto px-4 text-center">
+      <h2 className="text-4xl font-bold mb-4">AURA.</h2>
+      <p className="text-slate-400 mb-8">نصنع المستقبل الرقمي برؤية سعودية.</p>
+      <div className="flex justify-center gap-6 mb-8 text-sm font-medium text-slate-300">
+        <a href="#" className="hover:text-[#438FB3] transition-colors">تويتر</a>
+        <a href="#" className="hover:text-[#438FB3] transition-colors">لينكد إن</a>
+        <a href="#" className="hover:text-[#438FB3] transition-colors">إنستقرام</a>
+      </div>
+      <div className="text-slate-500 text-xs border-t border-white/5 pt-8">
+        © 2026 Aura Holding. جميع الحقوق محفوظة.
+      </div>
+    </div>
+  </footer>
+);
+
+// =========================================
+// 5. التطبيق الرئيسي
+// =========================================
+export default function AuraPage() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   return (
-    <div className="text-[#2d2d2d] bg-[#F8F8F8] overflow-x-hidden" dir="rtl">
-      <style>{`
-        @font-face {
-          font-family: 'DINNextLTArabic';
-          src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Regular.woff2') format('woff2');
-          font-weight: normal;
-          font-style: normal;
-          font-display: swap;
-        }
-        @font-face {
-          font-family: 'DINNextLTArabic';
-          src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Bold-2.woff2') format('woff2');
-          font-weight: bold;
-          font-style: normal;
-          font-display: swap;
-        }
-        
-        body { font-family: 'DINNextLTArabic', sans-serif; margin: 0; }
-        .font-din { font-family: 'DINNextLTArabic', sans-serif !important; }
-        
-        .bg-radial-gradient-vignette {
-          background: radial-gradient(circle, transparent 60%, rgba(0,0,0,0.03) 100%);
-        }
-
-        .bg-pattern-lines {
-          background-image: repeating-linear-gradient(
-            45deg,
-            #4390b3 0,
-            #4390b3 1px,
-            transparent 0,
-            transparent 50%
-          );
-          background-size: 10px 10px;
-        }
-
-        .water-nav { 
-          background: rgba(255, 255, 255, 0.6); 
-          backdrop-filter: blur(20px) saturate(180%); 
-          border: 1px solid rgba(255, 255, 255, 0.8); 
-          box-shadow: 0 4px 30px rgba(0,0,0,0.03);
-          border-radius: 40px; 
-        }
-        
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #F8F8F8; }
-        ::-webkit-scrollbar-thumb { background: #4390b3; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #2d6a84; }
-
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
+    <div className={`${fontMain.className} bg-white text-slate-900 selection:bg-[#438FB3] selection:text-white overflow-x-hidden`} dir="rtl">
+      {mounted && <CustomCursor />}
+      <KineticNebula />
       
-      <Navbar />
-      <AuraScene areScriptsLoaded={areScriptsLoaded} />
-      <PortfolioSection isGsapLoaded={gsapLoaded && scrollTriggerLoaded} />
-      <ServicesSection />
-      
-      <div className="h-24 bg-white flex items-center justify-center border-t border-slate-100">
-        <p className="text-xs text-slate-400 font-din">© 2026 Aura Agency. All Rights Reserved.</p>
-      </div>
+      <main className="relative z-10">
+        <Navbar />
+        <Hero />
+        <Stats />
+        <Services />
+        <Contact />
+        <Footer />
+      </main>
     </div>
   );
 }
