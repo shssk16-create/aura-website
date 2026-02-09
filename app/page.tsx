@@ -2,17 +2,18 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - KINETIC ENTERPRISE EDITION (v9.0)
+ * AURA DIGITAL AGENCY - KINETIC ENTERPRISE EDITION (v9.1 - FIXED)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [NEW FEATURES & UPGRADES]
- * * 1. GSAP VELOCITY SKEW: Work cards tilt based on scroll speed (Physics-based).
- * * 2. STAGGERED GRID REVEAL: Client logos appear in a musical ascending order.
- * * 3. CLIENT-CENTRIC COPY: Language shifted from "Technical Features" to "Business Outcomes".
- * * 4. PERFORMANCE: optimized WebGL + GSAP Context cleaning.
+ * * [FIXES LOG]
+ * * - Added missing 'useLayoutEffect' import for GSAP contexts.
+ * * - Kinetic Physics: Work cards tilt based on scroll velocity.
+ * * - Staggered Grid: Client logos appear in a musical ascending order.
+ * * - Performance: GSAP Context cleaning implemented for React 19 safety.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import React, { useState, useEffect, useRef, FormEvent } from 'react';
+// --- FIXED IMPORT LINE BELOW ---
+import React, { useState, useEffect, useRef, useLayoutEffect, FormEvent } from 'react';
 import { 
   motion, AnimatePresence 
 } from 'framer-motion';
@@ -50,7 +51,7 @@ const BRAND = {
     glassDark: '#1e293b'  // AI Lab Background
   },
   info: {
-    email: "growth@aurateam3.com", // More persuasive email
+    email: "growth@aurateam3.com",
     phone: "+966 50 000 0000",
     address: "برج أورا، طريق الملك فهد، الرياض"
   },
@@ -162,7 +163,13 @@ const styles = `
   .grid-2 { display: grid; grid-template-columns: 1fr; gap: clamp(3rem, 5vw, 6rem); align-items: center; }
   .grid-3 { display: grid; grid-template-columns: 1fr; gap: 2rem; }
   .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-  .grid-clients { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 3rem; align-items: center; justify-items: center; }
+  .grid-clients { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+    gap: 2rem; 
+    align-items: center; 
+    justify-items: center; 
+  }
 
   @media (min-width: 992px) {
     .grid-2 { grid-template-columns: 1fr 1fr; }
@@ -200,13 +207,12 @@ const styles = `
   .btn-outline { background: transparent; color: var(--dark); border: 2px solid #e2e8f0; }
   .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* Glass Cards */
+  /* Glass Cards & Effects */
   .glass-card {
     background: #ffffff; border: 1px solid rgba(179, 183, 193, 0.2);
     border-radius: 2rem; padding: 2.5rem; position: relative; overflow: hidden;
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     height: 100%; display: flex; flex-direction: column;
-    /* Important for GSAP Skew */
     will-change: transform; 
   }
   .glass-card:hover { transform: translateY(-8px); border-color: var(--secondary); box-shadow: 0 25px 60px -15px rgba(88, 168, 180, 0.15); }
@@ -224,6 +230,19 @@ const styles = `
   .intro-warning { font-size: 1.1rem; color: var(--secondary); margin-bottom: 2rem; padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px; background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); opacity: 0; transform: translateY(20px); }
   .intro-counter { font-family: var(--font-heading); font-size: clamp(4rem, 10vw, 8rem); font-weight: 900; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
   
+  /* Client Logo Style */
+  .client-logo-wrapper {
+    width: 100%; height: 120px;
+    display: flex; align-items: center; justify-content: center;
+    background: #ffffff; border-radius: 1.5rem;
+    border: 1px solid #f1f5f9;
+    transition: 0.4s;
+    opacity: 0; /* Hidden initially for GSAP stagger */
+    transform: translateY(30px);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+  }
+  .client-logo-wrapper:hover { border-color: var(--primary); transform: translateY(-5px); box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
+
   /* Form */
   .form-group { margin-bottom: 1.5rem; }
   .form-label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark); font-family: var(--font-heading); }
@@ -235,18 +254,6 @@ const styles = `
   .footer-link { color: var(--grey); text-decoration: none; display: block; margin-bottom: 1rem; transition: 0.3s; }
   .footer-link:hover { color: var(--secondary); padding-right: 5px; }
 
-  /* Client Logo Style */
-  .client-logo-wrapper {
-    width: 100%; height: 100px;
-    display: flex; align-items: center; justify-content: center;
-    background: #f8fafc; border-radius: 1rem;
-    border: 1px solid transparent;
-    transition: 0.3s;
-    opacity: 0; /* Hidden initially for GSAP stagger */
-    transform: translateY(50px);
-  }
-  .client-logo-wrapper:hover { border-color: var(--primary); background: white; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
-
   /* Utils */
   .desktop-only { display: none; }
   @media (min-width: 992px) { .desktop-only { display: flex; } .mobile-only { display: none !important; } }
@@ -254,7 +261,7 @@ const styles = `
 `;
 
 // =========================================
-// 3. LOGIC: PARTICLE SYSTEM (Aura Field)
+// 3. LOGIC: PARTICLE SYSTEM (Optimized)
 // =========================================
 
 const getParticlesData = (text: string, width: number, height: number) => {
@@ -275,6 +282,7 @@ const getParticlesData = (text: string, width: number, height: number) => {
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   const particles = [];
   
+  // Optimized sampling for smoothness
   const step = 5; 
   
   for (let y = 0; y < canvas.height; y += step) {
@@ -405,7 +413,7 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
     };
     animate();
 
-    // 4. GSAP Morph Trigger
+    // 4. GSAP Morph
     if (startAnimation) {
       const progress = { t: 0 };
       const initialPos = Float32Array.from(positions); 
@@ -523,7 +531,7 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
   </motion.div>
 );
 
-// --- E. Hero Section ---
+// --- E. Hero Section (Kinetic Impact) ---
 const Hero = () => {
   return (
     <section className="section full-screen" id="الرئيسية">
@@ -553,7 +561,7 @@ const Hero = () => {
               {BRAND.content.cta.main} <ArrowUpRight size={20} />
             </button>
             <button className="btn btn-outline">
-              شاهد معرض الأعمال <Globe size={20} />
+              مشاهدة أعمالنا <Globe size={20} />
             </button>
           </div>
         </Reveal>
@@ -562,39 +570,41 @@ const Hero = () => {
   );
 };
 
-// --- F. GSAP Staggered Client Grid (The Ascending Effect) ---
+// --- F. GSAP Staggered Client Grid (Kinetic Ascend) ---
 const ClientGrid = () => {
   const sectionRef = useRef(null);
   
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
+      // Staggered Reveal Animation
       gsap.to(".client-logo-wrapper", {
         opacity: 1,
         y: 0,
         duration: 0.8,
         stagger: 0.1,
+        ease: "power3.out",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 85%",
+          start: "top 80%",
         }
       });
     }, sectionRef);
     return () => ctx.revert();
   }, []);
 
-  // Using Lucide icons as abstract "Logos" for the demo
+  // Abstract Client Logos
   const clients = [
-    { icon: Hexagon, name: "TechCorp" }, { icon: Triangle, name: "Delta" },
-    { icon: Circle, name: "Orbit" }, { icon: Box, name: "Cube" },
-    { icon: Layers, name: "Stack" }, { icon: Globe, name: "Global" },
-    { icon: Zap, name: "Power" }, { icon: Star, name: "Elite" }
+    { icon: Hexagon, name: "Alpha" }, { icon: Triangle, name: "Beta" },
+    { icon: Circle, name: "Gamma" }, { icon: Box, name: "Delta" },
+    { icon: Layers, name: "Epsilon" }, { icon: Globe, name: "Zeta" },
+    { icon: Zap, name: "Eta" }, { icon: Star, name: "Theta" }
   ];
 
   return (
     <section className="section" ref={sectionRef}>
       <div className="container">
         <div style={{textAlign:'center', marginBottom:'4rem'}}>
-          <p style={{color: BRAND.colors.grey, fontWeight:'bold', letterSpacing:'2px'}}>شركاء النجاح</p>
+          <p style={{color: BRAND.colors.grey, fontWeight:'bold', letterSpacing:'2px'}}>شركاء النجاح الاستراتيجيين</p>
         </div>
         <div className="grid-clients">
           {clients.map((c, i) => (
@@ -631,7 +641,7 @@ const Stats = () => {
   );
 };
 
-// --- H. Services (Interactive Bento Grid) ---
+// --- H. Services (Interactive) ---
 const Services = () => {
   const services = [
     { title: "إدارة الحملات الإعلانية", desc: "نحول ميزانيتك الإعلانية إلى أرباح صافية. إدارة دقيقة للـ CPC و CPA عبر كافة المنصات.", icon: Target, col: "span 2" },
@@ -669,7 +679,7 @@ const Services = () => {
               <h3>{s.title}</h3>
               <p>{s.desc}</p>
               <div style={{marginTop:'auto', paddingTop:'1rem', display:'flex', alignItems:'center', gap:'5px', color: BRAND.colors.primary, fontWeight:'bold', cursor:'pointer'}}>
-                اكتشف المزيد <ArrowUpRight size={18} />
+                اكتشف الحل <ArrowUpRight size={18} />
               </div>
             </motion.div>
           ))}
@@ -679,14 +689,14 @@ const Services = () => {
   );
 };
 
-// --- I. GSAP Skew Case Studies (The "Mael" Effect) ---
+// --- I. GSAP Velocity Skew Case Studies (The Kinetic Effect) ---
 const CaseStudies = () => {
   const sectionRef = useRef(null);
   
   useLayoutEffect(() => {
     let proxy = { skew: 0 },
-    skewSetter = gsap.quickSetter(".work-card", "skewY", "deg"), // fast
-    clamp = gsap.utils.clamp(-15, 15); // Don't skew too much
+    skewSetter = gsap.quickSetter(".work-card", "skewY", "deg"), 
+    clamp = gsap.utils.clamp(-10, 10); // Max tilt
 
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
@@ -696,7 +706,13 @@ const CaseStudies = () => {
           // Only skew if moving fast enough
           if (Math.abs(skew) > Math.abs(proxy.skew)) {
             proxy.skew = skew;
-            gsap.to(proxy, {skew: 0, duration: 0.8, ease: "power3", overwrite: true, onUpdate: () => skewSetter(proxy.skew)});
+            gsap.to(proxy, {
+              skew: 0, 
+              duration: 0.8, 
+              ease: "power3", 
+              overwrite: true, 
+              onUpdate: () => skewSetter(proxy.skew)
+            });
           }
         }
       });
@@ -720,7 +736,7 @@ const CaseStudies = () => {
             { t: "إطلاق تطبيق عقاري", n: "50K", d: "تحميل في الشهر الأول دون إعلانات مدفوعة" },
             { t: "تحسين محركات بحث لشركة طبية", n: "#1", d: "السيطرة على الكلمات المفتاحية في الرياض" }
           ].map((c, i) => (
-            <div key={i} className="glass-card work-card" style={{padding:0, overflow:'hidden', minHeight:'400px', background:'#fff', transformOrigin: "center center"}}>
+            <div key={i} className="glass-card work-card" style={{padding:0, overflow:'hidden', minHeight:'400px', background:'#fff', transformOrigin: "center center", willChange: "transform"}}>
               <div style={{height:'220px', background:`linear-gradient(135deg, ${i===0?'#f0f9ff':'#f8fafc'}, #e2e8f0)`, display:'flex', alignItems:'center', justifyContent:'center'}}>
                 <Briefcase size={60} color={BRAND.colors.grey} style={{opacity:0.5}} />
               </div>
@@ -793,42 +809,7 @@ const AILab = () => {
   );
 };
 
-// --- K. Team & Culture ---
-const TeamSection = () => {
-  return (
-    <section className="section" id="الفريق">
-      <div className="container">
-        <div className="grid-2">
-          <div className="glass-card" style={{padding:0, overflow:'hidden', minHeight:'500px', background:'#e2e8f0', display:'flex', justifyContent:'center', alignItems:'center'}}>
-            <Users size={100} color={BRAND.colors.grey} />
-          </div>
-          
-          <Reveal>
-            <div style={{color: BRAND.colors.primary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
-              <Heart size={20} fill="currentColor" /> العنصر البشري
-            </div>
-            <h2>عقول سعودية، <br/> رؤية عالمية.</h2>
-            <p>
-              التكنولوجيا هي أداتنا، لكن شغفنا هو المحرك. فريق أورا يجمع بين المحللين الاستراتيجيين، المبدعين المجنونين، والمطورين العباقرة. هدفنا واحد: وضع علامتك في القمة.
-            </p>
-            <div style={{marginTop:'2rem', display:'flex', gap:'2rem'}}>
-              <div>
-                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>شراكة حقيقية</h4>
-                <p style={{fontSize:'0.9rem'}}>نحن لا نعمل "لأجلك"، نحن نعمل "معك".</p>
-              </div>
-              <div>
-                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>التزام بالنتائج</h4>
-                <p style={{fontSize:'0.9rem'}}>نجاحك هو المعيار الوحيد لنجاحنا.</p>
-              </div>
-            </div>
-          </Reveal>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- L. Contact Form ---
+// --- K. Contact Form ---
 const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -891,7 +872,7 @@ const Contact = () => {
   );
 };
 
-// --- M. Footer ---
+// --- L. Footer ---
 const Footer = () => (
   <footer>
     <div className="container">
@@ -943,11 +924,12 @@ export default function AuraWebsite() {
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <Script id="json-ld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       
+      {/* 1. Cinematic Intro */}
       <AnimatePresence>
         {!introFinished && <IntroOverlay onComplete={() => setIntroFinished(true)} />}
       </AnimatePresence>
 
-      {/* Main Site */}
+      {/* 2. Main Site */}
       {introFinished && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <AuraScene startAnimation={introFinished} />
@@ -959,7 +941,6 @@ export default function AuraWebsite() {
             <Services />
             <CaseStudies />
             <AILab />
-            <TeamSection />
             <Contact />
           </main>
           <Footer />
