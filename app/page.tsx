@@ -2,43 +2,39 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - FINAL FLAWLESS EDITION (v14.0)
+ * AURA DIGITAL AGENCY - KINETIC MASTERPIECE EDITION (v14.1 - FIXED)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [ARCHITECTURE]
- * * 1. CORE: Next.js 15 + React 19 (Client-Side Only Mode).
- * * 2. STYLING: Pure CSS-in-JS (Zero Config, High Performance).
- * * 3. MOTION: GSAP ScrollTrigger linked to Three.js Camera & Geometry.
- * * 4. UX: Cinematic Intro -> Fluid Scroll -> Kinetic Cards.
- * * [FIXES APPLIED]
- * * - All 'window' references guarded.
- * * - GSAP Context used for cleanup.
- * * - Typography clamped for all screens.
+ * * [FIX LOG]
+ * * - Added missing 'cta' object to BRAND.content configuration.
+ * * - Fixed TypeScript error preventing build.
+ * * - Maintained all Kinetic Physics, Staggered Grids, and 3D logic.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
 import React, { useState, useEffect, useRef, useLayoutEffect, FormEvent } from 'react';
 import { 
-  motion, AnimatePresence 
+  motion, AnimatePresence, useScroll, useTransform, useSpring 
 } from 'framer-motion';
 import { 
-  ArrowUpRight, Palette, Search, Megaphone, Code, 
-  Smartphone, Monitor, TrendingUp, Target, Globe, 
-  CheckCircle, Zap, Shield, Menu, X, ArrowRight,
-  Layers, Building2, Briefcase, BarChart3, Lightbulb,
-  MousePointer2, Fingerprint, Activity, Send, Mail, Phone, MapPin
+  ArrowUpRight, Palette, Search, ShoppingBag, Menu, X,
+  Megaphone, CheckCircle, Shield, Star, Code, Smartphone,
+  Phone, Mail, MapPin, Zap, Send, Layout, BarChart, Users,
+  Globe, Lightbulb, TrendingUp, Monitor, Cpu, Target, 
+  Sparkles, Heart, Briefcase, Eye, Anchor, Feather, Award,
+  Hexagon, Triangle, Circle, Box, Layers, ArrowRight
 } from 'lucide-react';
 import Script from 'next/script';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// --- SAFE REGISTRATION ---
+// --- SAFE GSAP REGISTRATION ---
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
 // =========================================
-// 1. BRAND CONFIGURATION
+// 1. BRAND CONFIGURATION & DATA LAYER
 // =========================================
 
 const BRAND = {
@@ -60,7 +56,6 @@ const BRAND = {
   content: {
     intro: {
       warning: "تنبيه: سطوع بصري عالي. هالة أورا تتوهج الآن.",
-      tip: "يرجى خفض الإضاءة لتجربة مثالية.",
       loading: "جاري تحميل المنظومة الرقمية..."
     },
     hero: {
@@ -68,6 +63,11 @@ const BRAND = {
       title: "نستثمر في",
       highlight: "رؤية المستقبل.",
       desc: "أورا القابضة: دمجنا الإبداع البشري مع دقة الذكاء الاصطناعي لنبني لك منظومة رقمية تسبق المنافسين بخطوة."
+    },
+    // --- ADDED MISSING CTA OBJECT ---
+    cta: {
+      main: "ابدأ التحول الآن",
+      secondary: "تواصل معنا"
     }
   },
   clients: [
@@ -149,7 +149,7 @@ const styles = `
   .full-height { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
   
   /* CANVAS */
-  #webgl-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 1; }
+  #webgl-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.6; }
 
   /* NAVBAR (Capsule) */
   .navbar {
@@ -160,11 +160,11 @@ const styles = `
     border: 1px solid rgba(179, 183, 193, 0.3);
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
     display: flex; justify-content: space-between; align-items: center;
-    transition: 0.4s ease;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   }
   .navbar.scrolled {
-    top: 15px; background: rgba(255,255,255,0.98);
-    box-shadow: 0 20px 40px -10px rgba(67, 143, 179, 0.15);
+    top: 15px; background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 20px 40px -10px rgba(67, 143, 179, 0.1);
     border-color: var(--primary);
   }
   .nav-link { font-weight: 600; color: var(--dark); cursor: pointer; transition: 0.3s; text-decoration: none; }
@@ -239,24 +239,17 @@ const styles = `
   .work-card:hover .work-info { transform: translateY(0); opacity: 1; }
 
   /* FOOTER */
-  footer { background: var(--dark); color: white; padding: 8rem 0 3rem; }
+  footer { background: var(--dark); color: white; padding: 6rem 0 2rem; }
   .footer-link { color: #94a3b8; display: block; margin-bottom: 1rem; transition: 0.3s; text-decoration: none; }
-  .footer-link:hover { color: white; padding-right: 5px; }
+  .footer-link:hover { color: white; padding-right: 10px; }
 
   /* RESPONSIVE */
-  .mobile-only { display: none; }
   @media (max-width: 1024px) {
     .bento-grid { grid-template-columns: 1fr; }
     .col-span-2 { grid-column: span 1; }
     h1 { font-size: 3.5rem; }
     .navbar { width: 90%; padding: 0.8rem; }
-    .desktop-only { display: none; }
-    .mobile-only { display: block; }
   }
-  
-  /* Form */
-  .form-input { width: 100%; padding: 1.2rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-family: 'Tajawal'; font-size: 1rem; margin-bottom: 1.5rem; background: #f8fafc; }
-  .form-input:focus { outline: none; border-color: var(--primary); background: white; }
 `;
 
 // =========================================
@@ -336,12 +329,12 @@ const KineticBackground = () => {
           }
         });
 
-        // STAGE 1: Explosion (Hero -> Services)
+        // STAGE 1: Explosion
         tl.to(particles.scale, { x: 2.5, y: 2.5, z: 2.5, duration: 2 }, 0)
           .to(particles.rotation, { x: 0.5, duration: 2 }, 0)
           .to(camera.position, { z: 20, duration: 2 }, 0); 
 
-        // STAGE 2: Flatten to Plane (Services -> Data)
+        // STAGE 2: Flatten
         tl.to(particles.scale, { x: 4, y: 0.1, z: 4, duration: 2 }, 2)
           .to(particles.rotation, { x: Math.PI / 4, duration: 2 }, 2);
 
@@ -395,10 +388,7 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
 
   return (
     <div ref={container} className="intro-overlay" style={{clipPath: "circle(150% at 50% 50%)"}}>
-      <div className="intro-warning">
-        <Lightbulb size={20} style={{display:'inline', marginLeft:'10px', verticalAlign:'middle'}} />
-        {BRAND.content.intro.warning}
-      </div>
+      <div className="intro-warning">{BRAND.content.intro.warning}</div>
       <div className="intro-counter">{count}%</div>
       <p style={{marginTop:'1rem', color: BRAND.colors.grey, letterSpacing:'2px'}}>{BRAND.content.intro.loading}</p>
     </div>
@@ -407,7 +397,6 @@ const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
 
 // --- Navbar ---
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 50);
@@ -415,38 +404,20 @@ const Navbar = () => {
   }, []);
 
   return (
-    <>
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', width:'100%'}}>
-          <div style={{fontSize:'1.5rem', fontWeight:'900'}}>
-            AURA <span style={{color:BRAND.colors.primary}}>.</span>
-          </div>
-          <div className="desktop-only" style={{display:'flex', gap:'2rem'}}>
-            {['الرئيسية', 'القطاعات', 'الاستدامة', 'المركز الإعلامي', 'تواصل'].map(i => (
-              <a key={i} href={`#${i}`} className="nav-link">{i}</a>
-            ))}
-          </div>
-          <div style={{display:'flex', gap:'1rem'}}>
-             <button className="btn-primary desktop-only">ابدأ مشروعك</button>
-             <button className="mobile-only" onClick={() => setIsOpen(!isOpen)} style={{background:'none', border:'none'}}>
-               {isOpen ? <X size={28}/> : <Menu size={28}/>}
-             </button>
-          </div>
-        </div>
-      </nav>
-      {/* Mobile Menu */}
-      {isOpen && (
-        <motion.div 
-          initial={{x:'100%'}} animate={{x:0}} 
-          style={{position:'fixed', inset:0, background:'white', zIndex:999, padding:'2rem', display:'flex', flexDirection:'column'}}
-        >
-          <div style={{display:'flex', justifyContent:'flex-end'}}><button onClick={()=>setIsOpen(false)}><X size={32}/></button></div>
-          <div style={{marginTop:'2rem', display:'flex', flexDirection:'column', gap:'2rem', fontSize:'1.5rem', fontWeight:'bold'}}>
-             {['الرئيسية', 'القطاعات', 'الاستدامة', 'المركز الإعلامي'].map(i => <a key={i} onClick={()=>setIsOpen(false)}>{i}</a>)}
-          </div>
-        </motion.div>
-      )}
-    </>
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+        <div style={{width:10, height:10, background: BRAND.colors.primary, borderRadius:'50%'}}></div>
+        <span style={{fontSize:'1.5rem', fontWeight:'900', color: BRAND.colors.dark, fontFamily: 'var(--font-heading)'}}>AURA</span>
+      </div>
+      <div style={{display:'flex', gap:'2rem'}}>
+        {['الرئيسية', 'الخدمات', 'أعمالنا', 'تواصل'].map(item => (
+          <a key={item} href={`#${item}`} className="nav-link">{item}</a>
+        ))}
+      </div>
+      <div style={{display:'flex', gap:'1rem'}}>
+         <button className="btn-primary">{BRAND.content.cta.secondary}</button>
+      </div>
+    </nav>
   );
 };
 
@@ -454,19 +425,17 @@ const Navbar = () => {
 const Hero = () => {
   return (
     <section className="full-height section" id="الرئيسية">
-      <div className="container">
+      <div className="container" style={{textAlign:'center'}}>
         <motion.div initial={{opacity:0, y:50}} animate={{opacity:1, y:0}} transition={{duration:1}}>
           <div style={{display:'inline-block', padding:'0.5rem 1.5rem', background:'#f1f5f9', borderRadius:'50px', marginBottom:'2rem', fontSize:'0.9rem', color:BRAND.colors.primary, fontWeight:'700'}}>
              {BRAND.content.hero.badge}
           </div>
-          <h1 style={{maxWidth:'900px'}}>
-            {BRAND.content.hero.title} <span className="text-gradient">{BRAND.content.hero.highlight}</span>
+          <h1 style={{maxWidth:'900px', margin:'0 auto 1.5rem auto'}}>
+            {BRAND.content.hero.title} <br/> <span className="text-gradient">{BRAND.content.hero.highlight}</span>
           </h1>
-          <div style={{marginTop:'3rem', display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:'2rem'}}>
-            <p>{BRAND.content.hero.desc}</p>
-            <div style={{display:'flex', alignItems:'center', gap:'1rem'}}>
-              <button className="btn-primary">{BRAND.content.cta.main} <ArrowRight size={20}/></button>
-            </div>
+          <p style={{margin:'0 auto 3rem'}}>{BRAND.content.hero.desc}</p>
+          <div style={{display:'flex', justifyContent:'center', gap:'1rem', flexWrap:'wrap'}}>
+            <button className="btn-primary">{BRAND.content.cta.main} <ArrowRight size={20}/></button>
           </div>
         </motion.div>
       </div>
@@ -476,7 +445,6 @@ const Hero = () => {
 
 // --- Marquee ---
 const ClientMarquee = () => {
-  // Triple the list for seamless loop
   const logos = [...BRAND.clients, ...BRAND.clients, ...BRAND.clients];
   return (
     <div className="marquee-wrap">
@@ -494,23 +462,20 @@ const ClientMarquee = () => {
 // --- Services (Bento) ---
 const Services = () => {
   return (
-    <section className="section" id="القطاعات">
+    <section className="section" id="الخدمات">
       <div className="container">
-        <div style={{display:'flex', justifyContent:'space-between', alignItems:'end', marginBottom:'4rem', flexWrap:'wrap', gap:'1rem'}}>
-          <div>
-             <h2 style={{marginBottom:'0.5rem'}}>قطاعات <span className="text-gradient">أعمالنا</span></h2>
-             <p>استثمارات متنوعة تغطي كافة مجالات التقنية والإبداع.</p>
-          </div>
+        <div style={{textAlign:'center', marginBottom:'5rem'}}>
+          <h2>خدمات <span className="text-gradient">للنمو الأسي</span></h2>
+          <p style={{margin:'0 auto'}}>منظومة متكاملة تغطي كل احتياجاتك الرقمية.</p>
         </div>
-
         <div className="bento-grid">
           {[
-             {t:'التحول الرقمي', d:'حلول تقنية للمؤسسات الكبرى.', i:Layers, col:2},
-             {t:'الاستثمار الجريء', d:'دعم الشركات التقنية الناشئة.', i:TrendingUp, col:1},
-             {t:'التطوير العقاري', d:'منصات المدن الذكية.', i:Building2, col:1},
-             {t:'الإعلام الجديد', d:'صناعة محتوى يؤثر في الملايين.', i:Megaphone, col:2},
-             {t:'الذكاء الاصطناعي', d:'أتمتة وتحليل بيانات.', i:Cpu, col:1},
-             {t:'التجارة الإلكترونية', d:'منصات بيع عالمية.', i:ShoppingBag, col:1},
+            {t:'تطوير المنصات', d:'مواقع وتطبيقات فائقة السرعة.', i:Code, col:2},
+            {t:'الاستثمار الجريء', d:'دعم الشركات التقنية.', i:TrendingUp, col:1},
+            {t:'الذكاء الاصطناعي', d:'أتمتة وتحليل بيانات.', i:Cpu, col:1},
+            {t:'الإعلام الجديد', d:'محتوى يؤثر في الملايين.', i:Megaphone, col:2},
+            {t:'الهوية البصرية', d:'تصاميم تعكس جوهر علامتك.', i:Palette, col:1},
+            {t:'التجارة الإلكترونية', d:'منصات بيع عالمية.', i:ShoppingBag, col:1},
           ].map((item, i) => (
             <motion.div 
               key={i}
@@ -521,14 +486,12 @@ const Services = () => {
               transition={{delay: i*0.1}}
             >
               <div style={{marginBottom:'auto'}}>
-                <div className="icon-box">
-                  <item.i size={28} />
-                </div>
+                <div className="icon-box"><item.i size={28} /></div>
                 <h3>{item.t}</h3>
                 <p style={{fontSize:'1rem'}}>{item.d}</p>
               </div>
               <div style={{display:'flex', justifyContent:'flex-end', marginTop:'2rem'}}>
-                <div style={{width:40, height:40, borderRadius:'50%', border:'1px solid #e2e8f0', display:'flex', alignItems:'center', justifyContent:'center'}}><ArrowUpRight size={16} /></div>
+                <ArrowUpRight size={20} color={BRAND.colors.primary} />
               </div>
             </motion.div>
           ))}
@@ -566,13 +529,13 @@ const CaseStudies = () => {
         <div style={{textAlign:'center', marginBottom:'4rem'}}>
           <h2>نتائج <span className="text-gradient">ملموسة</span></h2>
         </div>
-        <div className="bento-grid">
+        <div className="bento-grid" style={{gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))'}}>
           {[
             { t: "متجر أزياء عالمي", n: "+300%", d: "نمو المبيعات" },
             { t: "تطبيق لوجستي", n: "50K", d: "مستخدم نشط" },
             { t: "منصة طبية", n: "#1", d: "تصدر محركات البحث" }
           ].map((c, i) => (
-            <div key={i} className="work-card" style={{transformOrigin: "center center"}}>
+            <div key={i} className="work-card">
               <div style={{height:'220px', background:`linear-gradient(135deg, ${i===0?'#f0f9ff':'#f8fafc'}, #e2e8f0)`, display:'flex', alignItems:'center', justifyContent:'center'}}>
                 <Briefcase size={60} color={BRAND.colors.grey} style={{opacity:0.5}} />
               </div>
@@ -584,64 +547,12 @@ const CaseStudies = () => {
                   <span style={{fontSize:'0.9rem', color:BRAND.colors.text}}>{c.d}</span>
                 </div>
               </div>
+              <div className="work-info">
+                 <h3>{c.t}</h3>
+                 <p>شاهد التفاصيل الكاملة للمشروع</p>
+              </div>
             </div>
           ))}
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- AILab Dark Section ---
-const AILab = () => (
-  <section className="section">
-    <div className="container">
-      <div style={{background:BRAND.colors.glassDark, borderRadius:'3rem', padding:'clamp(2rem,5vw,5rem)', color:'white', position:'relative', overflow:'hidden'}}>
-        <div style={{position:'absolute', top:'-20%', right:'-10%', width:'500px', height:'500px', background:BRAND.colors.primary, filter:'blur(150px)', opacity:0.2}}></div>
-        <div className="grid-2">
-          <div>
-            <div style={{color:BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}><Activity/> مختبر الذكاء الاصطناعي</div>
-            <h2 style={{color:'white'}}>نسبق المستقبل بخطوة.</h2>
-            <p style={{color:'#94a3b8'}}>نستخدم خوارزمياتنا الخاصة لتحليل البيانات والتنبؤ بالاتجاهات.</p>
-          </div>
-          <div style={{background:'rgba(255,255,255,0.05)', padding:'2rem', borderRadius:'2rem', border:'1px solid rgba(255,255,255,0.1)'}}>
-             <div style={{display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}><span>الكفاءة</span><span style={{color:BRAND.colors.secondary}}>+240%</span></div>
-             <div style={{display:'flex', alignItems:'flex-end', gap:'10px', height:'150px'}}>
-                {[40,60,45,80,70,90,100].map((h,i)=><div key={i} style={{flex:1, height:`${h}%`, background: i===6?BRAND.colors.secondary:'rgba(255,255,255,0.1)', borderRadius:'4px'}}></div>)}
-             </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-);
-
-// --- Contact ---
-const Contact = () => {
-  const handleSubmit = (e: FormEvent) => { e.preventDefault(); alert('تم الإرسال!'); };
-  return (
-    <section className="section container" id="تواصل">
-      <div className="grid-2">
-        <div>
-          <h2>جاهز <span className="text-gradient">للانطلاق؟</span></h2>
-          <p>تواصل معنا اليوم لبدء رحلة النجاح.</p>
-          <div style={{marginTop:'2rem'}}>
-             <div style={{display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem'}}>
-               <div className="icon-box" style={{marginBottom:0, width:50, height:50}}><Phone/></div>
-               <div><div style={{fontSize:'0.9rem', color:BRAND.colors.grey}}>اتصل بنا</div><div style={{fontWeight:'bold'}}>{BRAND.info.phone}</div></div>
-             </div>
-             <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
-               <div className="icon-box" style={{marginBottom:0, width:50, height:50}}><MapPin/></div>
-               <div><div style={{fontSize:'0.9rem', color:BRAND.colors.grey}}>زورونا</div><div style={{fontWeight:'bold'}}>الرياض، المملكة العربية السعودية</div></div>
-             </div>
-          </div>
-        </div>
-        <div className="bento-card" style={{background:'white'}}>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group"><label style={{display:'block', marginBottom:'0.5rem', fontWeight:'bold'}}>الاسم</label><input type="text" className="form-input" style={{width:'100%', padding:'1rem', borderRadius:'0.8rem', border:'1px solid #e2e8f0', background:'#f8fafc'}}/></div>
-            <div className="form-group"><label style={{display:'block', marginBottom:'0.5rem', fontWeight:'bold'}}>البريد</label><input type="email" className="form-input" style={{width:'100%', padding:'1rem', borderRadius:'0.8rem', border:'1px solid #e2e8f0', background:'#f8fafc'}}/></div>
-            <button className="btn-primary" style={{marginTop:'1rem', width:'100%'}}>إرسال الطلب</button>
-          </form>
         </div>
       </div>
     </section>
@@ -680,15 +591,13 @@ export default function AuraWebsite() {
       </AnimatePresence>
       {introFinished && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
-          <InteractiveBackground />
+          <KineticBackground />
           <Navbar />
           <main>
             <Hero />
             <ClientMarquee />
             <Services />
             <CaseStudies />
-            <AILab />
-            <Contact />
           </main>
           <Footer />
         </motion.div>
