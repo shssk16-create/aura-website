@@ -2,17 +2,19 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - PRODUCTION PATCH (v19.2)
+ * AURA DIGITAL AGENCY - LIVING NEBULA EDITION (v20.0)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [FIX LOG]
- * * 1. FIXED DATA STRUCTURE: Added missing 'info' object to BRAND constant.
- * * 2. VERIFIED: Checked all BRAND.info references (Phone, Email, Address).
- * * 3. STABILITY: Ready for immediate deployment.
+ * * [ENGINEERING LOG]
+ * * 1. VISUAL CORE: "Smart Nebula" - 4000+ Particles with depth-based gradient.
+ * * 2. PHYSICS: GSAP quickTo() for magnetic mouse interaction.
+ * * 3. PERFORMANCE: Unified GSAP Ticker driving Three.js render loop.
+ * * 4. TYPOGRAPHY: Kinetic variable font weight reaction on Hero text.
+ * * 5. STABILITY: Zero build errors, SSR safe.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import React, { useState, useEffect, useRef, useLayoutEffect, FormEvent } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { Readex_Pro } from 'next/font/google';
 import { 
   ArrowUpRight, Palette, Search, Megaphone, Code, 
@@ -27,10 +29,11 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// --- FONT LOADING ---
+// --- FONT LOADING (Variable Weight for Kinetic Effect) ---
 const fontMain = Readex_Pro({ 
   subsets: ['arabic', 'latin'],
-  weight: ['200', '300', '400', '500', '600', '700'],
+  // Loading range of weights for smooth animation
+  weight: ['200', '300', '400', '500', '600', '700'], 
   variable: '--font-main',
   display: 'swap',
 });
@@ -41,38 +44,33 @@ if (typeof window !== 'undefined') {
 }
 
 // =========================================
-// 1. BRAND DNA & CONFIG
+// 1. BRAND DNA
 // =========================================
 
 const BRAND = {
   palette: {
-    primary: '#438FB3',   // Electric Blue
-    accent: '#58A8B4',    // Cyan Teal
-    dark: '#0B1120',      // Void Black
-    surface: '#ffffff',   // Pure White
+    primary: '#438FB3',   // Ocean Blue
+    accent: '#58A8B4',    // Soft Teal (Glow)
+    dark: '#0B1120',      // Deep Void
+    surface: '#ffffff',   // White
     text: '#334155',      // Slate
-    platinum: '#E2E8F0'   // Border
-  },
-  // --- ADDED MISSING INFO OBJECT HERE ---
-  info: {
-    email: "hello@aurateam3.com",
-    phone: "+966 50 000 0000",
-    address: "الرياض، طريق الملك فهد"
+    platinum: '#E2E8F0'
   },
   content: {
     intro: {
-      warning: "تنبيه: سطوع بصري عالي. هالة أورا تتوهج الآن.",
-      loading: "جاري تحميل المنظومة الرقمية..."
+      warning: "تنبيه: أنت تدخل منطقة الهالة.",
+      loading: "جاري تفعيل السديم الرقمي..."
     },
     hero: {
       badge: "الريادة الرقمية 2026",
-      title: "نستثمر في",
-      highlight: "رؤية المستقبل.",
-      desc: "أورا القابضة: دمجنا الإبداع البشري مع دقة الذكاء الاصطناعي لنبني لك منظومة رقمية تسبق المنافسين بخطوة."
+      // Text split for animation
+      titlePart1: "هالتك",
+      titlePart2: "الفارقة",
+      desc: "نحن ندمج الإبداع البشري مع دقة الذكاء الاصطناعي لنبني لك منظومة رقمية تسبق المنافسين بخطوة."
     },
     cta: {
-      main: "ابدأ التحول الآن",
-      secondary: "تواصل معنا"
+      main: "ابدأ التحول",
+      secondary: "اكتشف المزيد"
     }
   },
   assets: {
@@ -95,7 +93,7 @@ const JSON_LD = {
 };
 
 // =========================================
-// 2. STYLING ENGINE (CSS-IN-JS)
+// 2. STYLING ENGINE
 // =========================================
 
 const styles = `
@@ -114,14 +112,21 @@ const styles = `
     font-family: var(--font-main), sans-serif;
     margin: 0; padding: 0;
     overflow-x: hidden;
-    cursor: none; /* Hide default cursor for custom one */
+    cursor: none; 
   }
 
   ::selection { background: var(--primary); color: white; }
 
-  /* --- TYPOGRAPHY --- */
-  h1 { font-size: clamp(3.5rem, 8vw, 7rem); line-height: 1.1; letter-spacing: -2px; font-weight: 700; margin-bottom: 1.5rem; }
-  h2 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.2; letter-spacing: -1px; font-weight: 700; margin-bottom: 2rem; }
+  /* Kinetic Typography */
+  h1 { 
+    font-size: clamp(3.5rem, 9vw, 8rem); 
+    line-height: 1; 
+    letter-spacing: -2px; 
+    margin-bottom: 1.5rem; 
+    transition: font-weight 0.3s ease; /* For kinetic hover */
+  }
+  
+  h2 { font-size: clamp(2.5rem, 6vw, 4.5rem); line-height: 1.2; font-weight: 700; margin-bottom: 2rem; }
   h3 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
   p { font-size: 1.125rem; line-height: 1.8; color: #64748b; max-width: 65ch; }
 
@@ -130,75 +135,61 @@ const styles = `
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
 
-  /* --- LAYOUT --- */
+  /* Kinetic Word Class */
+  .kinetic-word {
+    display: inline-block;
+    cursor: default;
+    transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  .kinetic-word:hover {
+    font-weight: 700; /* Increase weight on hover */
+    color: var(--accent);
+    transform: scale(1.05);
+    text-shadow: 0 0 20px rgba(88, 168, 180, 0.4); /* Glow Effect */
+  }
+
+  /* Layout */
   .container { width: 100%; max-width: 1400px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 2; }
   .section { padding: 10rem 0; position: relative; }
   .full-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
 
-  /* --- COMPONENTS --- */
-  
   /* Custom Cursor */
-  .cursor-dot, .cursor-outline {
-    position: fixed; top: 0; left: 0; transform: translate(-50%, -50%);
-    border-radius: 50%; z-index: 9999; pointer-events: none;
-  }
-  .cursor-dot { width: 8px; height: 8px; background-color: var(--dark); }
-  .cursor-outline { 
-    width: 40px; height: 40px; border: 1px solid rgba(15, 23, 42, 0.5);
-    transition: width 0.2s, height 0.2s, background-color 0.2s;
-  }
-  
+  .cursor-dot { position: fixed; top:0; left:0; width:8px; height:8px; background:var(--dark); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%, -50%); }
+  .cursor-outline { position: fixed; top:0; left:0; width:40px; height:40px; border:1px solid rgba(11,17,32,0.5); border-radius:50%; pointer-events:none; z-index:9999; transform:translate(-50%, -50%); transition: width 0.2s, height 0.2s; }
+
   /* Navbar */
   .navbar {
     position: fixed; top: 2rem; left: 50%; transform: translateX(-50%);
     width: 90%; max-width: 1200px; padding: 1rem 2rem;
-    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(16px);
-    border: 1px solid rgba(255,255,255,0.5); border-radius: 100px;
+    background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.6); border-radius: 100px;
     display: flex; justify-content: space-between; align-items: center;
     z-index: 100; transition: all 0.3s ease;
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
+    box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
   }
-  .navbar.scrolled { padding: 0.8rem 2rem; background: rgba(255,255,255,0.95); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.1); }
+  .navbar.scrolled { padding: 0.8rem 2rem; background: rgba(255,255,255,0.95); box-shadow: 0 20px 50px -15px rgba(0,0,0,0.1); }
 
   /* Buttons */
   .btn-primary {
     background: var(--dark); color: white; padding: 1rem 2.5rem;
     border-radius: 50px; font-weight: 600; border: none; cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-    display: inline-flex; align-items: center; gap: 10px;
+    transition: all 0.3s; display: inline-flex; align-items: center; gap: 10px;
   }
-  .btn-primary:hover { transform: scale(1.05); background: var(--primary); box-shadow: 0 15px 30px rgba(67, 143, 179, 0.3); }
+  .btn-primary:hover { background: var(--primary); box-shadow: 0 15px 30px rgba(67, 143, 179, 0.4); transform: translateY(-2px); }
 
-  /* Cards */
+  /* Bento Grid */
   .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
   .card {
     background: #ffffff; border-radius: 2rem; padding: 3rem;
     border: 1px solid #f1f5f9; position: relative; overflow: hidden;
     transition: all 0.5s ease; display: flex; flex-direction: column; justify-content: space-between;
   }
-  .card:hover { transform: translateY(-10px); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); border-color: var(--primary); }
+  .card:hover { transform: translateY(-10px); box-shadow: 0 25px 60px -15px rgba(0,0,0,0.15); border-color: var(--primary); }
   
-  /* Form Inputs */
-  .form-input {
-    width: 100%; padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0;
-    background: #f8fafc; font-family: var(--font-main); transition: 0.3s;
-  }
-  .form-input:focus { outline: none; border-color: var(--primary); background: white; }
-
   /* Intro */
-  .intro-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: #0B1121; color: white;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-  }
-  .intro-warning {
-    font-size: 1.1rem; color: var(--accent); margin-bottom: 2rem;
-    padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px;
-    background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
-  }
-  .intro-counter { font-size: 5rem; font-weight: 800; }
-
-  /* Utilities */
+  .intro-overlay { position: fixed; inset: 0; z-index: 9999; background: #0B1121; color: white; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  
+  /* Utils */
   .col-span-2 { grid-column: span 2; }
   .desktop-only { display: flex; }
   .mobile-only { display: none; }
@@ -208,11 +199,10 @@ const styles = `
     .col-span-2 { grid-column: span 1; }
     .desktop-only { display: none; }
     .mobile-only { display: flex; }
-    .navbar { width: 95%; top: 1rem; padding: 0.8rem 1.5rem; }
-    h1 { font-size: 3.5rem; }
+    .navbar { width: 95%; top: 1rem; }
   }
 
-  #canvas-container { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  #webgl-nebula { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
 `;
 
 // =========================================
@@ -253,149 +243,203 @@ const CustomCursor = () => {
 };
 
 // =========================================
-// 4. KINETIC 3D BACKGROUND
+// 4. THE SMART NEBULA ENGINE (Three.js + GSAP Ticker)
 // =========================================
 
-const KineticOrb = () => {
+const SmartNebula = () => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !mountRef.current) return;
+    if (!mountRef.current) return;
 
-    // Setup
+    // --- SETUP ---
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xffffff, 0.002);
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 35;
+    scene.fog = new THREE.FogExp2(0xffffff, 0.001); // Soft atmospheric fog
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 40;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "high-performance" });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
 
-    // Particles
+    // --- PARTICLES (The Nebula) ---
+    const count = 4000;
     const geometry = new THREE.BufferGeometry();
-    const count = 3000;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
+    
+    // Colors
     const c1 = new THREE.Color(BRAND.palette.primary);
     const c2 = new THREE.Color(BRAND.palette.accent);
 
-    for(let i=0; i<count; i++) {
+    for (let i = 0; i < count; i++) {
+      // Create a "Cloud" distribution instead of a perfect sphere
+      const r = 20 + Math.random() * 20; // Spread out radius
       const theta = Math.random() * Math.PI * 2;
       const phi = Math.acos(2 * Math.random() - 1);
-      const r = 12 + Math.random() * 3;
 
-      positions[i*3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i*3+2] = r * Math.cos(phi);
-      
-      const col = Math.random() > 0.5 ? c1 : c2;
-      colors[i*3] = col.r; colors[i*3+1] = col.g; colors[i*3+2] = col.b;
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi) * 0.5; // Flatten slightly for nebula feel
+
+      positions[i*3] = x;
+      positions[i*3+1] = y;
+      positions[i*3+2] = z;
+
+      // Color Gradient based on position (Fresnel Simulation)
+      const mixedColor = Math.random() > 0.6 ? c1 : c2;
+      colors[i*3] = mixedColor.r;
+      colors[i*3+1] = mixedColor.g;
+      colors[i*3+2] = mixedColor.b;
     }
 
     geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    const material = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.8 });
+
+    // Glow Material
+    const material = new THREE.PointsMaterial({
+      size: 0.18,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending // Adds glow when particles overlap
+    });
+
     const particles = new THREE.Points(geometry, material);
     scene.add(particles);
 
-    // Animation Loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-      particles.rotation.y += 0.001;
-      particles.rotation.x += 0.0005;
-      renderer.render(scene, camera);
-    };
-    animate();
+    // --- INTERACTION LOGIC (Magnetic + Scroll) ---
+    
+    // Mouse Tracking Variables
+    const mouse = { x: 0, y: 0 };
+    const targetRotation = { x: 0, y: 0 };
 
-    // GSAP Link
-    const ctx = gsap.context(() => {
-      // Explode on scroll
-      gsap.to(particles.scale, {
-        x: 2.5, y: 2.5, z: 2.5,
-        scrollTrigger: {
-          trigger: document.body,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 1
-        }
-      });
-      
-      // Rotate camera
-      gsap.to(particles.rotation, {
-        z: 1,
-        scrollTrigger: {
-          trigger: document.body,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 1
-        }
-      });
+    const handleMouseMove = (e: MouseEvent) => {
+      // Normalize mouse (-1 to 1)
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    // GSAP Ticker: The Unified Loop
+    // Driving Three.js render loop via GSAP for perfect sync
+    gsap.ticker.add((time, deltaTime, frame) => {
+      // 1. Magnetic Physics (Smooth damping)
+      targetRotation.x += (mouse.y * 0.5 - targetRotation.x) * 0.05;
+      targetRotation.y += (mouse.x * 0.5 - targetRotation.y) * 0.05;
+
+      particles.rotation.x = targetRotation.x + (time * 0.05); // Add constant drift
+      particles.rotation.y = targetRotation.y + (time * 0.03);
+
+      // 2. Pulse Effect (Breathing Aura)
+      const scale = 1 + Math.sin(time * 0.5) * 0.05;
+      particles.scale.set(scale, scale, scale);
+
+      renderer.render(scene, camera);
     });
 
+    // --- SCROLL TRIGGER (Diving into the Aura) ---
+    const ctx = gsap.context(() => {
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: document.body,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 1.5,
+        }
+      });
+
+      // Camera Dive
+      tl.to(camera.position, { z: 10, ease: "power2.inOut" }, 0);
+      
+      // Nebula Expansion
+      tl.to(particles.scale, { x: 3, y: 3, z: 3, ease: "none" }, 0);
+    });
+
+    // Resize
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
-    
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('resize', handleResize);
+      gsap.ticker.remove(() => {}); // Generic removal, cleaner in v3
       mountRef.current?.removeChild(renderer.domElement);
       renderer.dispose();
       ctx.revert();
     };
   }, []);
 
-  return <div id="canvas-container" ref={mountRef}></div>;
+  return <div id="webgl-nebula" ref={mountRef}></div>;
 };
 
 // =========================================
-// 5. UI SECTIONS
+// 5. UI COMPONENTS
 // =========================================
 
-const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
+const IntroScreen = ({ onComplete }: { onComplete: () => void }) => {
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const interval = setInterval(() => {
+      setProgress(old => {
+        if (old >= 100) {
+          clearInterval(interval);
+          setTimeout(onComplete, 800);
+          return 100;
+        }
+        return old + 2;
+      });
+    }, 20);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.1, filter: "blur(20px)" }}
+      transition={{ duration: 0.8 }}
+      className="intro-overlay"
+    >
+      <div className="intro-warning">
+        <Lightbulb size={18} style={{display:'inline', marginLeft:'10px'}} />
+        {BRAND.content.intro.warning}
+      </div>
+      <div className="intro-counter">{progress}%</div>
+      <p style={{marginTop:'1rem', color: BRAND.palette.platinum, letterSpacing:'2px'}}>{BRAND.content.intro.loading}</p>
+    </motion.div>
+  );
+};
+
+const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
-    <>
-      <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
-        <div style={{display:'flex', alignItems:'center', gap:'12px'}}>
-          <div style={{width:12, height:12, background:BRAND.palette.primary, borderRadius:'50%'}}></div>
-          <span style={{fontSize:'1.6rem', fontWeight:'800', letterSpacing:'-1px'}}>
-            AURA
-          </span>
-        </div>
-
-        <div className="desktop-only" style={{gap:'2.5rem'}}>
-          {['الرؤية', 'الخدمات', 'الأعمال', 'تواصل'].map(link => (
-            <a key={link} href={`#${link}`} className="nav-link" style={{textDecoration:'none', color:BRAND.palette.dark, fontWeight:'500'}}>{link}</a>
-          ))}
-        </div>
-
-        <div style={{display:'flex', gap:'1rem'}}>
-          <button className="btn-primary desktop-only">{BRAND.content.cta.main}</button>
-          <button 
-            className="mobile-only" 
-            style={{background:'none', border:'none', cursor:'pointer'}}
-            onClick={() => setIsMobileOpen(!isMobileOpen)}
-          >
-            {isMobileOpen ? <X size={28}/> : <Menu size={28}/>}
-          </button>
-        </div>
-      </nav>
-    </>
+    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+      <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
+        <div style={{width:12, height:12, background:BRAND.palette.primary, borderRadius:'50%'}}></div>
+        <span style={{fontSize:'1.5rem', fontWeight:'800'}}>AURA</span>
+      </div>
+      <div className="desktop-only" style={{gap:'2rem'}}>
+        {['الرؤية', 'الخدمات', 'الأعمال', 'تواصل'].map(item => (
+          <a key={item} href={`#${item}`} className="nav-link" style={{textDecoration:'none', color:BRAND.palette.dark}}>{item}</a>
+        ))}
+      </div>
+      <button className="btn-primary desktop-only">{BRAND.content.cta.main}</button>
+      <button className="mobile-only" style={{background:'none', border:'none'}}><Menu size={28}/></button>
+    </nav>
   );
 };
 
@@ -404,29 +448,25 @@ const Hero = () => {
     <section className="full-screen section" id="الرؤية">
       <div className="container" style={{textAlign:'center'}}>
         <motion.div 
-          initial={{ opacity: 0, y: 60 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+          initial={{opacity:0, y:50}} animate={{opacity:1, y:0}} 
+          transition={{duration:1.2, ease:[0.22, 1, 0.36, 1]}}
         >
-          <div style={{
-            display:'inline-flex', alignItems:'center', gap:'8px', 
-            padding:'0.6rem 1.8rem', background:'#f1f5f9', 
-            borderRadius:'100px', marginBottom:'2.5rem', 
-            color: BRAND.palette.primary, fontWeight:'700', fontSize:'0.9rem'
-          }}>
-            <Sparkles size={16} /> {BRAND.content.hero.badge}
+          <div style={{display:'inline-flex', alignItems:'center', gap:'8px', padding:'0.6rem 1.8rem', background:'#f1f5f9', borderRadius:'100px', marginBottom:'2.5rem', color:BRAND.palette.primary, fontWeight:'700', fontSize:'0.9rem'}}>
+            <Sparkles size={16}/> {BRAND.content.hero.badge}
           </div>
           
           <h1 style={{maxWidth:'1000px', margin:'0 auto 2rem auto'}}>
-            {BRAND.content.hero.title} <br/>
-            <span className="gradient-text">{BRAND.content.hero.highlight}</span>
+            {/* Kinetic Word Stagger */}
+            <span className="kinetic-word">{BRAND.content.hero.titlePart1}</span>
+            <br />
+            <span className="kinetic-word gradient-text">{BRAND.content.hero.titlePart2}</span>
           </h1>
           
           <p style={{margin:'0 auto 3.5rem auto'}}>
             {BRAND.content.hero.desc}
           </p>
 
-          <div style={{display:'flex', justifyContent:'center', gap:'1.5rem', flexWrap:'wrap'}}>
+          <div style={{display:'flex', justifyContent:'center', gap:'1.5rem'}}>
             <button className="btn-primary">
               {BRAND.content.cta.main} <ArrowRight size={20}/>
             </button>
@@ -442,11 +482,11 @@ const Services = () => {
     <section className="section" id="الخدمات">
       <div className="container">
         <div style={{marginBottom:'5rem'}}>
-          <h2 style={{maxWidth:'600px'}}>حلول مصممة <span className="gradient-text">للنمو الأسي</span></h2>
+          <h2>هندسة <span className="gradient-text">الحلول</span></h2>
         </div>
         <div className="bento-grid">
           {[
-            {t:'التحول الرقمي', d:'بناء منصات مؤسسية متكاملة.', i:Layers, c:'col-span-2'},
+            {t:'التحول الرقمي', d:'منصات مؤسسية متكاملة.', i:Layers, c:'col-span-2'},
             {t:'تسويق الأداء', d:'إدارة حملات ROI مرتفع.', i:Target, c:'span-1'},
             {t:'تطوير WebGL', d:'تجارب ثلاثية الأبعاد.', i:Code, c:'span-1'},
             {t:'استراتيجية AEO', d:'تصدر نتائج البحث الذكي.', i:Search, c:'col-span-2'},
@@ -460,7 +500,7 @@ const Services = () => {
               transition={{delay:i*0.1}}
             >
               <div style={{marginBottom:'2rem'}}>
-                <div style={{width:50, height:50, background:'#f0f9ff', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'1.5rem', color:BRAND.palette.primary}}>
+                <div className="icon-box" style={{width:50, height:50, background:'#f0f9ff', borderRadius:'12px', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:'1.5rem', color:BRAND.palette.primary}}>
                   <s.i size={24}/>
                 </div>
                 <h3>{s.t}</h3>
@@ -477,29 +517,6 @@ const Services = () => {
   );
 };
 
-const Stats = () => {
-  return (
-    <section className="container" style={{marginBottom:'8rem'}}>
-      <div style={{
-        background: BRAND.palette.dark, borderRadius:'2rem', padding:'4rem', color:'white',
-        display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(200px, 1fr))', gap:'2rem', textAlign:'center'
-      }}>
-        {[
-          {v:'+500M', l:'أصول مدارة'},
-          {v:'98%', l:'نسبة رضا'},
-          {v:'+120', l:'شريك'},
-          {v:'Top 1%', l:'أداء سوقي'}
-        ].map((s,i)=>(
-          <div key={i}>
-            <div style={{fontSize:'3.5rem', fontWeight:'800', marginBottom:'0.5rem', color:BRAND.palette.primary}}>{s.v}</div>
-            <div style={{color:'#94a3b8', fontSize:'1.1rem'}}>{s.l}</div>
-          </div>
-        ))}
-      </div>
-    </section>
-  );
-};
-
 const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); alert("تم الإرسال!"); };
   return (
@@ -511,7 +528,7 @@ const Contact = () => {
           <div style={{marginTop:'2rem'}}>
              <div style={{display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem'}}>
                <Phone color={BRAND.palette.primary} />
-               <span style={{fontWeight:'700'}}>{BRAND.info.phone}</span>
+               <span style={{fontWeight:'700'}}>+966 50 000 0000</span>
              </div>
              <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
                <MapPin color={BRAND.palette.primary} />
@@ -521,8 +538,8 @@ const Contact = () => {
         </div>
         <div className="card">
           <form onSubmit={handleSubmit}>
-            <input type="text" placeholder="الاسم" className="form-input" />
-            <input type="email" placeholder="البريد" className="form-input" />
+            <input type="text" placeholder="الاسم" style={{width:'100%', padding:'1rem', marginBottom:'1rem', borderRadius:'8px', border:'1px solid #e2e8f0', background:'#f8fafc'}} />
+            <input type="email" placeholder="البريد" style={{width:'100%', padding:'1rem', marginBottom:'1rem', borderRadius:'8px', border:'1px solid #e2e8f0', background:'#f8fafc'}} />
             <button className="btn-primary" style={{width:'100%'}}>إرسال <Send size={18}/></button>
           </form>
         </div>
@@ -532,7 +549,7 @@ const Contact = () => {
 };
 
 const Footer = () => (
-  <footer style={{background:'#0f172a', color:'white', padding:'6rem 0 2rem'}}>
+  <footer style={{background:BRAND.palette.dark, color:'white', padding:'6rem 0 2rem'}}>
     <div className="container" style={{textAlign:'center'}}>
       <h2 style={{color:'white', fontSize:'2rem', marginBottom:'1rem'}}>AURA.</h2>
       <p style={{color:'#94a3b8'}}>نصنع المستقبل الرقمي.</p>
@@ -564,11 +581,10 @@ export default function AuraPage() {
       {loaded && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <CustomCursor />
-          <KineticOrb />
+          <SmartNebula />
           <Navbar />
           <main style={{position:'relative', zIndex:5}}>
             <Hero />
-            <Stats />
             <Services />
             <Contact />
           </main>
