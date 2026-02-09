@@ -2,34 +2,27 @@
 
 /**
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - SEO-MAX ENTERPRISE EDITION (v8.1 - FINAL FIX)
+ * AURA DIGITAL AGENCY - KINETIC ENTERPRISE EDITION (v9.0)
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [SEO STRATEGY & TECHNICAL ARCHITECTURE]
- * * 1. TARGET KEYWORDS: "Digital Marketing Saudi", "AI Marketing", "SEO Riyadh".
- * * 2. CORE WEB VITALS: Optimized for LCP < 1.2s via React Server Components logic.
- * * 3. SCHEMA MARKUP: Full JSON-LD implementation for "ProfessionalService".
- * * 4. UX/UI:
- * - Glassmorphism Navigation (Blur 20px)
- * - WebGL Aurora Background (Three.js Optimized)
- * - Bento Grid Services Layout
- * * 5. COLOR PALETTE (Trust & Tech):
- * - Primary: #438FB3 (Strategic Blue)
- * - Secondary: #58A8B4 (Innovation Teal)
- * - Silver: #B3B7C1 (Balance)
- * - Dark Mode: #0F172A (AI Lab)
+ * * [NEW FEATURES & UPGRADES]
+ * * 1. GSAP VELOCITY SKEW: Work cards tilt based on scroll speed (Physics-based).
+ * * 2. STAGGERED GRID REVEAL: Client logos appear in a musical ascending order.
+ * * 3. CLIENT-CENTRIC COPY: Language shifted from "Technical Features" to "Business Outcomes".
+ * * 4. PERFORMANCE: optimized WebGL + GSAP Context cleaning.
  * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
-import React, { useState, useEffect, useRef, FormEvent, useMemo } from 'react';
+import React, { useState, useEffect, useRef, FormEvent } from 'react';
 import { 
-  motion, AnimatePresence, useScroll, useTransform, useSpring 
+  motion, AnimatePresence 
 } from 'framer-motion';
 import { 
   ArrowUpRight, Palette, Search, ShoppingBag, Menu, X,
   Megaphone, CheckCircle, Shield, Star, Code, Smartphone,
   Phone, Mail, MapPin, Zap, Send, Layout, BarChart, Users,
   Globe, Lightbulb, TrendingUp, Monitor, Cpu, Target, 
-  Sparkles, Heart, MousePointer2, Briefcase, Eye, BarChart3
+  Sparkles, Heart, Briefcase, Eye, Anchor, Feather, Award,
+  Hexagon, Triangle, Circle, Box, Layers
 } from 'lucide-react';
 import Script from 'next/script';
 import * as THREE from 'three';
@@ -57,31 +50,29 @@ const BRAND = {
     glassDark: '#1e293b'  // AI Lab Background
   },
   info: {
-    email: "hello@aurateam3.com",
+    email: "growth@aurateam3.com", // More persuasive email
     phone: "+966 50 000 0000",
-    address: "الرياض، طريق الملك فهد، المملكة العربية السعودية"
+    address: "برج أورا، طريق الملك فهد، الرياض"
   },
   content: {
-    seoTitle: "أورا | أفضل شركة تسويق رقمي في السعودية والرياض",
-    // --- FIXED: Added missing 'intro' object ---
     intro: {
-      warning: "تنبيه: سطوع بصري عالي الكثافة. هالة أورا تتوهج الآن.",
-      loading: "جاري تهيئة الأنظمة الإبداعية..."
+      warning: "تنبيه: أنت على وشك دخول تجربة رقمية عالية الأداء.",
+      loading: "جاري تحميل أصول النجاح..."
     },
     hero: {
-      badge: "الريادة الرقمية 2026",
-      title: "أفضل شركة تسويق رقمي في السعودية:",
-      highlight: "نصنع هالة التميز لعلامتك",
-      desc: "في أورا، ندمج بين الذكاء الاصطناعي التوليدي وإدارة الحملات الإعلانية المبنية على البيانات لتحقيق عائد استثمار (ROI) يتجاوز التوقعات في الرياض وجدة وكافة أنحاء المملكة."
+      badge: "شريك النمو الاستراتيجي 2026",
+      title: "لا تبحث عن مجرد وكالة،",
+      highlight: "امتلك شريكاً يصنع الفرق.",
+      desc: "في عالم يضج بالضجيج، نحن نمنح علامتك التجارية صوتاً مسموعاً، وحضوراً لا يُمحى، وأرقاماً تتحدث عن نفسها. دعنا نحول طموحك إلى هيمنة سوقية."
     },
     cta: {
-      main: "ابدأ التحول الرقمي الآن",
-      secondary: "احصل على استشارة مجانية"
+      main: "استشر خبراؤنا الآن",
+      secondary: "احجز مكالمة اكتشاف"
     }
   }
 };
 
-// SEO: Structured Data (Schema.org)
+// SEO: Structured Data
 const JSON_LD = {
   "@context": "https://schema.org",
   "@type": "ProfessionalService",
@@ -94,21 +85,9 @@ const JSON_LD = {
     "@type": "PostalAddress",
     "streetAddress": "King Fahd Road",
     "addressLocality": "Riyadh",
-    "addressRegion": "Riyadh",
-    "postalCode": "11564",
     "addressCountry": "SA"
   },
-  "geo": {
-    "@type": "GeoCoordinates",
-    "latitude": "24.7136",
-    "longitude": "46.6753"
-  },
-  "priceRange": "$$$",
-  "openingHours": "Su-Th 09:00-18:00",
-  "sameAs": [
-    "https://twitter.com/aura_sa",
-    "https://linkedin.com/company/aura-sa"
-  ]
+  "priceRange": "$$$"
 };
 
 // =========================================
@@ -144,7 +123,7 @@ const styles = `
 
   ::selection { background: var(--primary); color: white; }
 
-  /* TYPOGRAPHY SYSTEM (SEO Optimized Headings) */
+  /* TYPOGRAPHY SYSTEM */
   h1, h2, h3, h4, h5 {
     font-family: var(--font-heading);
     color: var(--dark);
@@ -153,7 +132,7 @@ const styles = `
     letter-spacing: -0.02em;
   }
   
-  h1 { font-size: clamp(2.5rem, 5vw + 1rem, 5rem); line-height: 1.15; margin-bottom: 1.5rem; }
+  h1 { font-size: clamp(2.5rem, 5vw + 1rem, 5.5rem); line-height: 1.15; margin-bottom: 1.5rem; }
   h2 { font-size: clamp(2rem, 4vw + 1rem, 3.5rem); margin-bottom: 1.5rem; }
   h3 { font-size: clamp(1.5rem, 2vw + 0.5rem, 2rem); margin-bottom: 1rem; }
   
@@ -179,10 +158,11 @@ const styles = `
   .section { padding: clamp(6rem, 10vw, 10rem) 0; position: relative; overflow: hidden; }
   .full-screen { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
 
-  /* GRIDS (Bento Architecture) */
+  /* GRIDS */
   .grid-2 { display: grid; grid-template-columns: 1fr; gap: clamp(3rem, 5vw, 6rem); align-items: center; }
   .grid-3 { display: grid; grid-template-columns: 1fr; gap: 2rem; }
   .grid-4 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+  .grid-clients { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 3rem; align-items: center; justify-items: center; }
 
   @media (min-width: 992px) {
     .grid-2 { grid-template-columns: 1fr 1fr; }
@@ -199,7 +179,7 @@ const styles = `
     position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
     width: 90%; max-width: 1000px; z-index: 1000;
     padding: 0.8rem 2rem; border-radius: 100px;
-    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px); /* Glassmorphism */
+    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
     border: 1px solid rgba(179, 183, 193, 0.3);
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
     display: flex; justify-content: space-between; align-items: center;
@@ -220,12 +200,14 @@ const styles = `
   .btn-outline { background: transparent; color: var(--dark); border: 2px solid #e2e8f0; }
   .btn-outline:hover { border-color: var(--primary); color: var(--primary); }
 
-  /* Glass Cards (Bento) */
+  /* Glass Cards */
   .glass-card {
     background: #ffffff; border: 1px solid rgba(179, 183, 193, 0.2);
     border-radius: 2rem; padding: 2.5rem; position: relative; overflow: hidden;
     box-shadow: 0 10px 30px -10px rgba(0,0,0,0.03); transition: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
     height: 100%; display: flex; flex-direction: column;
+    /* Important for GSAP Skew */
+    will-change: transform; 
   }
   .glass-card:hover { transform: translateY(-8px); border-color: var(--secondary); box-shadow: 0 25px 60px -15px rgba(88, 168, 180, 0.15); }
   
@@ -253,16 +235,22 @@ const styles = `
   .footer-link { color: var(--grey); text-decoration: none; display: block; margin-bottom: 1rem; transition: 0.3s; }
   .footer-link:hover { color: var(--secondary); padding-right: 5px; }
 
+  /* Client Logo Style */
+  .client-logo-wrapper {
+    width: 100%; height: 100px;
+    display: flex; align-items: center; justify-content: center;
+    background: #f8fafc; border-radius: 1rem;
+    border: 1px solid transparent;
+    transition: 0.3s;
+    opacity: 0; /* Hidden initially for GSAP stagger */
+    transform: translateY(50px);
+  }
+  .client-logo-wrapper:hover { border-color: var(--primary); background: white; transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+
   /* Utils */
   .desktop-only { display: none; }
   @media (min-width: 992px) { .desktop-only { display: flex; } .mobile-only { display: none !important; } }
   .mobile-only { display: block; }
-  
-  /* Marquee */
-  .marquee-container { overflow: hidden; white-space: nowrap; padding: 2rem 0; background: ${BRAND.colors.light}; border-y: 1px solid rgba(0,0,0,0.05); }
-  .marquee-content { display: inline-flex; animation: scroll 30s linear infinite; }
-  .marquee-item { margin: 0 3rem; font-size: 1.5rem; font-weight: 700; color: ${BRAND.colors.grey}; opacity: 0.5; font-family: var(--font-heading); }
-  @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
 `;
 
 // =========================================
@@ -287,7 +275,6 @@ const getParticlesData = (text: string, width: number, height: number) => {
   const data = ctx.getImageData(0,0,canvas.width,canvas.height).data;
   const particles = [];
   
-  // Optimized for mobile/desktop
   const step = 5; 
   
   for (let y = 0; y < canvas.height; y += step) {
@@ -304,7 +291,7 @@ const getParticlesData = (text: string, width: number, height: number) => {
 };
 
 // =========================================
-// 4. REACT COMPONENTS (SEO Optimized)
+// 4. REACT COMPONENTS
 // =========================================
 
 // --- A. Cinematic Intro ---
@@ -464,7 +451,7 @@ const AuraScene = ({ startAnimation }: { startAnimation: boolean }) => {
   return <div id="aura-canvas" ref={mountRef}></div>;
 };
 
-// --- C. Navbar (Glassmorphism) ---
+// --- C. Navbar ---
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -524,7 +511,7 @@ const Navbar = () => {
   );
 };
 
-// --- D. Scroll Reveal Wrapper ---
+// --- D. Scroll Reveal Component ---
 const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: number }) => (
   <motion.div
     initial={{ opacity: 0, y: 40 }}
@@ -536,7 +523,7 @@ const Reveal = ({ children, delay = 0 }: { children: React.ReactNode, delay?: nu
   </motion.div>
 );
 
-// --- E. Hero Section (High Impact) ---
+// --- E. Hero Section ---
 const Hero = () => {
   return (
     <section className="section full-screen" id="الرئيسية">
@@ -575,16 +562,62 @@ const Hero = () => {
   );
 };
 
-// --- F. Stats Section ---
+// --- F. GSAP Staggered Client Grid (The Ascending Effect) ---
+const ClientGrid = () => {
+  const sectionRef = useRef(null);
+  
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      gsap.to(".client-logo-wrapper", {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        stagger: 0.1,
+        scrollTrigger: {
+          trigger: sectionRef.current,
+          start: "top 85%",
+        }
+      });
+    }, sectionRef);
+    return () => ctx.revert();
+  }, []);
+
+  // Using Lucide icons as abstract "Logos" for the demo
+  const clients = [
+    { icon: Hexagon, name: "TechCorp" }, { icon: Triangle, name: "Delta" },
+    { icon: Circle, name: "Orbit" }, { icon: Box, name: "Cube" },
+    { icon: Layers, name: "Stack" }, { icon: Globe, name: "Global" },
+    { icon: Zap, name: "Power" }, { icon: Star, name: "Elite" }
+  ];
+
+  return (
+    <section className="section" ref={sectionRef}>
+      <div className="container">
+        <div style={{textAlign:'center', marginBottom:'4rem'}}>
+          <p style={{color: BRAND.colors.grey, fontWeight:'bold', letterSpacing:'2px'}}>شركاء النجاح</p>
+        </div>
+        <div className="grid-clients">
+          {clients.map((c, i) => (
+            <div key={i} className="client-logo-wrapper">
+              <c.icon size={40} color={BRAND.colors.grey} />
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+// --- G. Stats Section ---
 const Stats = () => {
   return (
     <section className="container" style={{marginBottom:'8rem'}}>
       <div className="grid-4" style={{textAlign:'center'}}>
         {[
-          { n: "+500M", l: "قيمة أصول رقمية" },
-          { n: "98%", l: "معدل رضا الشركاء" },
-          { n: "+120", l: "مشروع استراتيجي" },
-          { n: "24/7", l: "دعم تقني متواصل" }
+          { n: "+500M", l: "ريال - عوائد لعملائنا" },
+          { n: "98%", l: "نسبة الاحتفاظ بالعملاء" },
+          { n: "+120", l: "استراتيجية منفذة بنجاح" },
+          { n: "10x", l: "متوسط العائد على الإعلان" }
         ].map((s, i) => (
           <Reveal key={i} delay={i * 0.1}>
             <div className="glass-card" style={{padding:'2rem'}}>
@@ -598,15 +631,15 @@ const Stats = () => {
   );
 };
 
-// --- G. Services (Interactive Bento Grid) ---
+// --- H. Services (Interactive Bento Grid) ---
 const Services = () => {
   const services = [
-    { title: "إدارة الحملات الإعلانية", desc: "تحسين تكلفة النقرة (CPC) عبر Google Ads وسناب شات وتيك توك لتحقيق أعلى عائد.", icon: Target, col: "span 2" },
-    { title: "تحسين محركات البحث", desc: "تصدر نتائج البحث الأولى في السعودية عبر استراتيجيات السيو المحلي والتقني.", icon: Search, col: "span 1" },
-    { title: "تطوير المنصات", desc: "بنية تحتية قوية باستخدام أحدث تقنيات الويب لضمان السرعة والأمان.", icon: Code, col: "span 1" },
-    { title: "التسويق بالمحتوى", desc: "إدارة حسابات التواصل الاجتماعي وصناعة محتوى إبداعي يرفع التفاعل.", icon: Megaphone, col: "span 2" },
-    { title: "الإنتاج الإبداعي", desc: "فيديو وموشن جرافيك بجودة سينمائية تأسر الجمهور.", icon: Monitor, col: "span 1" },
-    { title: "استراتيجيات النمو", desc: "تحليل البيانات واستخدام محركات الذكاء الاصطناعي لزيادة المبيعات.", icon: TrendingUp, col: "span 1" },
+    { title: "إدارة الحملات الإعلانية", desc: "نحول ميزانيتك الإعلانية إلى أرباح صافية. إدارة دقيقة للـ CPC و CPA عبر كافة المنصات.", icon: Target, col: "span 2" },
+    { title: "هيمنة محركات البحث (SEO)", desc: "لا نجعلك تظهر فقط، بل نجعلك الخيار الأول. استراتيجيات سيو تقني ومحلي متقدمة.", icon: Search, col: "span 1" },
+    { title: "منصات رقمية تبيع", desc: "مواقع وتطبيقات مصممة للتحويل (Conversion). سرعة، أمان، وتجربة مستخدم لا تقاوم.", icon: Code, col: "span 1" },
+    { title: "صناعة المحتوى الفيروسي", desc: "قصص تلهم، وتصاميم تخطف الأنظار. محتوى يبني ولاء الجمهور ويرفع التفاعل.", icon: Megaphone, col: "span 2" },
+    { title: "الإنتاج السينمائي", desc: "فيديو وموشن جرافيك يروي قصة علامتك بأسلوب عالمي.", icon: Monitor, col: "span 1" },
+    { title: "هندسة النمو", desc: "نستخدم البيانات للتنبؤ بالفرص قبل المنافسين. قرارات مبنية على الأرقام فقط.", icon: TrendingUp, col: "span 1" },
   ];
 
   return (
@@ -614,8 +647,8 @@ const Services = () => {
       <div className="container">
         <Reveal>
           <div style={{textAlign:'center', marginBottom:'5rem'}}>
-            <h2>مصفوفة الخدمات <span className="text-gradient">الذكية</span></h2>
-            <p style={{margin:'0 auto'}}>كل ما تحتاجه للنمو في السوق السعودي في مكان واحد.</p>
+            <h2>خدمات مصممة <span className="text-gradient">للنمو الأسي</span></h2>
+            <p style={{margin:'0 auto'}}>حلول متكاملة تغطي رحلة العميل من الوعي إلى الولاء.</p>
           </div>
         </Reveal>
 
@@ -636,7 +669,7 @@ const Services = () => {
               <h3>{s.title}</h3>
               <p>{s.desc}</p>
               <div style={{marginTop:'auto', paddingTop:'1rem', display:'flex', alignItems:'center', gap:'5px', color: BRAND.colors.primary, fontWeight:'bold', cursor:'pointer'}}>
-                المزيد عن الخدمة <ArrowUpRight size={18} />
+                اكتشف المزيد <ArrowUpRight size={18} />
               </div>
             </motion.div>
           ))}
@@ -646,41 +679,60 @@ const Services = () => {
   );
 };
 
-// --- H. Case Studies (Results Driven) ---
+// --- I. GSAP Skew Case Studies (The "Mael" Effect) ---
 const CaseStudies = () => {
+  const sectionRef = useRef(null);
+  
+  useLayoutEffect(() => {
+    let proxy = { skew: 0 },
+    skewSetter = gsap.quickSetter(".work-card", "skewY", "deg"), // fast
+    clamp = gsap.utils.clamp(-15, 15); // Don't skew too much
+
+    const ctx = gsap.context(() => {
+      ScrollTrigger.create({
+        trigger: sectionRef.current,
+        onUpdate: (self) => {
+          let skew = clamp(self.getVelocity() / -300);
+          // Only skew if moving fast enough
+          if (Math.abs(skew) > Math.abs(proxy.skew)) {
+            proxy.skew = skew;
+            gsap.to(proxy, {skew: 0, duration: 0.8, ease: "power3", overwrite: true, onUpdate: () => skewSetter(proxy.skew)});
+          }
+        }
+      });
+    }, sectionRef);
+    return () => ctx.revert();
+  }, []);
+
   return (
-    <section className="section" id="أعمالنا">
+    <section className="section" id="أعمالنا" ref={sectionRef}>
       <div className="container">
         <Reveal>
           <div style={{textAlign:'center', marginBottom:'4rem'}}>
-            <h2>قصص نجاح <span className="text-gradient">بالأرقام</span></h2>
-            <p style={{margin:'0 auto'}}>شاهد كيف ساعدنا كبرى الشركات في المملكة على تحقيق التحول الرقمي.</p>
+            <h2>نتائج تتحدث عن <span className="text-gradient">نفسها</span></h2>
+            <p style={{margin:'0 auto'}}>نحن لا نبيع الوعود، نحن نبيع النتائج الموثقة.</p>
           </div>
         </Reveal>
         
         <div className="grid-3">
           {[
-            { t: "نمو مبيعات متجر إلكتروني", n: "+260%", d: "زيادة في المبيعات الربع سنوية" },
-            { t: "حملة إبداعية لبراند سعودي", n: "+1.2M", d: "مشاهدة حقيقية في أسبوع واحد" },
-            { t: "تصدر نتائج البحث (SEO)", n: "#1", d: "الترتيب في الكلمات المفتاحية التنافسية" }
+            { t: "قصة نجاح: متجر أزياء", n: "+300%", d: "زيادة في المبيعات خلال موسم واحد" },
+            { t: "إطلاق تطبيق عقاري", n: "50K", d: "تحميل في الشهر الأول دون إعلانات مدفوعة" },
+            { t: "تحسين محركات بحث لشركة طبية", n: "#1", d: "السيطرة على الكلمات المفتاحية في الرياض" }
           ].map((c, i) => (
-            <motion.div 
-              key={i} 
-              className="glass-card" 
-              style={{padding:0, overflow:'hidden', minHeight:'350px', background:'#fff'}}
-              whileHover={{y:-5}}
-            >
-              <div style={{height:'200px', background:'linear-gradient(45deg, #f1f5f9, #e2e8f0)', display:'flex', alignItems:'center', justifyContent:'center'}}>
-                <Briefcase size={40} color={BRAND.colors.grey} />
+            <div key={i} className="glass-card work-card" style={{padding:0, overflow:'hidden', minHeight:'400px', background:'#fff', transformOrigin: "center center"}}>
+              <div style={{height:'220px', background:`linear-gradient(135deg, ${i===0?'#f0f9ff':'#f8fafc'}, #e2e8f0)`, display:'flex', alignItems:'center', justifyContent:'center'}}>
+                <Briefcase size={60} color={BRAND.colors.grey} style={{opacity:0.5}} />
               </div>
-              <div style={{padding:'2rem'}}>
-                <h3 style={{fontSize:'1.2rem', marginBottom:'0.5rem'}}>{c.t}</h3>
-                <div style={{display:'flex', alignItems:'baseline', gap:'10px'}}>
-                  <span style={{fontSize:'2.5rem', fontWeight:'bold', color:BRAND.colors.primary}}>{c.n}</span>
+              <div style={{padding:'2.5rem'}}>
+                <span style={{fontSize:'0.9rem', color:BRAND.colors.primary, fontWeight:'bold'}}>دراسة حالة</span>
+                <h3 style={{fontSize:'1.4rem', margin:'0.5rem 0'}}>{c.t}</h3>
+                <div style={{marginTop:'1rem', display:'flex', alignItems:'baseline', gap:'10px'}}>
+                  <span style={{fontSize:'3rem', fontWeight:'900', color:BRAND.colors.dark, lineHeight:1}}>{c.n}</span>
                   <span style={{fontSize:'0.9rem', color:BRAND.colors.text}}>{c.d}</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
           ))}
         </div>
       </div>
@@ -688,7 +740,7 @@ const CaseStudies = () => {
   );
 };
 
-// --- I. AI Lab Section (Dark Mode Container) ---
+// --- J. AI Lab Section ---
 const AILab = () => {
   return (
     <section className="section" id="مختبر AI">
@@ -700,14 +752,14 @@ const AILab = () => {
           <div className="grid-2">
             <Reveal>
               <div style={{color: BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
-                <Sparkles size={20} /> مستقبل التسويق
+                <Sparkles size={20} /> مختبر أورا للذكاء الاصطناعي
               </div>
-              <h2 style={{color:'white', fontFamily:'var(--font-heading)'}}>مختبر أورا للذكاء الاصطناعي</h2>
+              <h2 style={{color:'white', fontFamily:'var(--font-heading)'}}>نسبق المستقبل <br/> بخطوة.</h2>
               <p style={{color:'#94a3b8', maxWidth:'500px'}}>
-                نطور أدواتنا الخاصة في تحليل المشاعر، التنبؤ بسلوك المستهلك السعودي، وتوليد المحتوى الإبداعي. مما يوفر 35% من تكاليف الاستحواذ على العملاء.
+                نحن لا نستخدم أدوات الـ AI فقط، نحن نطوعها لخدمتك. نطور خوارزميات مخصصة لتحليل مشاعر الجمهور السعودي، والتنبؤ بالترندات قبل حدوثها.
               </p>
               <ul style={{listStyle:'none', marginTop:'2rem'}}>
-                {['تحليل البيانات الضخمة', 'أتمتة الحملات الإعلانية', 'تصميمات مخصصة بالـ AI'].map((item, i) => (
+                {['تحليل البيانات الضخمة (Big Data)', 'أتمتة الحملات الإعلانية', 'تصميمات مخصصة بالـ AI'].map((item, i) => (
                   <li key={i} style={{marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px', color:'white'}}>
                     <CheckCircle color={BRAND.colors.secondary} size={20} /> {item}
                   </li>
@@ -718,10 +770,9 @@ const AILab = () => {
             <Reveal delay={0.2}>
               <div style={{background:'rgba(255,255,255,0.05)', padding:'3rem', borderRadius:'2rem', border:'1px solid rgba(255,255,255,0.1)', position:'relative', zIndex:2}}>
                 <div style={{display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}>
-                  <span style={{fontWeight:'bold'}}>نمو الأداء</span>
+                  <span style={{fontWeight:'bold'}}>كفاءة الاستهداف</span>
                   <span style={{color: BRAND.colors.secondary, fontWeight:'bold'}}>+240%</span>
                 </div>
-                {/* Visual Data Representation */}
                 <div style={{display:'flex', alignItems:'flex-end', gap:'10px', height:'200px'}}>
                   {[40, 60, 45, 80, 70, 90, 100].map((h, i) => (
                     <motion.div 
@@ -742,7 +793,7 @@ const AILab = () => {
   );
 };
 
-// --- J. Team & Culture (Human Touch) ---
+// --- K. Team & Culture ---
 const TeamSection = () => {
   return (
     <section className="section" id="الفريق">
@@ -756,18 +807,18 @@ const TeamSection = () => {
             <div style={{color: BRAND.colors.primary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}>
               <Heart size={20} fill="currentColor" /> العنصر البشري
             </div>
-            <h2>خبراء سعوديون <br/> بمعايير عالمية.</h2>
+            <h2>عقول سعودية، <br/> رؤية عالمية.</h2>
             <p>
-              رغم قوتنا التقنية، إلا أن سر نجاحنا الحقيقي يكمن في فريقنا. مجموعة من المفكرين، المبدعين، والمهندسين الذين يجمعهم شغف واحد: صناعة الأثر في السوق السعودي.
+              التكنولوجيا هي أداتنا، لكن شغفنا هو المحرك. فريق أورا يجمع بين المحللين الاستراتيجيين، المبدعين المجنونين، والمطورين العباقرة. هدفنا واحد: وضع علامتك في القمة.
             </p>
             <div style={{marginTop:'2rem', display:'flex', gap:'2rem'}}>
               <div>
-                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>ثقافة الابتكار</h4>
-                <p style={{fontSize:'0.9rem'}}>بيئة تشجع على التجريب والتعلم المستمر.</p>
+                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>شراكة حقيقية</h4>
+                <p style={{fontSize:'0.9rem'}}>نحن لا نعمل "لأجلك"، نحن نعمل "معك".</p>
               </div>
               <div>
-                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>الشفافية المطلقة</h4>
-                <p style={{fontSize:'0.9rem'}}>لا تكاليف خفية، ولا وعود وهمية.</p>
+                <h4 style={{marginBottom:'0.5rem', color:BRAND.colors.dark}}>التزام بالنتائج</h4>
+                <p style={{fontSize:'0.9rem'}}>نجاحك هو المعيار الوحيد لنجاحنا.</p>
               </div>
             </div>
           </Reveal>
@@ -777,11 +828,11 @@ const TeamSection = () => {
   );
 };
 
-// --- K. Contact Form ---
+// --- L. Contact Form ---
 const Contact = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("تم استلام طلبك بنجاح! سيقوم فريق أورا بالتواصل معك خلال 24 ساعة.");
+    alert("شكراً لثقتك بنا. سيقوم مستشارونا بالتواصل معك قريباً لرسم خارطة طريق نجاحك.");
   };
 
   return (
@@ -789,16 +840,16 @@ const Contact = () => {
       <div className="grid-2">
         <Reveal>
           <div>
-            <h2>جاهز لتفعيل <span className="text-gradient">هالتك؟</span></h2>
+            <h2>هل أنت مستعد للهيمنة <span className="text-gradient">السوقية؟</span></h2>
             <p>
-              لا تترك مكانك في المستقبل للمنافسين. تواصل معنا اليوم واحصل على استشارة مجانية لتحليل وضعك الرقمي الحالي.
+              المنافسة لا تنتظر. تواصل معنا اليوم واحصل على تحليل رقمي شامل لوضع علامتك الحالي، وخطة عمل مخصصة للنمو.
             </p>
             
             <div style={{marginTop:'3rem', display:'flex', flexDirection:'column', gap:'2rem'}}>
               <div style={{display:'flex', gap:'1.5rem', alignItems:'center'}}>
                 <div className="icon-box" style={{marginBottom:0, width:60, height:60}}><Phone /></div>
                 <div>
-                  <div style={{fontSize:'0.9rem', color: '#64748b'}}>اتصل بنا مباشرة</div>
+                  <div style={{fontSize:'0.9rem', color: '#64748b'}}>اتصل بنا</div>
                   <div style={{fontWeight:'700', fontSize:'1.2rem', color: BRAND.colors.dark}}>{BRAND.info.phone}</div>
                 </div>
               </div>
@@ -815,22 +866,22 @@ const Contact = () => {
 
         <Reveal delay={0.2}>
           <div className="glass-card">
-            <h3 style={{marginBottom:'2rem'}}>احصل على استشارة مجانية</h3>
+            <h3 style={{marginBottom:'2rem'}}>ابدأ رحلة التحول</h3>
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label className="form-label">الاسم الكامل</label>
                 <input type="text" className="form-input" placeholder="محمد أحمد" required />
               </div>
               <div className="form-group">
-                <label className="form-label">رقم الجوال</label>
-                <input type="tel" className="form-input" placeholder="05xxxxxxxx" required />
+                <label className="form-label">البريد المهني</label>
+                <input type="email" className="form-input" placeholder="name@company.com" required />
               </div>
               <div className="form-group">
-                <label className="form-label">كيف يمكننا مساعدتك؟</label>
+                <label className="form-label">ما هو التحدي الأكبر الذي تواجهه؟</label>
                 <textarea className="form-input" style={{minHeight:'150px'}} placeholder="أخبرنا عن أهدافك..."></textarea>
               </div>
               <button className="btn btn-primary" style={{width:'100%'}}>
-                إرسال الطلب <Send size={18} />
+                طلب استشارة استراتيجية <Send size={18} />
               </button>
             </form>
           </div>
@@ -840,7 +891,7 @@ const Contact = () => {
   );
 };
 
-// --- L. Footer (SEO Optimized) ---
+// --- M. Footer ---
 const Footer = () => (
   <footer>
     <div className="container">
@@ -848,23 +899,22 @@ const Footer = () => (
         <div>
           <div style={{fontSize:'2.5rem', fontWeight:'900', color:'white', marginBottom:'1.5rem', fontFamily:'var(--font-heading)'}}>AURA.</div>
           <p style={{color: BRAND.colors.grey, maxWidth:'400px'}}>
-            الوكالة الرقمية التي تعيد تعريف معايير الجودة في المملكة. ندمج الفن، العلم، والتكنولوجيا لنصنع مستقبلاً أفضل لعلامتك التجارية.
+            أورا ليست مجرد وكالة، بل هي ذراعك الاستثماري في العالم الرقمي. نبتكر، ننفذ، ونحقق النتائج.
           </p>
         </div>
         
         <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(150px, 1fr))', gap:'2rem'}}>
           <div>
-            <h4 style={{color:'white', marginBottom:'1.5rem'}}>روابط سريعة</h4>
-            <a href="#" className="footer-link">شركة تسويق في الرياض</a>
-            <a href="#" className="footer-link">خدمات السيو (SEO)</a>
-            <a href="#" className="footer-link">إدارة حملات إعلانية</a>
-            <a href="#" className="footer-link">المدونة</a>
+            <h4 style={{color:'white', marginBottom:'1.5rem'}}>الشركة</h4>
+            <a href="#" className="footer-link">من نحن</a>
+            <a href="#" className="footer-link">قصص النجاح</a>
+            <a href="#" className="footer-link">انضم للفريق</a>
           </div>
           <div>
             <h4 style={{color:'white', marginBottom:'1.5rem'}}>الخدمات</h4>
-            <a href="#" className="footer-link">تطوير الويب</a>
+            <a href="#" className="footer-link">استراتيجيات النمو</a>
+            <a href="#" className="footer-link">تطوير المنصات</a>
             <a href="#" className="footer-link">التسويق الرقمي</a>
-            <a href="#" className="footer-link">الهوية البصرية</a>
           </div>
         </div>
       </div>
@@ -893,24 +943,18 @@ export default function AuraWebsite() {
       <style dangerouslySetInnerHTML={{ __html: styles }} />
       <Script id="json-ld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
       
-      {/* 1. Cinematic Intro */}
       <AnimatePresence>
         {!introFinished && <IntroOverlay onComplete={() => setIntroFinished(true)} />}
       </AnimatePresence>
 
-      {/* 2. Main Site */}
+      {/* Main Site */}
       {introFinished && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
           <AuraScene startAnimation={introFinished} />
           <Navbar />
           <main>
             <Hero />
-            {/* Infinite Marquee of Clients */}
-            <div className="marquee-container">
-              <div className="marquee-content">
-                {[...Array(10)].map((_, i) => <span key={i} className="marquee-item">CLIENT PARTNER {i+1}</span>)}
-              </div>
-            </div>
+            <ClientGrid />
             <Stats />
             <Services />
             <CaseStudies />
