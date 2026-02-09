@@ -1,524 +1,241 @@
 'use client';
 
-/**
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * AURA DIGITAL AGENCY - FINAL STABLE EDITION (v15.0 - ZERO ERRORS)
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- * * [FIX LOG]
- * * 1. CRITICAL FIX: Removed redundant window checks inside useEffect to fix TS 'never' type error.
- * * 2. DATA STRUCTURE: Ensured 'cta', 'TrendingUp', and all assets are defined.
- * * 3. PERFORMANCE: Optimized Three.js disposal logic.
- * * 4. ARCHITECTURE: Next.js 15 compatible, pure Client Component.
- * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- */
-
-import React, { useState, useEffect, useRef, useLayoutEffect, FormEvent } from 'react';
+import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
+import Image from 'next/image';
+import { Alexandria } from 'next/font/google';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { 
-  motion, AnimatePresence, useScroll, useTransform, useSpring 
-} from 'framer-motion';
-import { 
-  ArrowUpRight, Palette, Search, ShoppingBag, Menu, X,
-  Megaphone, CheckCircle, Shield, Star, Code, Smartphone,
-  Phone, Mail, MapPin, Zap, Send, Layout, BarChart, Users,
-  Globe, Lightbulb, TrendingUp, Monitor, Cpu, Target, 
-  Sparkles, Heart, Briefcase, Eye, Anchor, Feather, Award,
-  Hexagon, Triangle, Circle, Box, Layers, ArrowRight,
-  MousePointer2, Fingerprint, Activity, BarChart3
+  ArrowUpLeft, Hexagon, Layers, Zap, Search, 
+  ChevronDown, Menu, Globe, Shield, Cpu, Activity 
 } from 'lucide-react';
-import Script from 'next/script';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from '@studio-freight/lenis';
 
-// --- SAFE GSAP REGISTRATION ---
+// تحميل الخط الهندسي (بديل DIN)
+const alexandria = Alexandria({ subsets: ['arabic', 'latin'], weight: ['100', '300', '400', '700', '900'] });
+
+// تسجيل إضافات GSAP
 if (typeof window !== 'undefined') {
   gsap.registerPlugin(ScrollTrigger);
 }
 
-// =========================================
-// 1. BRAND CONFIGURATION & DATA LAYER
-// =========================================
-
-const BRAND = {
+// ==========================================
+// 1. نظام التصميم والثوابت (Design Tokens)
+// ==========================================
+const THEME = {
   colors: {
-    primary: '#438FB3',   // Aura Blue
-    secondary: '#58A8B4', // Cyan/Teal
-    grey: '#B3B7C1',      // Platinum
-    dark: '#0f172a',      // Deep Navy
-    text: '#334155',      // Slate Text (Readable)
-    bg: '#ffffff',        // Corporate White
+    platinum: '#B3B7C1', // الأساس: الاستقرار
+    oceanBlue: '#438FB3', // الثانوي: الثقة
+    softTeal: '#58A8B4', // اللكنة: الابتكار (مركز الهالة)
+    dark: '#0f172a',
     light: '#f8fafc',
-    glassDark: '#1e293b'
-  },
-  info: {
-    email: "hello@aurateam3.com",
-    phone: "+966 50 000 0000",
-    address: "الرياض، طريق الملك فهد، المملكة العربية السعودية"
-  },
-  content: {
-    intro: {
-      warning: "تنبيه: سطوع بصري عالي. هالة أورا تتوهج الآن.",
-      loading: "جاري تحميل المنظومة الرقمية..."
-    },
-    hero: {
-      badge: "شريك التحول الرقمي 2026",
-      title: "نستثمر في",
-      highlight: "رؤية المستقبل.",
-      desc: "أورا القابضة: دمجنا الإبداع البشري مع دقة الذكاء الاصطناعي لنبني لك منظومة رقمية تسبق المنافسين بخطوة."
-    },
-    cta: {
-      main: "ابدأ التحول الآن",
-      secondary: "تواصل معنا"
-    }
-  },
-  clients: [
-    "https://aurateam3.com/wp-content/uploads/2025/10/kidana-logo-gold-06-1.png",
-    "https://aurateam3.com/wp-content/uploads/2025/09/اورا-جامعة-الملك-عبد-العزيز.webp",
-    "https://aurateam3.com/wp-content/uploads/2025/09/اورا-الجمعية-للتربية-الخاصة.webp",
-    "https://aurateam3.com/wp-content/uploads/2025/09/اورا-INNOVATIVE-MANAGEMENT.webp",
-    "https://aurateam3.com/wp-content/uploads/2025/09/حدائق-الفرات.webp",
-    "https://aurateam3.com/wp-content/uploads/2025/09/اورا-سقنتشر.webp",
-    "https://aurateam3.com/wp-content/uploads/2025/09/اورا-الهيئة-الملكية.webp",
-    "https://aurateam3.com/wp-content/uploads/2025/09/اورا-وزارة-الثقافة.webp",
-    "https://aurateam3.com/wp-content/uploads/2025/09/أورا-وزارة-الاتصالات.webp",
-    "https://aurateam3.com/wp-content/uploads/2020/08/اعمار.webp",
-    "https://aurateam3.com/wp-content/uploads/2024/02/20231126102247شعار_نادي_الوحدة_السعودية-1.webp"
-  ]
+  }
 };
 
-const JSON_LD = {
-  "@context": "https://schema.org",
-  "@type": "Corporation",
-  "name": "Aura Holding",
-  "url": "https://aurateam3.com",
-  "logo": "https://aurateam3.com/logo.png",
-  "description": "شركة أورا القابضة للخدمات الرقمية والاستثمار التقني."
-};
-
-// =========================================
-// 2. CSS ENGINE (Zero-Conflict System)
-// =========================================
-
-const styles = `
-  @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700;800&family=Tajawal:wght@300;400;500;700&display=swap');
-  
-  :root {
-    --primary: ${BRAND.colors.primary};
-    --secondary: ${BRAND.colors.secondary};
-    --dark: ${BRAND.colors.dark};
-    --grey: ${BRAND.colors.grey};
-  }
-
-  /* BASE */
-  html, body {
-    background-color: #ffffff !important;
-    color: var(--dark) !important;
-    font-family: 'Readex Pro', sans-serif; /* Headings */
-    overflow-x: hidden;
-    direction: rtl;
-    margin: 0; padding: 0;
-  }
-
-  ::selection { background: var(--primary); color: white; }
-
-  /* TYPOGRAPHY */
-  h1, h2, h3, h4 {
-    font-family: 'Readex Pro', sans-serif;
-    color: var(--dark);
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -0.02em;
-  }
-  
-  h1 { font-size: clamp(3rem, 8vw, 6.5rem); margin-bottom: 2rem; }
-  h2 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 2rem; }
-  h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; }
-  
-  p, span, a, input, label, textarea {
-    font-family: 'Tajawal', sans-serif; /* Body Text */
-  }
-  
-  p { font-size: 1.1rem; line-height: 1.8; color: #475569; max-width: 600px; margin-bottom: 1.5rem; }
-
-  .text-gradient {
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text; color: transparent; display: inline-block;
-  }
-
-  /* UTILITIES */
-  .container { max-width: 1400px; margin: 0 auto; padding: 0 2rem; position: relative; z-index: 10; }
-  .section { padding: 10rem 0; position: relative; }
-  .full-height { min-height: 100vh; display: flex; flex-direction: column; justify-content: center; }
-  
-  /* CANVAS */
-  #webgl-canvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 0; pointer-events: none; opacity: 0.6; }
-
-  /* NAVBAR (Capsule) */
-  .navbar {
-    position: fixed; top: 25px; left: 50%; transform: translateX(-50%);
-    width: 90%; max-width: 900px; z-index: 1000;
-    padding: 0.8rem 2rem; border-radius: 100px;
-    background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(20px);
-    border: 1px solid rgba(179, 183, 193, 0.3);
-    box-shadow: 0 10px 30px -10px rgba(0,0,0,0.05);
-    display: flex; justify-content: space-between; align-items: center;
-    transition: 0.4s ease;
-  }
-  .navbar.scrolled {
-    top: 15px; background: rgba(255,255,255,0.98);
-    box-shadow: 0 20px 40px -10px rgba(67, 143, 179, 0.15);
-    border-color: var(--primary);
-  }
-  .nav-link { font-weight: 600; color: var(--dark); cursor: pointer; transition: 0.3s; text-decoration: none; }
-  .nav-link:hover { color: var(--primary); }
-
-  /* INTRO OVERLAY */
-  .intro-overlay {
-    position: fixed; inset: 0; z-index: 9999;
-    background: #0B1121; color: white;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center;
-  }
-  .intro-warning {
-    font-size: 1.1rem; color: var(--secondary); margin-bottom: 2rem;
-    padding: 1rem 2rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 50px;
-    background: rgba(0,0,0,0.3); backdrop-filter: blur(10px);
-  }
-  .intro-counter { font-size: clamp(4rem, 10vw, 8rem); font-weight: 900; line-height: 1; color: white; font-variant-numeric: tabular-nums; }
-
-  /* BENTO GRID */
-  .bento-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
-  .bento-card {
-    background: #ffffff; border-radius: 2rem; padding: 3rem;
-    display: flex; flex-direction: column; justify-content: space-between;
-    transition: 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-    border: 1px solid rgba(0,0,0,0.05); position: relative; overflow: hidden;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
-  }
-  .bento-card:hover { 
-    transform: translateY(-10px); background: white; 
-    border-color: var(--secondary); 
-    box-shadow: 0 25px 50px -10px rgba(67, 143, 179, 0.15); 
-  }
-  .col-span-2 { grid-column: span 2; }
-  
-  .icon-box {
-    width: 60px; height: 60px; border-radius: 1rem;
-    background: #f0f9ff; color: var(--primary);
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 1.5rem; transition: 0.3s;
-  }
-  .bento-card:hover .icon-box { background: var(--primary); color: white; }
-
-  /* BUTTONS */
-  .btn-primary {
-    background: var(--primary); color: white; padding: 0.8rem 2.5rem;
-    border-radius: 50px; border: none; font-weight: 700; cursor: pointer;
-    box-shadow: 0 10px 20px -5px rgba(67, 143, 179, 0.4); transition: 0.3s;
-    display: inline-flex; align-items: center; gap: 0.5rem;
-  }
-  .btn-primary:hover { background: var(--secondary); transform: translateY(-3px); }
-  
-  /* MARQUEE */
-  .marquee-wrap { overflow: hidden; white-space: nowrap; padding: 3rem 0; background: ${BRAND.colors.light}; border-y: 1px solid #eee; }
-  .marquee-content { display: inline-flex; animation: scroll 40s linear infinite; align-items: center; }
-  .marquee-item { margin: 0 3rem; opacity: 0.6; transition: 0.3s; filter: grayscale(100%); }
-  .marquee-item:hover { opacity: 1; filter: grayscale(0%); transform: scale(1.1); }
-  .client-logo { height: 60px; width: auto; object-fit: contain; }
-  @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-
-  /* KINETIC CARDS */
-  .work-card {
-    min-height: 450px; background: white; border-radius: 2rem; overflow: hidden;
-    position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    border: 1px solid #f1f5f9; will-change: transform;
-  }
-  .work-info {
-    position: absolute; bottom: 0; left: 0; right: 0; padding: 2.5rem;
-    background: linear-gradient(to top, rgba(15, 23, 42, 0.95), transparent);
-    color: white; transform: translateY(20px); opacity: 0; transition: 0.4s;
-  }
-  .work-card:hover .work-info { transform: translateY(0); opacity: 1; }
-
-  /* FOOTER */
-  footer { background: var(--dark); color: white; padding: 8rem 0 3rem; }
-  .footer-link { color: #94a3b8; display: block; margin-bottom: 1rem; transition: 0.3s; text-decoration: none; }
-  .footer-link:hover { color: white; padding-right: 5px; }
-
-  /* RESPONSIVE */
-  .mobile-only { display: none; }
-  @media (max-width: 1024px) {
-    .bento-grid { grid-template-columns: 1fr; }
-    .col-span-2 { grid-column: span 1; }
-    h1 { font-size: 3.5rem; }
-    .navbar { width: 90%; padding: 0.8rem; }
-    .desktop-only { display: none; }
-    .mobile-only { display: block; }
-  }
-  
-  /* Form */
-  .form-input { width: 100%; padding: 1.2rem; border-radius: 1rem; border: 1px solid #e2e8f0; font-family: 'Tajawal'; font-size: 1rem; margin-bottom: 1.5rem; background: #f8fafc; }
-  .form-input:focus { outline: none; border-color: var(--primary); background: white; }
-`;
-
-// =========================================
-// 3. THE KINETIC 3D ENGINE
-// =========================================
-
-const KineticBackground = () => {
+// ==========================================
+// 2. محرك الهالة (Three.js Aura Engine)
+// ==========================================
+const AuraCanvas = () => {
   const mountRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // === FIX: Removed `if (typeof window === 'undefined')` check ===
-    // useEffect runs only on client, so window is guaranteed.
     if (!mountRef.current) return;
 
-    // 1. Setup
-    const w = window.innerWidth;
-    const h = window.innerHeight;
+    // إعداد المشهد
     const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xffffff, 0.002);
+    // ضباب بلاتيني خفيف لدمج العناصر مع الخلفية
+    scene.fog = new THREE.FogExp2(0xffffff, 0.001);
 
-    const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 30;
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.innerHTML = '';
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // تحسين الأداء للجوال
     mountRef.current.appendChild(renderer.domElement);
 
-    // 2. The Network Orb (Particles)
-    const count = 3000;
+    // نظام الجسيمات (The Aura Particles)
+    const particlesCount = 3000;
     const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
+    const posArray = new Float32Array(particlesCount * 3);
+    const colorArray = new Float32Array(particlesCount * 3);
 
-    const color1 = new THREE.Color(BRAND.colors.primary);
-    const color2 = new THREE.Color(BRAND.colors.secondary);
+    const color1 = new THREE.Color(THEME.colors.oceanBlue);
+    const color2 = new THREE.Color(THEME.colors.softTeal);
 
-    for(let i=0; i<count; i++) {
-      const theta = Math.random() * Math.PI * 2;
+    for (let i = 0; i < particlesCount * 3; i += 3) {
+      // توزيع دائري (هالة)
+      const r = 20 + Math.random() * 30;
+      const theta = 2 * Math.PI * Math.random();
       const phi = Math.acos(2 * Math.random() - 1);
-      const r = 10 + Math.random() * 2;
-
-      positions[i*3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i*3+2] = r * Math.cos(phi);
       
-      const col = Math.random() > 0.5 ? color1 : color2;
-      colors[i*3] = col.r; colors[i*3+1] = col.g; colors[i*3+2] = col.b;
+      posArray[i] = r * Math.cos(theta) * Math.sin(phi);
+      posArray[i + 1] = r * Math.sin(theta) * Math.sin(phi);
+      posArray[i + 2] = r * Math.cos(phi);
+
+      // مزج الألوان
+      const mixedColor = Math.random() > 0.5 ? color1 : color2;
+      colorArray[i] = mixedColor.r;
+      colorArray[i + 1] = mixedColor.g;
+      colorArray[i + 2] = mixedColor.b;
     }
 
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colorArray, 3));
 
+    // Shader Material لمحاكاة التوهج (Glow)
     const material = new THREE.PointsMaterial({
-      size: 0.15, vertexColors: true, transparent: true, opacity: 0.8
+      size: 0.15,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.8,
+      blending: THREE.AdditiveBlending,
     });
 
-    const particles = new THREE.Points(geometry, material);
-    scene.add(particles);
+    const particlesMesh = new THREE.Points(geometry, material);
+    scene.add(particlesMesh);
 
-    // 3. Animation Loop
-    const animate = () => {
-      requestAnimationFrame(animate);
-      particles.rotation.y += 0.001; 
-      renderer.render(scene, camera);
+    // التفاعل مع الماوس (المغناطيس)
+    let mouseX = 0;
+    let mouseY = 0;
+    let targetX = 0;
+    let targetY = 0;
+
+    const onDocumentMouseMove = (event: MouseEvent) => {
+      mouseX = (event.clientX - window.innerWidth / 2) * 0.01;
+      mouseY = (event.clientY - window.innerHeight / 2) * 0.01;
     };
+    document.addEventListener('mousemove', onDocumentMouseMove);
+
+    // حلقة الريندر
+    const animate = () => {
+      targetX = mouseX * 0.5;
+      targetY = mouseY * 0.5;
+
+      // حركة انسيابية للكاميرا والجسيمات
+      particlesMesh.rotation.y += 0.001;
+      particlesMesh.rotation.x += 0.0005;
+
+      particlesMesh.rotation.y += 0.05 * (targetX - particlesMesh.rotation.y);
+      particlesMesh.rotation.x += 0.05 * (targetY - particlesMesh.rotation.x);
+
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    };
+
     animate();
 
-    // 4. GSAP SCROLL LINKING
-    const ctx = gsap.context(() => {
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: document.body,
-            start: "top top",
-            end: "bottom bottom",
-            scrub: 1.5,
-          }
-        });
-
-        // STAGE 1: Explosion (Hero -> Services)
-        tl.to(particles.scale, { x: 2.5, y: 2.5, z: 2.5, duration: 2 }, 0)
-          .to(particles.rotation, { x: 0.5, duration: 2 }, 0)
-          .to(camera.position, { z: 20, duration: 2 }, 0); 
-
-        // STAGE 2: Flatten to Plane (Services -> Data)
-        tl.to(particles.scale, { x: 4, y: 0.1, z: 4, duration: 2 }, 2)
-          .to(particles.rotation, { x: Math.PI / 4, duration: 2 }, 2);
-
-        // STAGE 3: Re-form
-        tl.to(particles.rotation, { y: Math.PI * 2, duration: 2 }, 4)
-          .to(particles.scale, { x: 1, y: 1, z: 1, duration: 2 }, 4);
-    });
-      
-    // Resize Handler
+    // إدارة تغيير حجم الشاشة
     const handleResize = () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
     };
-    
     window.addEventListener('resize', handleResize);
-    
+
     return () => {
+      if(mountRef.current) mountRef.current.removeChild(renderer.domElement);
+      document.removeEventListener('mousemove', onDocumentMouseMove);
       window.removeEventListener('resize', handleResize);
-      mountRef.current?.removeChild(renderer.domElement);
-      renderer.dispose();
-      ctx.revert();
     };
   }, []);
 
-  return <div id="webgl-canvas" ref={mountRef}></div>;
+  return <div ref={mountRef} className="fixed top-0 left-0 w-full h-full -z-10 opacity-70 pointer-events-none" />;
 };
 
-// =========================================
-// 4. UI COMPONENTS
-// =========================================
+// ==========================================
+// 3. مكونات الواجهة (UI Components)
+// ==========================================
 
-// --- Intro ---
-const IntroOverlay = ({ onComplete }: { onComplete: () => void }) => {
-  const container = useRef(null);
-  const [count, setCount] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCount(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          gsap.to(container.current, { clipPath: "circle(0% at 50% 50%)", duration: 1.5, ease: "expo.inOut", onComplete });
-          return 100;
-        }
-        return prev + 2;
-      });
-    }, 25);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <div ref={container} className="intro-overlay" style={{clipPath: "circle(150% at 50% 50%)"}}>
-      <div className="intro-warning">{BRAND.content.intro.warning}</div>
-      <div className="intro-counter">{count}%</div>
-      <p style={{marginTop:'1rem', color: BRAND.colors.grey, letterSpacing:'2px'}}>{BRAND.content.intro.loading}</p>
+const NavBar = () => (
+  <nav className="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center backdrop-blur-sm border-b border-white/5">
+    <div className="text-2xl font-black tracking-tighter text-[#0f172a]">AURA.</div>
+    <div className="hidden md:flex gap-10 text-sm font-bold text-gray-600">
+      {['الرؤية', 'الخدمات', 'دراسات الحالة', 'المعرفة'].map((item) => (
+        <a key={item} href={`#${item}`} className="hover:text-[#438FB3] transition-colors duration-300 relative group">
+          {item}
+          <span className="absolute -bottom-2 right-0 w-0 h-0.5 bg-[#58A8B4] transition-all duration-300 group-hover:w-full"></span>
+        </a>
+      ))}
     </div>
-  );
-};
+    <div className="flex gap-4">
+        <button className="hidden md:block border border-[#B3B7C1] text-[#0f172a] px-6 py-2 rounded-full text-sm font-bold hover:bg-[#0f172a] hover:text-white transition-all duration-300">
+        تواصل معنا
+        </button>
+        <button className="md:hidden text-[#0f172a]"><Menu /></button>
+    </div>
+  </nav>
+);
 
-// --- Navbar ---
-const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  useEffect(() => {
-    const h = () => setScrolled(window.scrollY > 50);
-    window.addEventListener('scroll', h); return () => window.removeEventListener('scroll', h);
-  }, []);
-
+const HeroSection = () => {
   return (
-    <>
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-        <div style={{display:'flex', alignItems:'center', gap:'10px'}}>
-          <div style={{width:10, height:10, background: BRAND.colors.primary, borderRadius:'50%'}}></div>
-          <span style={{fontSize:'1.5rem', fontWeight:'900', color: BRAND.colors.dark}}>AURA</span>
-        </div>
-        <div className="desktop-only" style={{display:'flex', gap:'2rem'}}>
-          {['الرئيسية', 'الخدمات', 'مختبر AI', 'أعمالنا', 'تواصل'].map(item => (
-            <a key={item} href={`#${item}`} className="nav-link">{item}</a>
-          ))}
-        </div>
-        <div style={{display:'flex', gap:'1rem'}}>
-          <button className="btn-primary desktop-only">{BRAND.content.cta.secondary}</button>
-          <button className="mobile-only" onClick={() => setIsOpen(!isOpen)} style={{background:'none', border:'none'}}>
-            {isOpen ? <X size={28} /> : <Menu size={28} />}
-          </button>
-        </div>
-      </nav>
-      <div className={`mobile-menu ${isOpen ? 'open' : ''}`}>
-        <div style={{display:'flex', flexDirection:'column', gap:'2rem', textAlign:'center'}}>
-          {['الرئيسية', 'الخدمات', 'مختبر AI', 'أعمالنا', 'تواصل'].map(item => (
-            <a key={item} href={`#${item}`} onClick={() => setIsOpen(false)} style={{fontSize:'1.8rem', fontWeight:'bold', textDecoration:'none', color:BRAND.colors.dark}}>{item}</a>
-          ))}
-          <button className="btn-primary" style={{marginTop:'2rem', width:'100%'}}>تواصل معنا</button>
-        </div>
-      </div>
-    </>
-  );
-};
-
-// --- Hero ---
-const Hero = () => {
-  return (
-    <section className="full-height section" id="الرئيسية">
-      <div className="container">
-        <motion.div initial={{opacity:0, y:50}} animate={{opacity:1, y:0}} transition={{duration:1}}>
-          <div style={{display:'inline-block', padding:'0.5rem 1.5rem', background:'#f1f5f9', borderRadius:'50px', marginBottom:'2rem', fontSize:'0.9rem', color:BRAND.colors.primary, fontWeight:'700'}}>
-             {BRAND.content.hero.badge}
-          </div>
-          <h1 style={{maxWidth:'900px'}}>
-            {BRAND.content.hero.title} <br/> <span className="text-gradient">{BRAND.content.hero.highlight}</span>
-          </h1>
-          <div style={{marginTop:'3rem', display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:'2rem'}}>
-            <p>{BRAND.content.hero.desc}</p>
-            <div style={{display:'flex', alignItems:'center', gap:'1rem'}}>
-              <button className="btn-primary">{BRAND.content.cta.main} <ArrowRight size={20}/></button>
-            </div>
-          </div>
-        </motion.div>
-      </div>
+    <section className="relative h-screen flex flex-col justify-center items-center text-center px-4 overflow-hidden">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1.2, ease: [0.22, 1, 0.36, 1] }}
+        className="z-10 max-w-5xl"
+      >
+        <h1 className="text-7xl md:text-[9rem] font-black mb-4 text-[#0f172a] leading-[0.9] tracking-tight">
+          هالتك <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#438FB3] to-[#58A8B4]">الفارقة</span>
+        </h1>
+        <h2 className="text-3xl md:text-5xl font-light text-[#B3B7C1] mb-8">
+          في عالم التسويق الرقمي
+        </h2>
+        <p className="text-lg text-gray-500 max-w-2xl mx-auto font-medium">
+          هندسة التجربة الإبداعية لوكالات المستقبل. نحن لا نصمم المواقع، نحن نخلق منظومات رقمية تتحدث لغة الذكاء الاصطناعي وتخاطب المشاعر البشرية.
+        </p>
+      </motion.div>
+      
+      <motion.div 
+        animate={{ y: [0, 10, 0] }} 
+        transition={{ repeat: Infinity, duration: 2 }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 text-[#438FB3]"
+      >
+        <div className="w-[1px] h-16 bg-gradient-to-b from-[#438FB3] to-transparent mx-auto mb-2"></div>
+        <span className="text-xs font-bold tracking-widest">اكتشف</span>
+      </motion.div>
     </section>
   );
 };
 
-// --- Marquee ---
-const ClientMarquee = () => {
-  const logos = [...BRAND.clients, ...BRAND.clients, ...BRAND.clients];
-  return (
-    <div className="marquee-wrap">
-      <div className="marquee-content">
-        {logos.map((src, i) => (
-          <div key={i} className="marquee-item">
-            <img src={src} alt="Client" className="client-logo" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
+// شبكة البنتو (Bento Grid) للخدمات
+const ServicesBento = () => {
+  const cards = [
+    { title: "هندسة الهوية", icon: <Hexagon />, col: "col-span-1 md:col-span-1", bg: "bg-white", text: "بناء علامات تجارية بصرية تخترق الضجيج." },
+    { title: "SEO & AEO 2026", icon: <Search />, col: "col-span-1 md:col-span-2", bg: "bg-[#f8fafc]", text: "السيطرة على محركات البحث ومنصات الإجابة (ChatGPT/Gemini)." },
+    { title: "تجارب WebGL", icon: <Globe />, col: "col-span-1 md:col-span-2", bg: "bg-[#f8fafc]", text: "مواقع ثلاثية الأبعاد تفاعلية ترفع معدل البقاء." },
+    { title: "النمو الرقمي", icon: <Zap />, col: "col-span-1 md:col-span-1", bg: "bg-white", text: "استراتيجيات قائمة على البيانات لزيادة التحويل." },
+  ];
 
-// --- Services ---
-const Services = () => {
   return (
-    <section className="section" id="الخدمات" style={{background: BRAND.colors.light}}>
-      <div className="container">
-        <div style={{textAlign:'center', marginBottom:'5rem'}}>
-          <h2>خدمات <span className="text-gradient">للنمو الأسي</span></h2>
-          <p style={{margin:'0 auto'}}>منظومة متكاملة تغطي كل احتياجاتك الرقمية.</p>
+    <section className="py-32 px-4" id="الخدمات">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex justify-between items-end mb-16">
+            <h2 className="text-5xl font-bold text-[#0f172a]">هندسة <span className="text-[#438FB3]">الحلول</span></h2>
+            <p className="text-[#B3B7C1] max-w-md text-left hidden md:block">
+                تصميم يخدم الوظيفة، وتقنية تخدم النمو. حلولنا مصممة لتكون قابلة للتوسع ومستعدة للمستقبل.
+            </p>
         </div>
-        <div className="bento-grid">
-          {[
-            {t:'تطوير المنصات', d:'مواقع وتطبيقات فائقة السرعة.', i:Code, col:2},
-            {t:'الاستثمار الجريء', d:'دعم الشركات التقنية.', i:TrendingUp, col:1},
-            {t:'الذكاء الاصطناعي', d:'أتمتة وتحليل بيانات.', i:Cpu, col:1},
-            {t:'الإعلام الجديد', d:'محتوى يؤثر في الملايين.', i:Megaphone, col:2},
-            {t:'الهوية البصرية', d:'تصاميم تعكس جوهر علامتك.', i:Palette, col:1},
-            {t:'التجارة الإلكترونية', d:'منصات بيع عالمية.', i:ShoppingBag, col:1},
-          ].map((item, i) => (
-            <motion.div 
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+          {cards.map((card, i) => (
+            <motion.div
               key={i}
-              className={`bento-card ${item.col === 2 ? 'col-span-2' : ''}`}
-              initial={{opacity:0, y:20}}
-              whileInView={{opacity:1, y:0}}
-              viewport={{once:true}}
-              transition={{delay: i*0.1}}
+              whileHover={{ y: -5 }}
+              className={`${card.col} ${card.bg} p-8 rounded-[2rem] border border-[#B3B7C1]/20 relative overflow-hidden group transition-all duration-500 hover:shadow-2xl hover:shadow-[#438FB3]/10`}
             >
-              <div style={{marginBottom:'auto'}}>
-                <div className="icon-box"><item.i size={28} /></div>
-                <h3>{item.t}</h3>
-                <p style={{fontSize:'1rem'}}>{item.d}</p>
+              <div className="absolute top-8 left-8 p-3 rounded-full bg-white border border-gray-100 text-[#438FB3] group-hover:bg-[#438FB3] group-hover:text-white transition-colors duration-300">
+                {card.icon}
               </div>
-              <div style={{display:'flex', justifyContent:'flex-end', marginTop:'2rem'}}>
-                <ArrowUpRight size={20} color={BRAND.colors.primary} />
+              <div className="absolute bottom-8 right-8 text-right max-w-[80%]">
+                <h3 className="text-2xl font-bold mb-2 text-[#0f172a]">{card.title}</h3>
+                <p className="text-gray-500 text-sm">{card.text}</p>
               </div>
+              {/* تأثير التوهج عند التحويم */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-[#58A8B4]/0 to-[#58A8B4]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
             </motion.div>
           ))}
         </div>
@@ -527,55 +244,102 @@ const Services = () => {
   );
 };
 
-// --- Kinetic Case Studies ---
+// مختبر النجاح (Horizontal Scroll)
 const CaseStudies = () => {
   const sectionRef = useRef(null);
-  
+  const triggerRef = useRef(null);
+
   useLayoutEffect(() => {
-    if (typeof window === 'undefined') return;
-    const ctx = gsap.context(() => {
-      let proxy = { skew: 0 }, skewSetter = gsap.quickSetter(".work-card", "skewY", "deg"), clamp = gsap.utils.clamp(-10, 10);
-      ScrollTrigger.create({
-        trigger: sectionRef.current,
-        onUpdate: (self) => {
-          let skew = clamp(self.getVelocity() / -300);
-          if (Math.abs(skew) > Math.abs(proxy.skew)) {
-            proxy.skew = skew;
-            gsap.to(proxy, {skew: 0, duration: 0.8, ease: "power3", overwrite: true, onUpdate: () => skewSetter(proxy.skew)});
-          }
-        }
-      });
-    }, sectionRef);
-    return () => ctx.revert();
+    const pin = gsap.fromTo(
+      sectionRef.current,
+      { translateX: 0 },
+      {
+        translateX: "-200vw",
+        ease: "none",
+        duration: 1,
+        scrollTrigger: {
+          trigger: triggerRef.current,
+          start: "top top",
+          end: "2000 top",
+          scrub: 0.6,
+          pin: true,
+        },
+      }
+    );
+    return () => {
+      pin.kill();
+    };
   }, []);
 
   return (
-    <section className="section" id="أعمالنا" ref={sectionRef}>
-      <div className="container">
-        <div style={{textAlign:'center', marginBottom:'4rem'}}>
-          <h2>نتائج <span className="text-gradient">ملموسة</span></h2>
+    <section className="overflow-hidden bg-[#0f172a] text-white">
+      <div ref={triggerRef}>
+        <div ref={sectionRef} className="h-screen w-[300vw] flex flex-row relative">
+          
+          {/* Intro Panel */}
+          <div className="h-screen w-screen flex flex-col justify-center items-start px-24 border-r border-white/10">
+            <span className="text-[#58A8B4] font-bold tracking-widest mb-4">مختبر النجاح</span>
+            <h2 className="text-8xl font-black mb-8">أرقام<br />تتحدث</h2>
+            <p className="text-xl text-[#B3B7C1] max-w-xl">
+              نحن لا نبيع الوعود، نحن نصنع النتائج. شاهد كيف حولنا العلامات التجارية إلى قادة في السوق.
+            </p>
+          </div>
+
+          {/* Case Study 1 */}
+          <div className="h-screen w-screen flex items-center justify-center relative border-r border-white/10 group">
+            <div className="absolute inset-0 bg-[#438FB3]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <div className="text-center z-10">
+                <h3 className="text-[10rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20 leading-none">
+                    +300%
+                </h3>
+                <p className="text-2xl mt-4 font-light text-[#58A8B4]">نمو في المبيعات - قطاع التجزئة</p>
+            </div>
+          </div>
+
+          {/* Case Study 2 */}
+          <div className="h-screen w-screen flex items-center justify-center relative">
+             <div className="text-center z-10">
+                <h3 className="text-[10rem] font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20 leading-none">
+                    #1
+                </h3>
+                <p className="text-2xl mt-4 font-light text-[#58A8B4]">ترتيب جوجل - AEO Strategy</p>
+            </div>
+          </div>
+
         </div>
-        <div className="bento-grid" style={{gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))'}}>
+      </div>
+    </section>
+  );
+};
+
+// مركز المعرفة (AEO Hub)
+const KnowledgeHub = () => {
+  return (
+    <section className="py-32 px-4 bg-white" id="المعرفة">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-16">
+          <span className="bg-[#f0f9ff] text-[#438FB3] px-4 py-2 rounded-full text-sm font-bold border border-[#438FB3]/20">
+            AEO - Answer Engine Optimization
+          </span>
+          <h2 className="text-4xl font-bold mt-6 text-[#0f172a]">مركز السيادة الرقمية</h2>
+          <p className="text-[#B3B7C1] mt-4">إجابات مهيكلة لتصدر نتائج الذكاء الاصطناعي في 2026</p>
+        </div>
+
+        <div className="space-y-6">
           {[
-            { t: "متجر أزياء عالمي", n: "+300%", d: "نمو المبيعات" },
-            { t: "تطبيق لوجستي", n: "50K", d: "مستخدم نشط" },
-            { t: "منصة طبية", n: "#1", d: "تصدر محركات البحث" }
-          ].map((c, i) => (
-            <div key={i} className="work-card" style={{transformOrigin: "center center"}}>
-              <div style={{height:'220px', background:`linear-gradient(135deg, ${i===0?'#f0f9ff':'#f8fafc'}, #e2e8f0)`, display:'flex', alignItems:'center', justifyContent:'center'}}>
-                <Briefcase size={60} color={BRAND.colors.grey} style={{opacity:0.5}} />
-              </div>
-              <div style={{padding:'2rem'}}>
-                <span style={{fontSize:'0.9rem', color:BRAND.colors.primary, fontWeight:'bold'}}>دراسة حالة</span>
-                <h3 style={{fontSize:'1.4rem', margin:'0.5rem 0'}}>{c.t}</h3>
-                <div style={{marginTop:'1rem', display:'flex', alignItems:'baseline', gap:'10px'}}>
-                  <span style={{fontSize:'3rem', fontWeight:'900', color:BRAND.colors.dark, lineHeight:1}}>{c.n}</span>
-                  <span style={{fontSize:'0.9rem', color:BRAND.colors.text}}>{c.d}</span>
-                </div>
-              </div>
-              <div className="work-info">
-                 <h3>{c.t}</h3>
-                 <p>شاهد التفاصيل الكاملة للمشروع</p>
+            { q: "لماذا يعد AEO مستقبل البحث الرقمي؟", a: "لأن المستخدمين انتقلوا من البحث عن روابط إلى البحث عن إجابات مباشرة. نحن نهيكل بياناتك لتكون المصدر الأول لـ ChatGPT و Gemini." },
+            { q: "ما هي استراتيجية الهالة؟", a: "هي منهجية شاملة تدمج الجاذبية البصرية مع العمق التقني، لضمان بقاء العميل لفترة أطول وزيادة معدل التحويل." },
+            { q: "كيف تضمنون سرعة الموقع مع الجرافيك العالي؟", a: "نستخدم تقنيات Lazy Loading و WebGL Instancing، مما يضمن تجربة سلسة حتى على الأجهزة المتوسطة." }
+          ].map((item, i) => (
+            <div key={i} className="border border-gray-100 rounded-2xl p-8 hover:border-[#438FB3] transition-colors cursor-pointer group bg-[#f8fafc]">
+              <h3 className="text-xl font-bold text-[#0f172a] group-hover:text-[#438FB3] transition-colors flex justify-between items-center">
+                {item.q}
+                <ArrowUpLeft className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </h3>
+              
+              {/* Structured Data Block for AEO */}
+              <div className="mt-4 text-gray-600 text-sm leading-relaxed border-t border-gray-200 pt-4">
+                {item.a}
               </div>
             </div>
           ))}
@@ -585,107 +349,94 @@ const CaseStudies = () => {
   );
 };
 
-// --- AI Lab ---
-const AILab = () => (
-  <section className="section" id="مختبر AI">
-    <div className="container">
-      <div style={{background: BRAND.colors.glassDark, borderRadius:'3rem', padding:'clamp(2rem, 5vw, 5rem)', color:'white', position:'relative', overflow:'hidden'}}>
-        <div style={{position:'absolute', top:'-20%', right:'-10%', width:'500px', height:'500px', background: BRAND.colors.primary, filter:'blur(150px)', opacity:0.2}}></div>
-        <div className="grid-2">
-          <div>
-            <div style={{color:BRAND.colors.secondary, fontWeight:'bold', marginBottom:'1rem', display:'flex', alignItems:'center', gap:'10px'}}><Activity/> مختبر الذكاء الاصطناعي</div>
-            <h2 style={{color:'white'}}>نسبق المستقبل بخطوة.</h2>
-            <p style={{color:'#94a3b8'}}>نستخدم خوارزمياتنا الخاصة لتحليل البيانات والتنبؤ بالاتجاهات.</p>
-          </div>
-          <div style={{background:'rgba(255,255,255,0.05)', padding:'2rem', borderRadius:'2rem', border:'1px solid rgba(255,255,255,0.1)'}}>
-             <div style={{display:'flex', justifyContent:'space-between', marginBottom:'2rem'}}><span>الكفاءة</span><span style={{color:BRAND.colors.secondary}}>+240%</span></div>
-             <div style={{display:'flex', alignItems:'flex-end', gap:'10px', height:'150px'}}>
-                {[40,60,45,80,70,90,100].map((h,i)=><div key={i} style={{flex:1, height:`${h}%`, background: i===6?BRAND.colors.secondary:'rgba(255,255,255,0.1)', borderRadius:'4px'}}></div>)}
-             </div>
-          </div>
-        </div>
+// تذييل الصفحة (Footer)
+const Footer = () => (
+  <footer className="bg-[#0f172a] text-white py-20 px-4 border-t border-white/10">
+    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12">
+      <div className="col-span-1 md:col-span-2">
+        <h2 className="text-5xl font-black mb-6 tracking-tighter">AURA.</h2>
+        <p className="text-[#B3B7C1] max-w-sm">
+          نحن لا نتبع المسار، نحن نضيئه.
+          <br/>
+          الرياض، المملكة العربية السعودية.
+        </p>
+      </div>
+      <div>
+        <h4 className="font-bold mb-6 text-[#58A8B4]">الخدمات</h4>
+        <ul className="space-y-3 text-sm text-gray-400">
+          <li><a href="#" className="hover:text-white transition-colors">استراتيجية الهالة</a></li>
+          <li><a href="#" className="hover:text-white transition-colors">تطوير WebGL</a></li>
+          <li><a href="#" className="hover:text-white transition-colors">تحسين محركات الإجابة</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 className="font-bold mb-6 text-[#58A8B4]">تواصل</h4>
+        <ul className="space-y-3 text-sm text-gray-400">
+          <li>hello@aura.agency</li>
+          <li>+966 50 000 0000</li>
+          <li>Linkedin / Twitter</li>
+        </ul>
       </div>
     </div>
-  </section>
-);
-
-// --- Contact ---
-const Contact = () => {
-  const handleSubmit = (e: FormEvent) => { e.preventDefault(); alert('تم الإرسال!'); };
-  return (
-    <section className="section container" id="تواصل">
-      <div className="grid-2">
-        <div>
-          <h2>جاهز <span className="text-gradient">للانطلاق؟</span></h2>
-          <p>تواصل معنا اليوم لبدء رحلة النجاح.</p>
-          <div style={{marginTop:'2rem'}}>
-             <div style={{display:'flex', gap:'1rem', alignItems:'center', marginBottom:'1rem'}}>
-               <div className="icon-box" style={{marginBottom:0, width:50, height:50}}><Phone/></div>
-               <div><div style={{fontSize:'0.9rem', color:BRAND.colors.grey}}>اتصل بنا</div><div style={{fontWeight:'bold'}}>{BRAND.info.phone}</div></div>
-             </div>
-             <div style={{display:'flex', gap:'1rem', alignItems:'center'}}>
-               <div className="icon-box" style={{marginBottom:0, width:50, height:50}}><MapPin/></div>
-               <div><div style={{fontSize:'0.9rem', color:BRAND.colors.grey}}>زورونا</div><div style={{fontWeight:'bold'}}>الرياض، المملكة العربية السعودية</div></div>
-             </div>
-          </div>
-        </div>
-        <div className="bento-card" style={{background:'white'}}>
-          <form onSubmit={handleSubmit}>
-            <div className="form-group"><label style={{display:'block', marginBottom:'0.5rem', fontWeight:'bold'}}>الاسم</label><input type="text" className="form-input"/></div>
-            <div className="form-group"><label style={{display:'block', marginBottom:'0.5rem', fontWeight:'bold'}}>البريد</label><input type="email" className="form-input"/></div>
-            <button className="btn-primary" style={{width:'100%', marginTop:'1rem'}}>إرسال الطلب <Send size={18}/></button>
-          </form>
-        </div>
-      </div>
-    </section>
-  );
-};
-
-// --- Footer ---
-const Footer = () => (
-  <footer>
-    <div className="container">
-      <div style={{display:'flex', justifyContent:'space-between', flexWrap:'wrap', gap:'4rem', paddingBottom:'4rem', borderBottom:'1px solid #1e293b'}}>
-        <div><h2 style={{color:'white', fontSize:'2rem'}}>AURA.</h2><p style={{color:'#64748b'}}>الاستثمار في المستقبل.</p></div>
-        <div style={{display:'flex', gap:'4rem', flexWrap:'wrap'}}>
-           <div><h4 style={{color:'white', marginBottom:'1rem'}}>الشركة</h4><a href="#" className="footer-link">عن أورا</a><a href="#" className="footer-link">القيادة</a></div>
-           <div><h4 style={{color:'white', marginBottom:'1rem'}}>الخدمات</h4><a href="#" className="footer-link">التحول الرقمي</a><a href="#" className="footer-link">الاستثمار</a></div>
-        </div>
-      </div>
-      <div style={{paddingTop:'2rem', color:'#475569', fontSize:'0.9rem'}}>© 2026 Aura Holding. All Rights Reserved.</div>
+    <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-white/5 text-center text-[#B3B7C1] text-xs flex justify-between items-center">
+      <span>© 2026 Aura Digital Agency. All Rights Reserved.</span>
+      <span className="opacity-50">Designed for the Future.</span>
     </div>
   </footer>
 );
 
-// =========================================
-// 5. MAIN ENTRY POINT
-// =========================================
+// ==========================================
+// 4. التجميع النهائي للصفحة (Main Page)
+// ==========================================
 
-export default function AuraWebsite() {
-  const [introFinished, setIntroFinished] = useState(false);
+export default function Home() {
+  // تهيئة مكتبة التمرير الناعم (Lenis)
+  useEffect(() => {
+    const lenis = new Lenis({
+      duration: 1.2,
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      orientation: 'vertical',
+      smoothWheel: true,
+    });
+
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+
+    requestAnimationFrame(raf);
+  }, []);
 
   return (
-    <>
-      <style dangerouslySetInnerHTML={{ __html: styles }} />
-      <Script id="json-ld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(JSON_LD) }} />
-      <AnimatePresence>
-        {!introFinished && <IntroOverlay onComplete={() => setIntroFinished(true)} />}
-      </AnimatePresence>
-      {introFinished && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1 }}>
-          <KineticBackground />
-          <Navbar />
-          <main>
-            <Hero />
-            <ClientMarquee />
-            <Services />
-            <CaseStudies />
-            <AILab />
-            <Contact />
-          </main>
-          <Footer />
-        </motion.div>
-      )}
-    </>
+    <div className={alexandria.className} dir="rtl">
+      {/* Schema.org for AEO */}
+      <Script id="structured-data" type="application/ld+json">
+        {`
+          {
+            "@context": "https://schema.org",
+            "@type": "ProfessionalService",
+            "name": "Aura Digital Agency",
+            "slogan": "هالتك الفارقة في عالم التسويق",
+            "description": "وكالة تسويق رقمي رائدة في الرياض تعتمد على هندسة التجربة والذكاء الاصطناعي.",
+            "address": {
+              "@type": "PostalAddress",
+              "addressLocality": "Riyadh",
+              "addressCountry": "SA"
+            }
+          }
+        `}
+      </Script>
+
+      <AuraCanvas />
+      
+      <main className="relative z-10">
+        <NavBar />
+        <HeroSection />
+        <ServicesBento />
+        <CaseStudies />
+        <KnowledgeHub />
+        <Footer />
+      </main>
+    </div>
   );
 }
