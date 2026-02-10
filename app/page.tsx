@@ -1,369 +1,421 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Readex_Pro } from 'next/font/google';
+import React, { useEffect, useRef, useState } from 'react';
 import { 
-  ArrowUpRight, Palette, Search, Megaphone, Code, 
-  Target, Layers, Zap, Menu, X, ArrowRight,
-  Globe, Sparkles, Phone, MapPin, Send, MousePointer2
+  motion, 
+  useScroll, 
+  useTransform, 
+  useSpring, 
+  useInView, 
+  useMotionValueEvent,
+  AnimatePresence
+} from 'framer-motion';
+import { 
+  Sparkles, 
+  ArrowUpLeft, 
+  PlayCircle, 
+  Disc, 
+  Fingerprint, 
+  Zap, 
+  Palette, 
+  Code2, 
+  Rocket, 
+  Megaphone, 
+  LineChart, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Instagram, 
+  Twitter, 
+  Linkedin,
+  Menu,
+  X
 } from 'lucide-react';
-import * as THREE from 'three';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from '@studio-freight/lenis';
+import Link from 'next/link';
 
-// --- إعداد الخط ---
-const fontMain = Readex_Pro({ 
-  subsets: ['arabic', 'latin'],
-  weight: ['200', '300', '400', '500', '600', '700'],
-  display: 'swap',
-});
+/* -------------------------------------------------------------------------- */
+/* COMPONENTS                                */
+/* -------------------------------------------------------------------------- */
 
-// --- تسجيل GSAP ---
-if (typeof window !== 'undefined') {
-  gsap.registerPlugin(ScrollTrigger);
-}
-
-// =========================================
-// 1. الماوس المغناطيسي (Custom Cursor)
-// =========================================
-const CustomCursor = () => {
-  const cursorRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const moveCursor = (e: MouseEvent) => {
-      if (cursorRef.current) {
-        gsap.to(cursorRef.current, {
-          x: e.clientX,
-          y: e.clientY,
-          duration: 0.2,
-          ease: 'power2.out'
-        });
-      }
-    };
-    window.addEventListener('mousemove', moveCursor);
-    return () => window.removeEventListener('mousemove', moveCursor);
-  }, []);
-
-  return (
-    <div 
-      ref={cursorRef} 
-      className="fixed top-0 left-0 w-8 h-8 border border-slate-800 rounded-full pointer-events-none z-[9999] hidden md:flex -translate-x-1/2 -translate-y-1/2 mix-blend-difference bg-white/20 backdrop-blur-sm"
-    />
-  );
-};
-
-// =========================================
-// 2. خلفية الهالة (3D Nebula)
-// =========================================
-const KineticNebula = () => {
-  const mountRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!mountRef.current) return;
-
-    // إعداد المشهد
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0xffffff, 0.002);
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 30;
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    mountRef.current.innerHTML = '';
-    mountRef.current.appendChild(renderer.domElement);
-
-    // الجسيمات
-    const count = 3000;
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const color1 = new THREE.Color('#438FB3'); // لون الهوية
-    const color2 = new THREE.Color('#58A8B4'); // التيل
-
-    for(let i=0; i<count; i++) {
-      const r = 15 + Math.random() * 10;
-      const theta = 2 * Math.PI * Math.random();
-      const phi = Math.acos(2 * Math.random() - 1);
-      
-      positions[i*3] = r * Math.sin(phi) * Math.cos(theta);
-      positions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
-      positions[i*3+2] = r * Math.cos(phi);
-      
-      const c = Math.random() > 0.5 ? color1 : color2;
-      colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b;
-    }
-    
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    const material = new THREE.PointsMaterial({ size: 0.15, vertexColors: true, transparent: true, opacity: 0.8 });
-    const particles = new THREE.Points(geometry, material);
-    scene.add(particles);
-
-    // الحركة
-    const animate = () => {
-      requestAnimationFrame(animate);
-      particles.rotation.y += 0.001;
-      particles.rotation.x += 0.0005;
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    // تفاعل GSAP مع التمرير
-    const ctx = gsap.context(() => {
-      gsap.to(particles.scale, {
-        x: 3, y: 3, z: 3,
-        scrollTrigger: { trigger: document.body, start: "top top", end: "bottom bottom", scrub: 1.5 }
-      });
-    });
-
-    const handleResize = () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      mountRef.current?.removeChild(renderer.domElement);
-      renderer.dispose();
-      ctx.revert();
-    };
-  }, []);
-
-  return <div ref={mountRef} className="fixed inset-0 -z-10 opacity-70 pointer-events-none" />;
-};
-
-// =========================================
-// 3. النافبار (Tailwind Styled)
-// =========================================
+// --- 1. Navbar Component ---
 const Navbar = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { scrollY } = useScroll();
+  const [hidden, setHidden] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useMotionValueEvent(scrollY, "change", (latest) => {
+    const previous = scrollY.getPrevious() || 0;
+    if (latest > previous && latest > 150) setHidden(true);
+    else setHidden(false);
+    setScrolled(latest > 50);
+  });
 
   return (
-    <>
-      <nav className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-5xl backdrop-blur-xl bg-white/70 border border-white/50 rounded-full z-50 px-8 py-4 flex justify-between items-center shadow-lg shadow-slate-200/50 transition-all hover:shadow-xl">
-        <div className="flex items-center gap-3">
-          <div className="w-3 h-3 bg-[#438FB3] rounded-full animate-pulse"></div>
-          <span className="text-xl font-bold tracking-tighter text-slate-900">AURA</span>
-        </div>
+    <motion.header
+      variants={{
+        visible: { y: 0 },
+        hidden: { y: "-100%" },
+      }}
+      animate={hidden ? "hidden" : "visible"}
+      transition={{ duration: 0.35, ease: "easeInOut" }}
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+        scrolled ? 'py-3' : 'py-6'
+      }`}
+    >
+      <div className="container mx-auto px-6 md:px-12">
+        <div className={`flex items-center justify-between transition-all duration-300 ${
+            scrolled 
+            ? 'bg-[#0a0f1e]/60 backdrop-blur-xl border border-white/10 rounded-full pl-3 pr-4 py-2 shadow-lg shadow-purple-900/10' 
+            : 'bg-transparent'
+        }`}>
+          
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2 group relative z-10">
+            <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-tr from-violet-600 to-blue-600 rounded-xl rotate-3 group-hover:rotate-12 transition-transform duration-500">
+                <Sparkles className="text-white w-5 h-5" />
+                <div className="absolute inset-0 bg-white/40 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            </div>
+            <span className="text-2xl font-black tracking-wider text-white">
+              AURA<span className="text-cyan-400">.</span>
+            </span>
+          </Link>
 
-        <div className="hidden md:flex gap-8">
-          {['الرئيسية', 'خدماتنا', 'أعمالنا', 'تواصل'].map((item) => (
-            <a key={item} href={`#${item}`} className="text-sm font-semibold text-slate-600 hover:text-[#438FB3] transition-colors relative group">
-              {item}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#438FB3] transition-all duration-300 group-hover:w-full"></span>
-            </a>
-          ))}
-        </div>
-
-        <button className="bg-[#0f172a] text-white px-6 py-2.5 rounded-full text-sm font-bold hover:bg-[#438FB3] transition-colors hidden md:block shadow-lg shadow-slate-900/20">
-          ابدأ مشروعك
-        </button>
-
-        <button className="md:hidden text-slate-800" onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X /> : <Menu />}
-        </button>
-      </nav>
-
-      {/* قائمة الجوال */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div 
-            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 bg-white/95 backdrop-blur-lg z-40 flex flex-col items-center justify-center gap-8 md:hidden"
-          >
-            {['الرئيسية', 'خدماتنا', 'أعمالنا', 'تواصل'].map((item) => (
-              <a key={item} href={`#${item}`} onClick={() => setIsOpen(false)} className="text-2xl font-bold text-slate-800">
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-8 font-medium text-sm text-slate-300">
+            {['الرئيسية', 'خدماتنا', 'عن الأورا', 'أعمالنا'].map((item, index) => (
+              <Link key={index} href={`#${item}`} className="relative hover:text-white transition-colors group py-2">
                 {item}
-              </a>
+                <span className="absolute bottom-0 right-0 w-0 h-[2px] bg-cyan-400 transition-all duration-300 group-hover:w-full"></span>
+              </Link>
             ))}
-          </motion.div>
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center gap-4">
+            <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="hidden md:flex px-6 py-2.5 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white text-sm font-bold items-center gap-2 shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:shadow-[0_0_30px_rgba(124,58,237,0.5)] transition-shadow"
+            >
+                ابدأ هالتك
+            </motion.button>
+            
+            {/* Mobile Menu Toggle */}
+            <button className="md:hidden text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? <X /> : <Menu />}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+            <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="md:hidden absolute top-full left-0 w-full bg-[#0a0f1e] border-b border-white/10 overflow-hidden"
+            >
+                <div className="flex flex-col p-6 gap-4 text-center">
+                    {['الرئيسية', 'خدماتنا', 'عن الأورا', 'أعمالنا'].map((item) => (
+                        <Link key={item} href="#" className="text-slate-300 hover:text-white py-2 text-lg">{item}</Link>
+                    ))}
+                    <button className="w-full py-4 rounded-xl bg-violet-600 text-white font-bold mt-4">ابدأ مشروعك</button>
+                </div>
+            </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </motion.header>
   );
 };
 
-// =========================================
-// 4. الأقسام الرئيسية
-// =========================================
+// --- 2. Hero Component ---
+const HeroSection = () => {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
 
-const Hero = () => (
-  <section className="min-h-screen flex flex-col justify-center items-center text-center px-4 relative pt-20">
-    <motion.div 
-      initial={{ opacity: 0, y: 50 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ duration: 1 }}
-      className="max-w-4xl"
-    >
-      <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-slate-50 border border-slate-200 text-[#438FB3] font-bold text-sm mb-8 shadow-sm">
-        <Sparkles size={16} /> شريك التحول الرقمي 2026
-      </div>
-      
-      <h1 className="text-5xl md:text-8xl font-bold text-slate-900 mb-6 leading-[1.1] tracking-tight">
-        هالتك <span className="bg-gradient-to-r from-[#438FB3] to-[#58A8B4] bg-clip-text text-transparent">الفارقة</span>
-        <br /> في عالم التسويق
-      </h1>
-      
-      <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-        نحن لا نصمم المواقع فحسب، بل نهندس تجربة رقمية متكاملة تدمج الذكاء الاصطناعي بالإبداع البشري لتضعك في المقدمة.
-      </p>
+  const container = {
+    hidden: { opacity: 0 },
+    visible: (i = 1) => ({
+      opacity: 1,
+      transition: { staggerChildren: 0.1, delayChildren: 0.3 * i },
+    }),
+  };
 
-      <div className="flex justify-center gap-4">
-        <button className="bg-[#0f172a] text-white px-8 py-4 rounded-full font-bold text-lg hover:bg-[#438FB3] transition-all shadow-xl shadow-slate-900/20 flex items-center gap-2">
-          اكتشف خدماتنا <ArrowRight size={20} />
-        </button>
-      </div>
-    </motion.div>
-  </section>
-);
-
-const Stats = () => (
-  <div className="container mx-auto px-4 mb-32">
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 bg-[#0f172a] rounded-[3rem] p-8 md:p-16 text-white shadow-2xl">
-      {[
-        { n: '+500M', t: 'أصول مدارة' },
-        { n: '98%', t: 'نسبة رضا' },
-        { n: '+120', t: 'شريك استراتيجي' },
-        { n: 'Top 1%', t: 'أداء سوقي' }
-      ].map((stat, i) => (
-        <div key={i} className="text-center border-l border-white/10 last:border-0">
-          <div className="text-4xl md:text-6xl font-bold text-[#438FB3] mb-2">{stat.n}</div>
-          <div className="text-slate-400 font-medium">{stat.t}</div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
-
-const Services = () => {
-  const items = [
-    { title: "التحول الرقمي", desc: "بناء منصات مؤسسية متكاملة.", icon: Layers, span: "md:col-span-2" },
-    { title: "تسويق الأداء", desc: "إدارة حملات ROI مرتفع.", icon: Target, span: "" },
-    { title: "تطوير WebGL", desc: "تجارب ثلاثية الأبعاد.", icon: Code, span: "" },
-    { title: "استراتيجية AEO", desc: "تصدر نتائج البحث الذكي.", icon: Search, span: "md:col-span-2" },
-  ];
+  const child = {
+    visible: {
+      opacity: 1,
+      y: 0,
+      filter: "blur(0px)",
+      transition: { type: "spring", damping: 12, stiffness: 100 }
+    },
+    hidden: { opacity: 0, y: 50, filter: "blur(10px)" },
+  };
 
   return (
-    <section className="py-24 px-4 max-w-7xl mx-auto" id="خدماتنا">
-      <div className="text-center mb-16">
-        <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">هندسة <span className="text-[#438FB3]">الحلول</span></h2>
-        <p className="text-slate-500">خدمات مصممة لضمان نموك الأسي.</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {items.map((item, i) => (
-          <motion.div 
-            key={i}
-            whileHover={{ y: -10 }}
-            className={`${item.span} bg-white border border-slate-100 p-8 rounded-[2.5rem] shadow-lg shadow-slate-100/50 hover:border-[#438FB3]/30 transition-all duration-300 group cursor-pointer relative overflow-hidden`}
+    <section ref={ref} className="relative z-20 min-h-screen flex items-center pt-32 pb-20 overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-violet-600/10 rounded-full blur-[120px] mix-blend-screen pointer-events-none"></div>
+
+      <div className="container mx-auto px-6 md:px-12 flex flex-col items-center text-center relative z-10">
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 text-violet-300 text-sm font-medium mb-8 backdrop-blur-md"
+        >
+          <Sparkles size={14} className="animate-pulse text-cyan-400" />
+          <span>وكالة الجيل القادم الإبداعية</span>
+        </motion.div>
+
+        <motion.div variants={container} initial="hidden" animate={isInView ? "visible" : "hidden"} className="max-w-5xl mx-auto">
+          <h1 className="text-5xl md:text-8xl font-black tracking-tighter leading-[1.15] mb-8 text-white">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+              {['نصنع', 'لك', 'وجوداً', 'رقمياً'].map((word, idx) => (
+                <motion.span key={idx} variants={child} className="inline-block">{word}</motion.span>
+              ))}
+            </div>
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2">
+                <motion.span variants={child}>لا يمكن</motion.span>
+                <motion.span variants={child} className="relative inline-block group">
+                    <span className="absolute inset-0 bg-gradient-to-r from-violet-600 to-cyan-500 blur-2xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"></span>
+                    <span className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-blue-400 to-cyan-400 drop-shadow-[0_0_15px_rgba(139,92,246,0.5)]">
+                    تجاهل هالته.
+                    </span>
+                </motion.span>
+            </div>
+          </h1>
+
+          <motion.p 
+             initial={{ opacity: 0 }}
+             animate={isInView ? { opacity: 1 } : {}}
+             transition={{ delay: 1, duration: 1 }}
+             className="text-lg md:text-2xl text-slate-400 max-w-3xl mx-auto mb-12 leading-relaxed"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#438FB3]/5 rounded-bl-[100px] -mr-8 -mt-8 transition-transform group-hover:scale-150"></div>
-            <div className="w-14 h-14 bg-[#f0f9ff] rounded-2xl flex items-center justify-center text-[#438FB3] mb-6 relative z-10 group-hover:bg-[#438FB3] group-hover:text-white transition-colors">
-              <item.icon size={28} />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 mb-2 relative z-10">{item.title}</h3>
-            <p className="text-slate-500 relative z-10">{item.desc}</p>
-            <div className="absolute bottom-8 left-8 text-[#438FB3] opacity-0 group-hover:opacity-100 transition-opacity">
-              <ArrowUpRight />
-            </div>
-          </motion.div>
-        ))}
+            في عالم مزدحم بالضجيج، لا يكفي أن تكون موجوداً. يجب أن تكون <span className="text-white font-bold glow-text">مُشعاً</span>. نحن نمزج السحر البصري بالذكاء الاصطناعي لنمنح علامتك التجارية هالتها الفارقة.
+          </motion.p>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={isInView ? { opacity: 1, y: 0 } : {}}
+          transition={{ delay: 1.2, type: "spring" }}
+          className="flex flex-col sm:flex-row gap-5"
+        >
+          <motion.button 
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
+            className="px-10 py-5 rounded-full bg-gradient-to-r from-violet-600 to-blue-600 text-white text-lg font-bold flex items-center gap-3 shadow-[0_0_30px_rgba(124,58,237,0.4)] hover:shadow-[0_0_50px_rgba(124,58,237,0.6)] transition-all"
+          >
+            اطلب استشارة مجانية 
+            <ArrowUpLeft size={24} />
+          </motion.button>
+
+          <motion.button 
+             whileHover={{ scale: 1.05, backgroundColor: "rgba(255,255,255,0.05)" }}
+             whileTap={{ scale: 0.98 }}
+             className="px-10 py-5 rounded-full text-lg font-bold text-white border border-white/10 flex items-center gap-3 backdrop-blur-sm hover:border-violet-500/50 transition-colors"
+          >
+            <PlayCircle size={24} className="text-cyan-400" />
+            شاهد الفيديو
+          </motion.button>
+        </motion.div>
       </div>
+
+       {/* Scroll Indicator */}
+       <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, y: [0, 10, 0] }}
+            transition={{ delay: 2, duration: 2, repeat: Infinity }}
+            className="absolute bottom-10 left-1/2 -translate-x-1/2 text-slate-500 flex flex-col items-center gap-2 text-sm"
+        >
+            <span>اكتشف الهالة</span>
+            <div className="w-5 h-10 border-2 border-white/10 rounded-full flex justify-center pt-2">
+                <motion.div 
+                    animate={{ y: [0, 12, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="w-1 h-2 bg-cyan-400 rounded-full"
+                />
+            </div>
+        </motion.div>
     </section>
   );
 };
 
-const Contact = () => (
-  <section className="py-24 px-4 bg-slate-50" id="تواصل">
-    <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
-      <div>
-        <div className="inline-block px-4 py-1 rounded-full bg-white border border-slate-200 text-[#438FB3] font-bold text-sm mb-6">
-          تواصل معنا
-        </div>
-        <h2 className="text-4xl md:text-6xl font-bold text-slate-900 mb-6">جاهز للبدء في <br/> <span className="text-[#438FB3]">رحلتك؟</span></h2>
-        <p className="text-slate-500 text-lg mb-8">فريقنا مستعد لتحليل احتياجاتك وبناء استراتيجية مخصصة لعلامتك التجارية.</p>
-        
-        <div className="flex flex-col gap-4">
-          <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100">
-            <div className="w-12 h-12 bg-[#f0f9ff] rounded-full flex items-center justify-center text-[#438FB3]"><Phone size={20}/></div>
-            <div>
-              <div className="text-sm text-slate-400">اتصل بنا</div>
-              <div className="font-bold text-slate-900">+966 50 000 0000</div>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 bg-white p-4 rounded-2xl border border-slate-100">
-            <div className="w-12 h-12 bg-[#f0f9ff] rounded-full flex items-center justify-center text-[#438FB3]"><MapPin size={20}/></div>
-            <div>
-              <div className="text-sm text-slate-400">الموقع</div>
-              <div className="font-bold text-slate-900">الرياض، المملكة العربية السعودية</div>
-            </div>
-          </div>
-        </div>
-      </div>
+// --- 3. Concept Component ---
+const ConceptSection = () => {
+    const ref = useRef(null);
+    const { scrollYProgress } = useScroll({ target: ref, offset: ["start end", "end start"] });
+    const ySlow = useTransform(scrollYProgress, [0, 1], [100, -100]);
+    const rotate = useTransform(scrollYProgress, [0, 1], [0, 45]);
 
-      <div className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-100">
-        <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">الاسم الكامل</label>
-            <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:outline-none focus:border-[#438FB3] transition-colors" placeholder="محمد أحمد" />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">البريد الإلكتروني</label>
-            <input type="email" className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:outline-none focus:border-[#438FB3] transition-colors" placeholder="name@company.com" />
-          </div>
-          <div>
-            <label className="block text-sm font-bold text-slate-700 mb-2">رسالتك</label>
-            <textarea className="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:outline-none focus:border-[#438FB3] transition-colors min-h-[120px]" placeholder="كيف يمكننا مساعدتك؟"></textarea>
-          </div>
-          <button className="bg-[#438FB3] text-white py-4 rounded-xl font-bold text-lg hover:bg-[#2d6a84] transition-colors flex justify-center items-center gap-2 mt-2">
-            إرسال الطلب <Send size={20}/>
-          </button>
-        </form>
-      </div>
-    </div>
-  </section>
-);
+    return (
+        <section ref={ref} className="relative z-20 py-32 overflow-hidden bg-[#02040a]">
+             <div className="container mx-auto px-6 md:px-12 relative">
+                {/* Parallax Background Text */}
+                <motion.div style={{ y: ySlow }} className="absolute top-0 right-0 text-[15rem] md:text-[20rem] font-black text-white/[0.02] leading-none pointer-events-none select-none -z-10">
+                    AURA
+                </motion.div>
 
-const Footer = () => (
-  <footer className="bg-[#0f172a] text-white py-20 border-t border-white/10">
-    <div className="container mx-auto px-4 text-center">
-      <h2 className="text-4xl font-bold mb-4">AURA.</h2>
-      <p className="text-slate-400 mb-8">نصنع المستقبل الرقمي برؤية سعودية.</p>
-      <div className="flex justify-center gap-6 mb-8 text-sm font-medium text-slate-300">
-        <a href="#" className="hover:text-[#438FB3] transition-colors">تويتر</a>
-        <a href="#" className="hover:text-[#438FB3] transition-colors">لينكد إن</a>
-        <a href="#" className="hover:text-[#438FB3] transition-colors">إنستقرام</a>
-      </div>
-      <div className="text-slate-500 text-xs border-t border-white/5 pt-8">
-        © 2026 Aura Holding. جميع الحقوق محفوظة.
-      </div>
-    </div>
-  </footer>
-);
+                <div className="grid md:grid-cols-2 gap-16 items-center">
+                    <div>
+                        <h2 className="text-4xl md:text-5xl font-bold mb-8 leading-tight text-white">
+                            ما هي <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-violet-500">الهالة</span> <br/> في عالم التسويق؟
+                        </h2>
+                        <p className="text-lg text-slate-400 mb-10 leading-relaxed">
+                             التسويق التقليدي يصرخ لطلب الانتباه. أما تسويق "الأورا" فهو يهمس، لكن همسه مسموع أكثر من أي صراخ. هي الطاقة غير المرئية التي تجعل عميلك يشعر بالولاء قبل أن يشتري.
+                        </p>
+                        
+                        <div className="space-y-6">
+                            {[
+                                { icon: Disc, title: "جاذبية مغناطيسية", desc: "تصميمات تجبر العميل على التوقف." },
+                                { icon: Fingerprint, title: "هوية لا تتكرر", desc: "بصمة بصرية يستحيل تقليدها." },
+                                { icon: Zap, title: "تأثير فوري", desc: "إقناع في أول 3 ثوانٍ." },
+                            ].map((item, index) => (
+                                <motion.div 
+                                    key={index}
+                                    initial={{ opacity: 0, x: -20 }}
+                                    whileInView={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: index * 0.2 }}
+                                    viewport={{ once: true }}
+                                    className="flex items-center gap-4 p-4 rounded-2xl bg-white/[0.03] border border-white/5 hover:bg-white/[0.08] transition-colors group"
+                                >
+                                    <div className="bg-violet-500/10 p-3 rounded-xl text-violet-400 group-hover:text-cyan-400 transition-colors">
+                                        <item.icon size={24} />
+                                    </div>
+                                    <div>
+                                        <h4 className="text-xl font-bold text-white mb-1">{item.title}</h4>
+                                        <p className="text-slate-400 text-sm">{item.desc}</p>
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
+                    </div>
 
-// =========================================
-// 5. التطبيق الرئيسي
-// =========================================
-export default function AuraPage() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  return (
-    <div className={`${fontMain.className} bg-white text-slate-900 selection:bg-[#438FB3] selection:text-white overflow-x-hidden`} dir="rtl">
-      {mounted && <CustomCursor />}
-      <KineticNebula />
-      
-      <main className="relative z-10">
-        <Navbar />
-        <Hero />
-        <Stats />
-        <Services />
-        <Contact />
-        <Footer />
-      </main>
-    </div>
-  );
+                    {/* Abstract Visual */}
+                    <motion.div style={{ rotate }} className="relative hidden md:flex justify-center items-center">
+                        <div className="absolute inset-0 bg-gradient-to-tr from-violet-600 to-cyan-600 rounded-full blur-[80px] opacity-20 animate-pulse"></div>
+                        <div className="relative w-80 h-80 bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[3rem] flex items-center justify-center overflow-hidden shadow-2xl">
+                             <div className="absolute inset-0 bg-gradient-to-br from-violet-500/20 to-transparent"></div>
+                             <Zap size={100} className="text-white/20" />
+                        </div>
+                    </motion.div>
+                </div>
+             </div>
+        </section>
+    )
 }
+
+// --- 4. Bento Grid Component ---
+const BentoCard = ({ title, desc, icon: Icon, className, delay = 0, colSpan = "" }: any) => {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ delay, duration: 0.5 }}
+        viewport={{ once: true, margin: "-50px" }}
+        whileHover={{ y: -5 }}
+        className={`relative p-8 rounded-3xl bg-[#0f1623]/80 border border-white/5 overflow-hidden group hover:border-violet-500/30 transition-all duration-500 ${colSpan} ${className}`}
+      >
+        {/* Glow Effect on Hover */}
+        <div className="absolute inset-0 bg-gradient-to-br from-violet-600/10 via-transparent to-cyan-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
+        <div className="relative z-10">
+            <div className="mb-6 inline-flex p-3 rounded-2xl bg-white/5 border border-white/5 text-cyan-400 group-hover:text-violet-400 group-hover:scale-110 transition-all duration-300">
+                <Icon size={28} />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-3">{title}</h3>
+            <p className="text-slate-400 leading-relaxed text-sm md:text-base">{desc}</p>
+        </div>
+
+        <div className="mt-8 flex items-center text-cyan-400 font-bold text-sm opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-300">
+            اقرأ المزيد <ArrowUpLeft size={16} className="mr-2" />
+        </div>
+      </motion.div>
+    );
+};
+
+const ServicesBento = () => {
+    return (
+        <section className="relative z-20 py-32 bg-[#02040a]">
+            <div className="container mx-auto px-6 md:px-12">
+                <motion.div 
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="text-center mb-20"
+                >
+                    <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+                        خدمات تصنع <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-500 to-cyan-400">الفرق</span>
+                    </h2>
+                    <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+                        حلول متكاملة مصممة لرفع قيمة علامتك التجارية وزيادة جاذبيتها في السوق الرقمي.
+                    </p>
+                </motion.div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <BentoCard
+                        colSpan="md:col-span-2"
+                        title="تطوير ويب & Next.js"
+                        desc="مواقع فائقة السرعة، متجاوبة، ومبنية بأحدث تقنيات 2026. نضمن لك تصدر محركات البحث وأداء لا يضاهى."
+                        icon={Code2}
+                        delay={0.1}
+                    />
+                    <BentoCard
+                        title="تطبيقات الموبايل"
+                        desc="تصميم وتطوير تطبيقات iOS و Android بتجربة مستخدم (UX) سلسة وساحرة."
+                        icon={Palette}
+                        delay={0.2}
+                    />
+                    <BentoCard
+                        title="الهوية البصرية"
+                        desc="نبني نظاماً بصرياً (Brand System) يعكس قيمك ويحفر مكانك في ذاكرة الجمهور."
+                        icon={Rocket}
+                        delay={0.3}
+                    />
+                     <BentoCard
+                        colSpan="md:col-span-2"
+                        title="استراتيجيات النمو الرقمي"
+                        desc="خطط تسويقية تعتمد على البيانات والذكاء الاصطناعي. نستهدف جمهورك بدقة لتحويل الزوار إلى عملاء دائمين."
+                        icon={LineChart}
+                        delay={0.4}
+                    />
+                    <BentoCard
+                        title="إدارة السوشيال ميديا"
+                        desc="محتوى إبداعي، تصاميم جذابة، وإدارة مجتمعات احترافية."
+                        icon={Megaphone}
+                        delay={0.5}
+                    />
+                </div>
+            </div>
+        </section>
+    )
+}
+
+// --- 5. Footer Component ---
+const Footer = () => {
+    return (
+        <footer className="relative z-20 bg-[#010205] pt-32 pb-10 border-t border-white/5 overflow-hidden">
+             {/* Glow Background */}
+             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-violet-900/10 to-transparent blur-[100px] pointer-events-none"></div>
+
+             <div className="container mx-auto px-6 md:px-12 relative">
+                {/* CTA Box */}
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    className="relative rounded-[3rem] bg-[#0a0f1e]/50 border border-white/10 p-12 md:p-20 text-center mb-24 overflow-hidden"
+                >
+                    <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/20 via-transparent to-cyan-600/20 opacity-50 mix-blend-overlay"></div>
+                    <h2 className="text-4xl md:text-7xl font-black text-white mb-8 leading-tight">
+                        جاهز لتُشع <br/> 
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-cyan-400">بهالتك الفارقة؟</span>
+                    </h2>
+                    <button className="px-12 py-6 rounded-full bg-white text-black text-xl font-bold hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
+                        احجز استشارتك الآن
+  
