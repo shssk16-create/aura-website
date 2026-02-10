@@ -1,0 +1,428 @@
+'use client';
+
+import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
+import { motion, useSpring, useMotionValue, AnimatePresence } from 'framer-motion';
+import { 
+  ArrowUpRight, Sparkles, Gem, Lightbulb, Rocket, Code, 
+  Megaphone, PenTool, Share2, Search, Palette, ShoppingBag, 
+  Instagram, Twitter, Linkedin, Mail, Plus, Crosshair, ArrowRight, BarChart 
+} from 'lucide-react';
+import * as THREE from 'three';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+
+// --- تسجيل GSAP لمرة واحدة ---
+if (typeof window !== 'undefined') {
+  gsap.registerPlugin(ScrollTrigger);
+}
+
+// --- CSS Styles (شاملة الخطوط + الناف بار + تحسينات التابلت) ---
+const styles = `
+  /* استيراد خط Readex Pro كبديل احتياطي */
+  @import url('https://fonts.googleapis.com/css2?family=Readex+Pro:wght@200;300;400;500;600;700&display=swap');
+
+  /* --- تعريف خطوط DIN الرسمية --- */
+  @font-face {
+    font-family: 'DIN Next LT Arabic';
+    src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'DIN Next LT Arabic';
+    src: url('https://aurateam3.com/wp-content/uploads/2025/10/DINNextLTArabic-Bold-2.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  :root {
+    --bg-dark: #050607;
+    --primary: #4390b3;
+    --secondary: #5fc2d0;
+    --white: #ffffff;
+    --slate-400: #94a3b8;
+    --border-color: rgba(255, 255, 255, 0.05);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: var(--bg-dark);
+    color: var(--white);
+    font-family: 'DIN Next LT Arabic', 'Readex Pro', sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Typography */
+  h1, h2, h3, h4 { font-weight: 700; line-height: 1.1; letter-spacing: -0.02em; }
+  p, a, button, span { font-weight: 400; }
+
+  .text-gradient {
+    background: linear-gradient(to left, var(--secondary), var(--primary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; position: relative; }
+  
+  /* Utilities */
+  .flex-between { display: flex; align-items: center; justify-content: space-between; }
+  .hidden-tablet { display: none; }
+  .absolute-fill { position: absolute; inset: 0; }
+
+  /* --- Navbar Styles --- */
+  .navbar {
+    position: fixed; top: 0; left: 0; width: 100%; z-index: 1000;
+    padding: 2rem 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .navbar.scrolled {
+    padding: 1rem 0; background: rgba(5, 6, 7, 0.6);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .nav-link {
+    position: relative; font-size: 0.9rem; font-weight: 500;
+    color: rgba(255, 255, 255, 0.8); cursor: pointer; transition: color 0.3s;
+  }
+  .nav-link:hover { color: white; }
+  .nav-link::after {
+    content: ''; position: absolute; bottom: -4px; right: 0; width: 0; height: 2px;
+    background: var(--primary); transition: width 0.3s ease;
+  }
+  .nav-link:hover::after { width: 100%; }
+  
+  .nav-btn {
+    padding: 0.75rem 1.5rem; background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 99px;
+    color: white; font-weight: bold; font-size: 0.9rem; cursor: pointer;
+    transition: all 0.3s; backdrop-filter: blur(4px);
+  }
+  .nav-btn:hover {
+    background: var(--primary); border-color: var(--primary);
+    transform: translateY(-2px); box-shadow: 0 5px 15px rgba(67, 144, 179, 0.3);
+  }
+
+  /* Mobile Menu */
+  .mobile-menu {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+    background: #050607; z-index: 999;
+    display: flex; flex-direction: column; justify-content: center; alignItems: center; gap: 2rem;
+  }
+
+  /* Custom Cursor - Hidden on Touch Devices */
+  @media (pointer: fine) {
+    .custom-cursor {
+      position: fixed; top: 0; left: 0; width: 300px; height: 300px;
+      background: var(--primary); border-radius: 50%; filter: blur(80px);
+      opacity: 0.2; z-index: 9999; pointer-events: none;
+      mix-blend-mode: screen; transform: translate(-50%, -50%);
+    }
+  }
+
+  /* Preloader */
+  .preloader {
+    position: fixed; inset: 0; z-index: 10000; background: var(--bg-dark);
+    display: flex; flex-direction: column; alignItems: center; justifyContent: center;
+  }
+  .preloader-text { font-size: 15vw; font-weight: 700; opacity: 0.2; font-variant-numeric: tabular-nums; }
+
+  /* Section Styles */
+  .marquee-section { padding: 4rem 0; background: var(--bg-dark); overflow: hidden; position: relative; border-top: 1px solid var(--border-color); }
+  .marquee-content { display: flex; gap: 4rem; padding: 0 1rem; white-space: nowrap; }
+  .marquee-item { font-size: 1.5rem; font-weight: 700; color: rgba(255,255,255,0.1); transition: 0.3s; }
+  .marquee-item:hover { color: var(--primary); transform: scale(1.1); text-shadow: 0 0 20px rgba(67, 144, 179, 0.5); }
+  
+  .process-section { padding: 6rem 0; background: var(--bg-dark); overflow: hidden; }
+  .process-step { position: relative; width: 100%; display: flex; align-items: center; justify-content: space-between; margin-bottom: 6rem; }
+  .process-dot-container { position: absolute; left: 50%; transform: translateX(-50%); width: 1.5rem; height: 1.5rem; display: flex; align-items: center; justify-content: center; z-index: 10; }
+  .process-dot { width: 0.75rem; height: 0.75rem; border-radius: 50%; transition: all 0.5s; }
+  .process-dot.active { background: var(--primary); transform: scale(1.5); box-shadow: 0 0 20px var(--primary); }
+  .process-dot.inactive { background: #1a1a1a; border: 1px solid rgba(255,255,255,0.2); }
+  .process-content { width: 42%; transition: all 0.7s; }
+  .process-spacer { width: 42%; }
+  
+  .faq-section { padding: 6rem 1.5rem; }
+  .faq-item { border: 1px solid var(--border-color); border-radius: 1.5rem; margin-bottom: 1rem; overflow: hidden; transition: 0.3s; }
+  .faq-item.active { background: #0F1115; border-color: rgba(67, 144, 179, 0.2); }
+  .faq-trigger { width: 100%; padding: 1.5rem; display: flex; align-items: center; justify-content: space-between; background: none; border: none; color: white; cursor: pointer; text-align: right; }
+
+  .services-section { padding: 6rem 1rem; }
+  .bento-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+  .bento-card { position: relative; padding: 1.5rem; border-radius: 1.5rem; border: 1px solid var(--border-color); overflow: hidden; background: #0F1115; }
+  
+  .works-section { position: relative; height: 100vh; background: var(--bg-dark); overflow: hidden; display: flex; flex-direction: column; justify-content: center; z-index: 30; }
+  .works-container { display: flex; align-items: center; height: 100%; padding: 0 2rem; gap: 2rem; width: max-content; }
+  .work-card { position: relative; width: 85vw; height: 50vh; flex-shrink: 0; border-radius: 2rem; overflow: hidden; border: 1px solid var(--border-color); }
+  .work-image { width: 120%; height: 100%; object-fit: cover; filter: grayscale(100%); opacity: 0.8; }
+
+  /* --- MEDIA QUERIES (TABLET & DESKTOP) --- */
+  @media (min-width: 768px) {
+    .hidden-tablet { display: flex; }
+    .marquee-item { font-size: 2.5rem; gap: 6rem; }
+    .bento-grid { grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+    .col-span-2 { grid-column: span 2; }
+    .process-step { margin-bottom: 8rem; }
+    .work-card { width: 60vw; height: 60vh; }
+    h1 { font-size: 4rem; }
+    h2 { font-size: 3rem; }
+  }
+
+  @media (min-width: 1024px) {
+    .bento-grid { grid-template-columns: repeat(3, 1fr); }
+    .work-card { width: 45vw; height: 70vh; }
+    h1 { font-size: 5.5rem; }
+    h2 { font-size: 4rem; }
+  }
+`;
+
+// --- Utils ---
+const generateTextPoints = (text: string, particleCount: number) => {
+    if (typeof document === 'undefined') return new Float32Array(particleCount * 3);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    if (!ctx) return new Float32Array(particleCount * 3);
+    const width = 1200; const height = 600;
+    canvas.width = width; canvas.height = height;
+    ctx.fillStyle = 'black'; ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = 'white'; 
+    ctx.font = '900 180px "DIN Next LT Arabic", "Readex Pro", sans-serif'; 
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; 
+    ctx.fillText(text, width / 2, height / 2);
+    const imageData = ctx.getImageData(0, 0, width, height);
+    const data = imageData.data;
+    const validPixels = [];
+    for (let y = 0; y < height; y += 4) { 
+        for (let x = 0; x < width; x += 4) {
+            if (data[(y * width + x) * 4] > 100) { 
+                validPixels.push({ x: (x / width - 0.5) * 40, y: -(y / height - 0.5) * 20 }); 
+            }
+        }
+    }
+    // Shuffle
+    for (let i = validPixels.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [validPixels[i], validPixels[j]] = [validPixels[j], validPixels[i]];
+    }
+    const positions = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount; i++) {
+        const pixel = validPixels[i % validPixels.length];
+        if (pixel) { positions[i*3] = pixel.x; positions[i*3+1] = pixel.y; positions[i*3+2] = 0; }
+    }
+    return positions;
+};
+
+// --- Shaders ---
+const particleVertexShader = `
+  uniform float uTime; uniform float uProgress; uniform vec2 uMouse;
+  attribute vec3 aRandomPos; attribute vec3 aTargetPos; attribute float aSize;
+  varying float vAlpha; varying vec3 vPos;
+  // Simplex Noise Simplified
+  vec3 mod289(vec3 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+  vec4 permute(vec4 x) { return mod289(((x*34.0)+1.0)*x); }
+  vec4 taylorInvSqrt(vec4 r) { return 1.79284291400159 - 0.85373472095314 * r; }
+  float snoise(vec3 v) {
+    const vec2 C = vec2(1.0/6.0, 1.0/3.0); const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+    vec3 i = floor(v + dot(v, C.yyy)); vec3 x0 = v - i + dot(i, C.xxx);
+    vec3 g = step(x0.yzx, x0.xyz); vec3 l = 1.0 - g;
+    vec3 i1 = min(g.xyz, l.zxy); vec3 i2 = max(g.xyz, l.zxy);
+    vec3 x1 = x0 - i1 + C.xxx; vec3 x2 = x0 - i2 + C.yyy; vec3 x3 = x0 - D.yyy;
+    i = mod289(i);
+    vec4 p = permute(permute(permute(i.z + vec4(0.0, i1.z, i2.z, 1.0)) + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+    float n_ = 0.142857142857; vec3 ns = n_ * D.wyz - D.xzx;
+    vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+    vec4 x_ = floor(j * ns.z); vec4 y_ = floor(j - 7.0 * x_);
+    vec4 x = x_ *ns.x + ns.yyyy; vec4 y = y_ *ns.x + ns.yyyy;
+    vec4 h = 1.0 - abs(x) - abs(y);
+    vec4 b0 = vec4(x.xy, y.xy); vec4 b1 = vec4(x.zw, y.zw);
+    vec4 s0 = floor(b0)*2.0 + 1.0; vec4 s1 = floor(b1)*2.0 + 1.0;
+    vec4 sh = -step(h, vec4(0.0));
+    vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy; vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+    vec3 p0 = vec3(a0.xy, h.x); vec3 p1 = vec3(a0.zw, h.y);
+    vec3 p2 = vec3(a1.xy, h.z); vec3 p3 = vec3(a1.zw, h.w);
+    vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2, p2), dot(p3,p3)));
+    p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+    vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+    m = m * m;
+    return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+  }
+  void main() {
+    float t = uProgress;
+    float ease = 1.0 - pow(1.0 - t, 3.0);
+    vec3 p = aRandomPos;
+    // Aurora effect
+    float wave = sin(p.x * 0.1 + uTime * 0.5) * 5.0;
+    vec3 auroraPos = p + vec3(0.0, wave, sin(p.z * 0.2 + uTime * 0.2) * 4.0);
+    auroraPos += snoise(p * 0.1 + vec3(0.0, uTime * 0.2, 0.0)) * 2.0;
+    vec3 finalPos = mix(auroraPos, aTargetPos, ease);
+    // Mouse Repel
+    vec3 mouseWorld = vec3(uMouse.x * 30.0, uMouse.y * 15.0, 0.0); 
+    float dist = distance(finalPos, mouseWorld);
+    if (dist < 6.0) {
+      vec3 dir = normalize(finalPos - mouseWorld);
+      finalPos += dir * ((6.0 - dist) / 6.0) * 1.5 * ease; 
+    }
+    vec4 mvPosition = modelViewMatrix * vec4(finalPos, 1.0);
+    gl_Position = projectionMatrix * mvPosition;
+    gl_PointSize = (aSize * 3.5) * (1.0 + ease * 0.5) * (20.0 / -mvPosition.z);
+    vAlpha = 0.4 + ease * 0.6; vPos = finalPos;
+  }
+`;
+const particleFragmentShader = `
+  uniform vec3 uColorPrimary; uniform vec3 uColorAurora; uniform float uProgress;
+  varying float vAlpha; varying vec3 vPos;
+  void main() {
+    vec2 center = gl_PointCoord - 0.5;
+    if (length(center) > 0.5) discard;
+    float glow = exp(-length(center) * 4.0);
+    float heightFactor = smoothstep(-10.0, 10.0, vPos.y);
+    vec3 color = mix(mix(uColorAurora, uColorPrimary, heightFactor), vec3(1.0), uProgress);
+    if (length(center) < 0.1) color += 0.2;
+    gl_FragColor = vec4(color, vAlpha * glow);
+  }
+`;
+
+// --- Components ---
+
+const Navbar = () => {
+  const [scrolled, setScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navLinks = [
+    { name: 'الرئيسية', href: '#' },
+    { name: 'خدماتنا', href: '#' },
+    { name: 'أعمالنا', href: '#' },
+    { name: 'من نحن', href: '#' },
+  ];
+
+  return (
+    <>
+      <motion.nav 
+        className={`navbar ${scrolled ? 'scrolled' : ''}`}
+        initial={{ y: -100 }} animate={{ y: 0 }} transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <div className="container flex-between">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', zIndex: 1001 }}>
+            <div style={{ width: '10px', height: '10px', background: '#4390b3', borderRadius: '50%', boxShadow: '0 0 10px #4390b3' }}></div>
+            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', letterSpacing: '0.05em' }}>AURA</span>
+          </div>
+          <div className="hidden-tablet" style={{ gap: '2.5rem' }}>
+             {navLinks.map((link, i) => <a key={i} className="nav-link">{link.name}</a>)}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', zIndex: 1001 }}>
+            <button className="nav-btn hidden-tablet">ابدأ مشروعك</button>
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} style={{ background: 'transparent', border: 'none', color: 'white', cursor: 'pointer' }} className="md:hidden">
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', width: '30px', alignItems: 'flex-end' }}>
+                  <motion.span animate={{ rotate: mobileMenuOpen ? 45 : 0, y: mobileMenuOpen ? 8 : 0 }} style={{ width: '100%', height: '2px', background: 'white' }} />
+                  <motion.span animate={{ opacity: mobileMenuOpen ? 0 : 1 }} style={{ width: '70%', height: '2px', background: 'white' }} />
+                  <motion.span animate={{ rotate: mobileMenuOpen ? -45 : 0, y: mobileMenuOpen ? -8 : 0 }} style={{ width: '100%', height: '2px', background: 'white' }} />
+               </div>
+            </button>
+          </div>
+        </div>
+      </motion.nav>
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div className="mobile-menu" initial={{ opacity: 0, y: '-100%' }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: '-100%' }}>
+            {navLinks.map((link, i) => (
+              <motion.a key={i} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 * i }} style={{ fontSize: '2rem', fontWeight: 'bold', color: 'white', textDecoration: 'none' }} onClick={() => setMobileMenuOpen(false)}>{link.name}</motion.a>
+            ))}
+            <motion.button initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="nav-btn" style={{ marginTop: '2rem', fontSize: '1.2rem', padding: '1rem 3rem' }}>تواصل معنا</motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+};
+
+const CustomCursor = () => {
+  const mouseX = useMotionValue(-100); const mouseY = useMotionValue(-100);
+  const spring = { damping: 25, stiffness: 100, mass: 0.8 };
+  const x = useSpring(mouseX, spring); const y = useSpring(mouseY, spring);
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia("(pointer: coarse)").matches) return;
+    const move = (e: MouseEvent) => { mouseX.set(e.clientX); mouseY.set(e.clientY); };
+    window.addEventListener('mousemove', move);
+    return () => window.removeEventListener('mousemove', move);
+  }, [mouseX, mouseY]);
+  return <motion.div className="custom-cursor" style={{ x, y }} />;
+};
+
+const MagneticButton = ({ children, className="", style={}, onClick }: any) => {
+    return (
+        <button className={`magnetic-btn ${className}`} style={style} onClick={onClick}>
+            {children}
+        </button>
+    );
+};
+
+const Preloader = ({ onComplete }: any) => {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let current = 0;
+    const interval = setInterval(() => {
+      current += Math.random() * 5;
+      if (current >= 100) {
+        setCount(100); clearInterval(interval); setTimeout(onComplete, 800);
+      } else { setCount(Math.floor(current)); }
+    }, 50);
+    return () => clearInterval(interval);
+  }, [onComplete]);
+  return (
+    <motion.div className="preloader" exit={{ y: "-100%", transition: { duration: 1.2, ease: [0.83, 0, 0.17, 1] } }}>
+        <div className="preloader-text">{count}%</div>
+        <div style={{ position: 'absolute', bottom: '2.5rem', left: '2.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{ width: '0.5rem', height: '0.5rem', background: '#4390b3', borderRadius: '50%' }}></div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', fontFamily: 'monospace' }}>INITIALIZING...</div>
+        </div>
+    </motion.div>
+  );
+};
+
+const ClientsMarquee = () => {
+    const logos = ["أرامكو", "وتد", "أساس", "نيوم", "مسك", "وزارة الثقافة", "الهيئة الملكية", "البحر الأحمر"];
+    return (
+        <div className="marquee-section">
+            <div style={{display:'flex'}}>
+                <motion.div className="marquee-content" animate={{ x: "100%" }} initial={{ x: 0 }} transition={{ repeat: Infinity, ease: "linear", duration: 40 }} style={{ direction: 'ltr' }}>
+                    {[...logos, ...logos, ...logos].map((client, i) => <div key={i} className="marquee-item">{client}</div>)}
+                </motion.div>
+            </div>
+        </div>
+    );
+};
+
+const ProcessSection = () => {
+    const containerRef = useRef(null); const lineRef = useRef(null);
+    const [activeIndex, setActiveIndex] = useState(-1);
+    const steps = [
+        { title: "الاكتشاف", desc: "فهم عميق للعلامة.", icon: Search },
+        { title: "التخطيط", desc: "خارطة طريق دقيقة.", icon: Crosshair },
+        { title: "التصميم", desc: "تجربة بصرية آسرة.", icon: Palette },
+        { title: "الإطلاق", desc: "تقديمك للعالم.", icon: Rocket }
+    ];
+    useLayoutEffect(() => {
+        if(!containerRef.current) return;
+        const ctx = gsap.context(() => {
+            gsap.fromTo(lineRef.current, { strokeDasharray: 1000, strokeDashoffset: 1000 }, {
+                strokeDashoffset: 0, ease: "none",
+                scrollTrigger: { trigger: containerRef.current, start: "top center", end: "bottom center", scrub: 0.5, onUpdate: (self) => setActiveIndex(Math.floor(self.progress * (steps.length + 0.5))) }
+            });
+        }, containerRef);
+        return () => ctx.revert();
+    }, []);
+    return (
+        <div ref={containerRef} className="process-section">
+            <div className="container">
+                <h2 style={{ textAlign:'center', marginBottom: '4rem' }}>رحلة الإبداع</h2>
+                <d

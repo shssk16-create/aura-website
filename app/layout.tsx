@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import './globals.css'; // <--- هذا هو السطر المفقود والمسؤول عن تشغيل تايلوند
 
 export const metadata: Metadata = {
   title: 'AURA | هالتك الفارقة',
@@ -12,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body style={{ margin: 0, padding: 0, backgroundColor: '#050607' }}>
+      <body>
         {children}
       </body>
     </html>
