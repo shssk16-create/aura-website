@@ -418,4 +418,110 @@ const Footer = () => {
                     </h2>
                     <button className="px-12 py-6 rounded-full bg-white text-black text-xl font-bold hover:scale-105 transition-transform shadow-[0_0_40px_rgba(255,255,255,0.3)]">
                         احجز استشارتك الآن
-  
+                    </button>
+                </motion.div>
+
+                {/* Links */}
+                <div className="grid md:grid-cols-4 gap-12 text-slate-400">
+                    <div className="md:col-span-2">
+                        <Link href="/" className="flex items-center gap-2 mb-6 text-white">
+                            <Sparkles className="text-cyan-400" />
+                            <span className="text-2xl font-black">AURA.</span>
+                        </Link>
+                        <p className="max-w-sm mb-8">نحن لا نتبع الصيحات، نحن نصنعها. وكالة إبداعية متخصصة في خلق تجارب رقمية ذات أثر خالد.</p>
+                        <div className="flex gap-4">
+                            {[Instagram, Twitter, Linkedin].map((Icon, i) => (
+                                <a key={i} href="#" className="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white hover:text-black transition-all">
+                                    <Icon size={20} />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h4 className="text-white font-bold text-lg mb-6">روابط</h4>
+                        <ul className="space-y-4">
+                            {['الرئيسية', 'خدماتنا', 'عن الوكالة', 'اتصل بنا'].map(item => (
+                                <li key={item}><a href="#" className="hover:text-cyan-400 transition-colors">{item}</a></li>
+                            ))}
+                        </ul>
+                    </div>
+
+                    <div>
+                         <h4 className="text-white font-bold text-lg mb-6">تواصل</h4>
+                         <ul className="space-y-4">
+                            <li className="flex items-center gap-3"><MapPin size={18} className="text-violet-500"/> الرياض، المملكة العربية السعودية</li>
+                            <li className="flex items-center gap-3"><Mail size={18} className="text-violet-500"/> hello@aura.sa</li>
+                            <li className="flex items-center gap-3"><Phone size={18} className="text-violet-500"/> +966 50 000 0000</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div className="mt-16 pt-8 border-t border-white/5 text-center text-sm flex flex-col md:flex-row justify-between items-center">
+                    <p>© 2026 وكالة أورا (Aura Agency). جميع الحقوق محفوظة.</p>
+                    <div className="flex gap-6 mt-4 md:mt-0">
+                        <a href="#" className="hover:text-white">الخصوصية</a>
+                        <a href="#" className="hover:text-white">الشروط</a>
+                    </div>
+                </div>
+             </div>
+        </footer>
+    )
+}
+
+/* -------------------------------------------------------------------------- */
+/* MAIN PAGE LOGIC                              */
+/* -------------------------------------------------------------------------- */
+
+export default function Home() {
+  // Smooth Scroll Initialization
+  useEffect(() => {
+    const lenis = new Lenis({
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        direction: 'vertical',
+        smooth: true,
+    });
+
+    function raf(time: number) {
+        lenis.raf(time);
+        requestAnimationFrame(raf);
+    }
+    requestAnimationFrame(raf);
+  }, []);
+
+  return (
+    <main className="min-h-screen bg-[#02040a] text-slate-200 selection:bg-violet-500/30 selection:text-white overflow-hidden">
+        
+        {/* Global Animated Background Blobs */}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+            <motion.div 
+                animate={{ 
+                    scale: [1, 1.2, 1],
+                    rotate: [0, 90, 0],
+                    x: [0, 100, 0]
+                }}
+                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                className="absolute top-[-20%] left-[-10%] w-[800px] h-[800px] bg-violet-800/20 rounded-full blur-[120px] opacity-40 mix-blend-screen" 
+            />
+            <motion.div 
+                animate={{ 
+                    scale: [1, 1.3, 1],
+                    rotate: [0, -60, 0],
+                    x: [0, -100, 0]
+                }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-blue-800/20 rounded-full blur-[120px] opacity-30 mix-blend-screen" 
+            />
+        </div>
+
+        {/* Page Content */}
+        <Navbar />
+        <HeroSection />
+        <ConceptSection />
+        <ServicesBento />
+        <Footer />
+        
+    </main>
+  );
+}
