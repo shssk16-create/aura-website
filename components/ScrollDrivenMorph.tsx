@@ -8,25 +8,17 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger);
 
-/* -------------------------------------------------------------------------- */
-/* 1. SHADERS (سحر الـ GPU)                                                   */
-/* -------------------------------------------------------------------------- */
-
 const vertexShader = `
-  uniform float uProgress1; // 0.0 to 1.0 (Random -> AURA)
-  uniform float uProgress2; // 0.0 to 1.0 (AURA -> ?)
+  uniform float uProgress1; 
+  uniform float uProgress2; 
   
-  attribute vec3 aTarget1; // مواقع تشكيل كلمة AURA
-  attribute vec3 aTarget2; // مواقع تشكيل علامة الاستفهام ?
+  attribute vec3 aTarget1; 
+  attribute vec3 aTarget2; 
   attribute float aRandomness;
   
   void main() {
-    // 1. التجميع: من العشوائية إلى AURA
     vec3 pos1 = mix(position, aTarget1, uProgress1);
-    
-    // 2. التحول (Morphing): من AURA إلى علامة الاستفهام
-    // إضافة تأثير "تناثر سحري" في منتصف التحول فقط لتبدو الحركة عضوية
-    float arc = sin(uProgress2 * 3.14159); // يبدأ 0، يصل 1 في المنتصف، يعود 0
+    float arc = sin(uProgress2 * 3.14159); 
     vec3 pos2 = mix(pos1, aTarget2, uProgress2);
     
     pos2.x += cos(aRandomness * 20.0) * arc * 4.0;
@@ -35,8 +27,6 @@ const vertexShader = `
 
     vec4 mvPosition = modelViewMatrix * vec4(pos2, 1.0);
     gl_Position = projectionMatrix * mvPosition;
-    
-    // حجم الجزيئات يتأثر بالعمق
     gl_PointSize = (20.0 + aRandomness * 20.0) * (1.0 / -mvPosition.z);
   }
 `;
@@ -47,21 +37,13 @@ const fragmentShader = `
   uniform float uProgress2;
 
   void main() {
-    // رسم دائرة ناعمة بدلاً من مربع
     float dist = distance(gl_PointCoord, vec2(0.5));
     if (dist > 0.5) discard;
     float alpha = smoothstep(0.5, 0.1, dist);
-    
-    // تدرج اللون أثناء التحول من AURA إلى ?
     vec3 finalColor = mix(uColor1, uColor2, uProgress2);
-    
     gl_FragColor = vec4(finalColor, alpha * 0.9);
   }
 `;
-
-/* -------------------------------------------------------------------------- */
-/* 2. DATA GENERATION (استخراج الإحداثيات من النصوص)                         */
-/* -------------------------------------------------------------------------- */
 
 const MAX_PARTICLES = 4000;
 
@@ -78,7 +60,6 @@ const getPointsFromText = (text: string, fontSize: number, width: number, height
 
   const data = ctx.getImageData(0, 0, width, height).data;
   const points = [];
-  // فحص بكسلات الكانفاس بمسافات محددة لتحويلها إلى إحداثيات 3D
   for (let y = 0; y < height; y += 4) {
     for (let x = 0; x < width; x += 4) {
       if (data[(y * width + x) * 4 + 3] > 128) {
@@ -89,10 +70,6 @@ const getPointsFromText = (text: string, fontSize: number, width: number, height
   return points;
 };
 
-/* -------------------------------------------------------------------------- */
-/* 3. THE R3F PARTICLES COMPONENT                                             */
-/* -------------------------------------------------------------------------- */
-
 const MorphParticles = ({ uniformsRef }: { uniformsRef: any }) => {
   const [geometryData, setGeometryData] = useState<any>(null);
 
@@ -102,9 +79,7 @@ const MorphParticles = ({ uniformsRef }: { uniformsRef: any }) => {
     const canvasH = 500;
     const scale = isMobile ? 0.03 : 0.04;
 
-    // استخراج نقاط AURA
     const auraPts = getPointsFromText("AURA", isMobile ? 120 : 250, canvasW, canvasH, scale);
-    // استخراج نقاط علامة الاستفهام
     const questionPts = getPointsFromText("?", isMobile ? 250 : 400, canvasW, canvasH, scale);
 
     const positions = new Float32Array(MAX_PARTICLES * 3);
@@ -113,16 +88,13 @@ const MorphParticles = ({ uniformsRef }: { uniformsRef: any }) => {
     const randomness = new Float32Array(MAX_PARTICLES);
 
     for (let i = 0; i < MAX_PARTICLES; i++) {
-      // 1. مواقع عشوائية مبعثرة (البداية)
       positions[i * 3] = (Math.random() - 0.5) * 40;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 40;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 20;
 
-      // 2. مواقع AURA (نكرر النقاط إذا كانت أقل من الماكس)
       const p1 = auraPts[i % auraPts.length] || new THREE.Vector3();
       target1[i * 3] = p1.x; target1[i * 3 + 1] = p1.y; target1[i * 3 + 2] = p1.z;
 
-      // 3. مواقع علامة الاستفهام ?
       const p2 = questionPts[i % questionPts.length] || new THREE.Vector3();
       target2[i * 3] = p2.x; target2[i * 3 + 1] = p2.y; target2[i * 3 + 2] = p2.z;
 
@@ -134,13 +106,14 @@ const MorphParticles = ({ uniformsRef }: { uniformsRef: any }) => {
 
   if (!geometryData) return null;
 
+  // 🚀 الإصلاح الجذري هنا: استخدمنا مصفوفة args بدلاً من تمرير الخصائص بشكل منفصل
   return (
     <points>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" count={MAX_PARTICLES} array={geometryData.positions} itemSize={3} />
-        <bufferAttribute attach="attributes-aTarget1" count={MAX_PARTICLES} array={geometryData.target1} itemSize={3} />
-        <bufferAttribute attach="attributes-aTarget2" count={MAX_PARTICLES} array={geometryData.target2} itemSize={3} />
-        <bufferAttribute attach="attributes-aRandomness" count={MAX_PARTICLES} array={geometryData.randomness} itemSize={1} />
+        <bufferAttribute attach="attributes-position" args={[geometryData.positions, 3]} />
+        <bufferAttribute attach="attributes-aTarget1" args={[geometryData.target1, 3]} />
+        <bufferAttribute attach="attributes-aTarget2" args={[geometryData.target2, 3]} />
+        <bufferAttribute attach="attributes-aRandomness" args={[geometryData.randomness, 1]} />
       </bufferGeometry>
       <shaderMaterial
         transparent
@@ -154,16 +127,11 @@ const MorphParticles = ({ uniformsRef }: { uniformsRef: any }) => {
   );
 };
 
-/* -------------------------------------------------------------------------- */
-/* 4. MAIN SCROLL COMPONENT & CHOREOGRAPHY                                    */
-/* -------------------------------------------------------------------------- */
-
 export default function ScrollDrivenMorph() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
   const htmlRef = useRef<HTMLDivElement>(null);
 
-  // الكنز الحقيقي: نمرر هذا المرجع للـ Shader، ونجعل GSAP يغير قيمه المباشرة
   const shaderUniforms = useRef({
     uProgress1: { value: 0 },
     uProgress2: { value: 0 },
@@ -179,25 +147,16 @@ export default function ScrollDrivenMorph() {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=4000", // مسافة التمرير المطلوبة لإنهاء المشهد بالكامل
-          scrub: 1, // تأخير ناعم لتجربة فاخرة
+          end: "+=4000", 
+          scrub: 1, 
           pin: true,
           anticipatePin: 1
         }
       });
 
-      // إجمالي المدة 100 لتسهيل توزيع النسب المئوية
-
-      // Phase 1 (0% to 25%): التجميع إلى كلمة AURA
       tl.to(shaderUniforms.current.uProgress1, { value: 1, duration: 25, ease: "power2.inOut" });
-
-      // Phase 2 (25% to 55%): التحول من AURA إلى علامة استفهام (?)
       tl.to(shaderUniforms.current.uProgress2, { value: 1, duration: 30, ease: "power2.inOut" });
-
-      // Phase 3 (55% to 75%): تلاشي المشهد 3D مع ضبابية
       tl.to(canvasWrapperRef.current, { opacity: 0, filter: "blur(20px)", scale: 1.1, duration: 20, ease: "power1.inOut" });
-
-      // Phase 4 (75% to 100%): ظهور قسم "لماذا أورا؟" بصعود ناعم
       tl.fromTo(
         htmlRef.current,
         { opacity: 0, y: 80, filter: "blur(15px)" },
@@ -210,8 +169,6 @@ export default function ScrollDrivenMorph() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-full overflow-hidden bg-[#F8FAFC]">
-      
-      {/* Layer 1: 3D Canvas (الجسيمات) */}
       <div 
         ref={canvasWrapperRef} 
         className="absolute inset-0 z-10 mix-blend-multiply opacity-80"
@@ -222,7 +179,6 @@ export default function ScrollDrivenMorph() {
         </Canvas>
       </div>
 
-      {/* Layer 2: قسم الانتقال (لماذا أورا؟) */}
       <div 
         ref={htmlRef} 
         className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 pointer-events-none px-6"
@@ -235,7 +191,6 @@ export default function ScrollDrivenMorph() {
           لأننا لا نقدم تصاميم فقط، نحن نبني أنظمة رقمية تتنفس هوية علامتك التجارية، وتحول الزوار إلى عملاء ولاء بفضل التكنولوجيا المتقدمة.
         </p>
       </div>
-
     </div>
   );
 }
