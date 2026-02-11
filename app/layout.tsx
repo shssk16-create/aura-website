@@ -1,9 +1,9 @@
-import type { Metadata } from 'next';
-import './globals.css'; // <--- هذا هو السطر المفقود والمسؤول عن تشغيل تايلوند
+import "./globals.css";
+import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: 'AURA | هالتك الفارقة',
-  description: 'نحن نمزج الإبداع بالتكنولوجيا لنخلق تجارب رقمية لا تُنسى.',
+  title: "AURA | أورا",
+  description: "نصنع لك هالتك الفارقة",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body>
+      <body className="antialiased overflow-x-hidden bg-[#F8FAFC]">
         {children}
       </body>
     </html>
