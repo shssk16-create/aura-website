@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Lenis from "lenis";
 import { AnimatePresence } from "framer-motion";
 import LoadingScreen from "@/components/LoadingScreen";
-import ScrollDrivenHero from "@/components/ScrollDrivenHero";
+import ScrollDrivenMorph from "@/components/ScrollDrivenMorph"; // المكون الجديد
 import SelectedWork from "@/components/SelectedWork";
 import CustomCursor from "@/components/CustomCursor";
 
@@ -24,7 +24,7 @@ export default function Home() {
         {loading && <LoadingScreen onComplete={() => setLoading(false)} />}
       </AnimatePresence>
       
-      {/* البقع الضبابية الفاخرة */}
+      {/* البقع الضبابية الخلفية */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute top-[-10%] left-[-10%] w-[800px] h-[800px] bg-[#58A8B4]/15 rounded-full blur-[120px] mix-blend-multiply animate-pulse" />
         <div className="absolute bottom-[-10%] right-[-10%] w-[900px] h-[900px] bg-[#438FB3]/10 rounded-full blur-[120px] mix-blend-multiply" />
@@ -38,13 +38,16 @@ export default function Home() {
             <a href="#" className="hover:text-[#58A8B4] transition-colors">أعمالنا</a>
             <a href="#" className="hover:text-[#58A8B4] transition-colors">الخدمات</a>
           </div>
-          <button className="bg-gradient-to-r from-[#58A8B4] to-[#438FB3] text-white px-6 py-2 rounded-full text-xs hover:shadow-[0_0_20px_rgba(88,168,180,0.4)] hover:scale-105 transition-all cursor-auto">
+          <button className="bg-gradient-to-r from-[#58A8B4] to-[#438FB3] text-white px-6 py-2 rounded-full text-xs hover:shadow-lg hover:scale-105 transition-all cursor-auto">
             تواصل معنا
           </button>
         </div>
       </nav>
 
-      {!loading && <ScrollDrivenHero />}
+      {/* المكون السحري الجديد */}
+      {!loading && <ScrollDrivenMorph />}
+      
+      {/* قسم الأعمال */}
       {!loading && <SelectedWork />}
     </main>
   );
