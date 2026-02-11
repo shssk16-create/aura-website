@@ -8,6 +8,10 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 if (typeof window !== "undefined") gsap.registerPlugin(ScrollTrigger);
 
+/* -------------------------------------------------------------------------- */
+/* 1. SHADERS (GPU Magic)                                                     */
+/* -------------------------------------------------------------------------- */
+
 const vertexShader = `
   uniform float uProgress1; 
   uniform float uProgress2; 
@@ -17,7 +21,10 @@ const vertexShader = `
   attribute float aRandomness;
   
   void main() {
+    // التجميع إلى AURA
     vec3 pos1 = mix(position, aTarget1, uProgress1);
+    
+    // التحول إلى ? مع تأثير تناثر عضوي
     float arc = sin(uProgress2 * 3.14159); 
     vec3 pos2 = mix(pos1, aTarget2, uProgress2);
     
@@ -106,7 +113,6 @@ const MorphParticles = ({ uniformsRef }: { uniformsRef: any }) => {
 
   if (!geometryData) return null;
 
-  // 🚀 الإصلاح الجذري هنا: استخدمنا مصفوفة args بدلاً من تمرير الخصائص بشكل منفصل
   return (
     <points>
       <bufferGeometry>
@@ -127,10 +133,15 @@ const MorphParticles = ({ uniformsRef }: { uniformsRef: any }) => {
   );
 };
 
+/* -------------------------------------------------------------------------- */
+/* 4. MAIN SCROLL COMPONENT & CHOREOGRAPHY                                    */
+/* -------------------------------------------------------------------------- */
+
 export default function ScrollDrivenMorph() {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasWrapperRef = useRef<HTMLDivElement>(null);
-  const htmlRef = useRef<HTMLDivElement>(null);
+  const heroHtmlRef = useRef<HTMLDivElement>(null);
+  const whyAuraHtmlRef = useRef<HTMLDivElement>(null);
 
   const shaderUniforms = useRef({
     uProgress1: { value: 0 },
@@ -147,20 +158,32 @@ export default function ScrollDrivenMorph() {
         scrollTrigger: {
           trigger: containerRef.current,
           start: "top top",
-          end: "+=4000", 
-          scrub: 1, 
+          end: "+=4500", // إطالة مسافة التمرير للاستمتاع بالمشهد
+          scrub: 1,
           pin: true,
           anticipatePin: 1
         }
       });
 
-      tl.to(shaderUniforms.current.uProgress1, { value: 1, duration: 25, ease: "power2.inOut" });
-      tl.to(shaderUniforms.current.uProgress2, { value: 1, duration: 30, ease: "power2.inOut" });
-      tl.to(canvasWrapperRef.current, { opacity: 0, filter: "blur(20px)", scale: 1.1, duration: 20, ease: "power1.inOut" });
+      // استخدام مواقع ثابتة (Absolute Timing) في الـ Timeline للتزامن المثالي
+      // الإجمالي 100 وحدة زمنية (0 إلى 100)
+
+      // المرحلة 1 (0 إلى 30): تجميع الجزيئات لتشكيل AURA خلف النص الافتتاحي
+      tl.to(shaderUniforms.current.uProgress1, { value: 1, duration: 30, ease: "power2.inOut" }, 0);
+
+      // المرحلة 2 (30 إلى 45): النص الافتتاحي يتلاشى ويصعد للأعلى
+      tl.to(heroHtmlRef.current, { opacity: 0, y: -50, filter: "blur(15px)", duration: 15, ease: "power1.inOut" }, 30);
+
+      // المرحلة 3 (45 إلى 75): الذرات تتحول إلى (؟) + الشفافية تقل لتصبح علامة مائية
+      tl.to(shaderUniforms.current.uProgress2, { value: 1, duration: 30, ease: "power2.inOut" }, 45);
+      tl.to(canvasWrapperRef.current, { opacity: 0.15, scale: 1.15, duration: 30, ease: "power2.inOut" }, 45);
+
+      // المرحلة 4 (75 إلى 100): ظهور قسم "لماذا أورا" والنص يصعد من الأسفل بوضوح
       tl.fromTo(
-        htmlRef.current,
+        whyAuraHtmlRef.current,
         { opacity: 0, y: 80, filter: "blur(15px)" },
-        { opacity: 1, y: 0, filter: "blur(0px)", duration: 25, ease: "power3.out" }
+        { opacity: 1, y: 0, filter: "blur(0px)", duration: 25, ease: "power3.out" },
+        75
       );
     }, containerRef);
 
@@ -169,6 +192,23 @@ export default function ScrollDrivenMorph() {
 
   return (
     <div ref={containerRef} className="relative h-screen w-full overflow-hidden bg-[#F8FAFC]">
+      
+      {/* Layer 1: النص الافتتاحي (الهيرو) */}
+      <div 
+        ref={heroHtmlRef} 
+        className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 pointer-events-none"
+        style={{ willChange: "transform, opacity, filter", transform: "translateZ(0)" }}
+      >
+        <h1 className="text-6xl md:text-8xl font-black text-[#0F172A] drop-shadow-sm text-center leading-tight">
+          نصنع لك <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#58A8B4] to-[#438FB3]">هالتك الفارقة</span>
+        </h1>
+        <p className="mt-6 text-xl md:text-2xl text-[#0F172A]/70 font-medium text-center max-w-2xl">
+          تسويق يعتمد على البيانات، بروح إبداعية لا تُنسى.
+        </p>
+      </div>
+
+      {/* Layer 2: العالم ثلاثي الأبعاد (الذرات) */}
       <div 
         ref={canvasWrapperRef} 
         className="absolute inset-0 z-10 mix-blend-multiply opacity-80"
@@ -179,18 +219,20 @@ export default function ScrollDrivenMorph() {
         </Canvas>
       </div>
 
+      {/* Layer 3: نص قسم "لماذا أورا؟" */}
       <div 
-        ref={htmlRef} 
-        className="absolute inset-0 z-20 flex flex-col items-center justify-center opacity-0 pointer-events-none px-6"
+        ref={whyAuraHtmlRef} 
+        className="absolute inset-0 z-30 flex flex-col items-center justify-center opacity-0 pointer-events-none px-6"
         style={{ willChange: "transform, opacity, filter", transform: "translateZ(0)" }}
       >
         <h2 className="text-5xl md:text-8xl font-black text-[#0F172A] mb-6 drop-shadow-sm text-center leading-tight">
           لماذا <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#58A8B4] to-[#438FB3]">أورا؟</span>
         </h2>
-        <p className="text-xl md:text-3xl text-[#0F172A]/70 max-w-4xl text-center leading-relaxed font-medium">
+        <p className="text-xl md:text-3xl text-[#0F172A]/80 max-w-4xl text-center leading-relaxed font-semibold">
           لأننا لا نقدم تصاميم فقط، نحن نبني أنظمة رقمية تتنفس هوية علامتك التجارية، وتحول الزوار إلى عملاء ولاء بفضل التكنولوجيا المتقدمة.
         </p>
       </div>
+
     </div>
   );
 }
