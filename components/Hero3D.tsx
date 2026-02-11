@@ -24,10 +24,15 @@ function Particles({ count = 2000 }) {
 
   useFrame(() => {
     if (!mesh.current) return;
+    
+    // إصلاح الخطأ: نحفظ الميش في متغير ثابت قبل الدخول في اللوب
+    const currentMesh = mesh.current;
+
     particles.forEach((particle, i) => {
       let { t, factor, speed, x, y, z } = particle;
       t = particle.t += speed / 2;
       const s = Math.cos(t);
+      
       dummy.position.set(
         x + Math.cos(t / 10) * factor + (Math.sin(t * 1) * factor) / 10,
         y + Math.sin(t / 10) * factor + (Math.cos(t * 2) * factor) / 10,
@@ -36,9 +41,11 @@ function Particles({ count = 2000 }) {
       dummy.rotation.set(s * 5, s * 5, s * 5);
       dummy.scale.set(s, s, s);
       dummy.updateMatrix();
-      mesh.current.setMatrixAt(i, dummy.matrix);
+      
+      // نستخدم المتغير الثابت هنا
+      currentMesh.setMatrixAt(i, dummy.matrix);
     });
-    mesh.current.instanceMatrix.needsUpdate = true;
+    currentMesh.instanceMatrix.needsUpdate = true;
   });
 
   return (
