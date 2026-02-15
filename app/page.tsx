@@ -1,203 +1,190 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import Head from "next/head";
+import React, { useRef, useEffect, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { ArrowLeft, Search, Zap, BarChart3, PenTool, Layout } from "lucide-react";
-
-import LoadingScreen from "@/components/LoadingScreen";
-import AuraBackground from "@/components/AuraShader";
+import { ArrowLeft, Play, Sparkles } from "lucide-react";
+import FluidBackground from "@/components/FluidBackground";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-export default function Home() {
-  const [isLoading, setIsLoading] = useState(true);
-  const container = useRef(null);
-  const halaRef = useRef(null); // مرجع لشخصية هالة
+export default function AuraHome() {
+  const container = useRef<HTMLDivElement>(null);
+  const halaRef = useRef<HTMLDivElement>(null);
+  const cursorRef = useRef<HTMLDivElement>(null);
+  
+  // حالة هالة (Idle, Greeting, Active)
+  const [halaState, setHalaState] = useState("greeting");
 
+  // 1. مؤشر الماوس المخصص (The Aura Cursor)
   useGSAP(() => {
-    if (isLoading) return;
+    const moveCursor = (e: MouseEvent) => {
+      gsap.to(cursorRef.current, {
+        x: e.clientX,
+        y: e.clientY,
+        duration: 0.5,
+        ease: "power2.out",
+      });
+    };
+    window.addEventListener("mousemove", moveCursor);
+    return () => window.removeEventListener("mousemove", moveCursor);
+  }, []);
 
-    // 1. Hero Animation: Kinetic Typography
-    gsap.from(".hero-text-char", {
+  // 2. أنميشن السكرول والسرد
+  useGSAP(() => {
+    // دخول الهيرو
+    gsap.from(".hero-char", {
       y: 100,
       opacity: 0,
       stagger: 0.05,
-      duration: 1,
+      duration: 1.2,
       ease: "power4.out",
-      scrollTrigger: { trigger: ".hero-section" }
     });
 
-    // 2. Hala Follows Mouse (Agentic UX)
-    const moveHala = (e: MouseEvent) => {
-      const x = (e.clientX / window.innerWidth - 0.5) * 50;
-      const y = (e.clientY / window.innerHeight - 0.5) * 50;
-      gsap.to(halaRef.current, { x: x, y: y, duration: 1, ease: "power2.out" });
-    };
-    window.addEventListener("mousemove", moveHala);
-
-    // 3. Stats Scroll Animation
-    gsap.from(".stat-card", {
-      y: 100,
-      opacity: 0,
-      stagger: 0.2,
+    // تحرك هالة مع السكرول
+    gsap.to(halaRef.current, {
+      y: 200, // تتحرك للأسفل ببطء
+      scale: 0.8,
       scrollTrigger: {
-        trigger: ".stats-section",
-        start: "top 80%",
-        end: "bottom 20%",
-        scrub: 1
-      }
+        trigger: ".hero-section",
+        start: "top top",
+        end: "bottom top",
+        scrub: 1,
+      },
     });
 
-    return () => window.removeEventListener("mousemove", moveHala);
-  }, [isLoading]);
+    // ظهور بطاقات الخدمات (Bento Grid)
+    gsap.from(".bento-item", {
+      y: 50,
+      opacity: 0,
+      stagger: 0.1,
+      duration: 0.8,
+      scrollTrigger: {
+        trigger: ".services-section",
+        start: "top 70%",
+      },
+    });
+  }, { scope: container });
 
   return (
-    <main ref={container} className="min-h-screen relative" dir="rtl">
-      <Head>
-        <title>أورا | هالتك الفارقة في عالم التسويق</title>
-        <meta name="description" content="وكالة تسويق رقمي سعودية رائدة برؤية 2030" />
-      </Head>
+    <main ref={container} className="relative min-h-screen selection:bg-aura-teal selection:text-white" dir="rtl">
+      
+      {/* الخلفية الحية */}
+      <div className="living-bg" />
+      <FluidBackground /> {/* الـ Shader الثلاثي الأبعاد */}
 
-      {/* 0. المؤثرات الخلفية */}
-      <div className="bg-noise" />
-      <AuraBackground />
+      {/* مؤشر الماوس (الهالة) */}
+      <div 
+        ref={cursorRef} 
+        className="fixed top-0 left-0 w-8 h-8 rounded-full border border-aura-teal bg-aura-blue/20 blur-sm pointer-events-none z-[9999] -translate-x-1/2 -translate-y-1/2 mix-blend-screen"
+      />
 
-      {/* شاشة التحميل */}
-      {isLoading && <LoadingScreen onComplete={() => setIsLoading(false)} />}
+      {/* Navigation */}
+      <nav className="fixed top-0 w-full z-50 p-6 flex justify-between items-center backdrop-blur-sm bg-white/5 border-b border-white/10">
+        <h1 className="text-3xl font-black tracking-tighter text-aura-dark">AURA</h1>
+        <button className="px-6 py-2 rounded-full border border-aura-silver text-aura-dark font-bold hover:bg-aura-teal hover:text-white hover:border-transparent transition-all">
+          ابدأ المشروع
+        </button>
+      </nav>
 
-      {!isLoading && (
-        <>
-          {/* Header */}
-          <header className="fixed top-0 w-full z-40 p-6 flex justify-between items-center mix-blend-difference text-white">
-            <h1 className="text-3xl font-black tracking-tighter">AURA</h1>
-            <nav className="hidden md:flex gap-8 text-sm font-bold">
-              <a href="#services" className="hover:text-[#58A8B4] transition-colors">خدماتنا</a>
-              <a href="#about" className="hover:text-[#58A8B4] transition-colors">عن أورا</a>
-              <a href="#contact" className="hover:text-[#58A8B4] transition-colors">تواصل معنا</a>
-            </nav>
-          </header>
+      {/* --- SECTION 1: HERO --- */}
+      <section className="hero-section h-screen flex flex-col items-center justify-center relative overflow-hidden px-4">
+        
+        {/* هالة (المساعد الرقمي) */}
+        <div ref={halaRef} className="absolute right-[5%] md:right-[15%] top-[20%] w-[300px] md:w-[500px] h-[500px] z-0 pointer-events-none">
+          {/* هنا نضع فيديو هالة أو صورتها بتأثير 2.5D */}
+          {/* تمثيل تجريدي حالياً */}
+          <div className="w-full h-full bg-gradient-to-tr from-aura-blue to-aura-teal rounded-full blur-[100px] opacity-60 animate-pulse" />
+          <img 
+            src="/api/placeholder/400/600" // استبدلها بصورة هالة المفرغة
+            alt="Hala Agent"
+            className="relative z-10 w-full h-full object-contain drop-shadow-[0_0_30px_rgba(88,168,180,0.5)]"
+          />
+        </div>
 
-          {/* 1. Hero Section: المستقبل يرحب بك */}
-          <section className="hero-section h-screen flex flex-col items-center justify-center relative z-10 px-4">
-            {/* هالة: الوكيل الرقمي */}
-            <div ref={halaRef} className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] opacity-60 blur-3xl rounded-full bg-gradient-to-r from-[#58A8B4] to-[#438FB3] -z-10 animate-pulse" />
+        <div className="relative z-10 text-center md:text-right md:w-full md:pr-[10%] max-w-7xl">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/30 border border-aura-silver/50 backdrop-blur-md mb-6">
+            <span className="w-2 h-2 rounded-full bg-aura-teal animate-ping" />
+            <span className="text-sm font-bold text-aura-dark">مستقبل التسويق الحي</span>
+          </div>
+
+          <h1 className="text-6xl md:text-9xl font-black text-aura-dark leading-[0.9] tracking-tighter mb-8">
+            <div className="overflow-hidden"><span className="hero-char inline-block">هالتك</span></div>
+            <div className="overflow-hidden">
+              <span className="hero-char inline-block kinetic-text drop-shadow-lg">الفارقة</span>
+            </div>
+            <div className="overflow-hidden"><span className="hero-char inline-block text-4xl md:text-7xl opacity-80">في عالم التسويق</span></div>
+          </h1>
+
+          <p className="text-lg md:text-2xl text-slate-600 max-w-xl md:ml-auto leading-relaxed mb-10">
+            أهلاً بك في بيئة أورا. أنا <span className="text-aura-blue font-bold">هالة</span>، وكيلك الرقمي لقيادة علامتك التجارية نحو المستقبل عبر تجارب بصرية حية.
+          </p>
+
+          <div className="flex gap-4 justify-center md:justify-start">
+            <button className="group relative px-8 py-4 bg-aura-dark text-white rounded-full overflow-hidden shadow-xl hover:shadow-aura-blue/40 transition-shadow">
+              <span className="relative z-10 flex items-center gap-2 font-bold">
+                تحدث مع هالة <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+              </span>
+              <div className="absolute inset-0 bg-aura-gradient transform scale-x-0 group-hover:scale-x-100 transition-transform origin-right duration-500" />
+            </button>
             
-            <div className="text-center">
-              <h2 className="text-xl md:text-2xl font-medium text-[#1F2937] mb-4">أهلاً بك في المستقبل</h2>
-              <h1 className="text-6xl md:text-8xl font-black text-[#1F2937] leading-tight mb-6 overflow-hidden">
-                <span className="inline-block hero-text-char">هالتك</span>{" "}
-                <span className="inline-block hero-text-char text-transparent bg-clip-text bg-gradient-to-r from-[#438FB3] to-[#58A8B4]">الفارقة</span>
-                <br />
-                <span className="inline-block hero-text-char">في عالم التسويق</span>
-              </h1>
-              <p className="max-w-2xl mx-auto text-lg text-gray-700 mb-10">
-                في "أورا"، نحن لا نقدم خدمات تسويقية فحسب؛ نحن نصنع "هالة" من الإبداع تحيط بعلامتك التجارية لتجعلها الرقم الصعب في السوق السعودي.
-              </p>
-              <button className="group relative px-8 py-4 bg-[#1F2937] text-white rounded-full overflow-hidden shadow-lg hover:shadow-[#58A8B4]/50 transition-all duration-300">
-                <span className="relative z-10 flex items-center gap-2 font-bold">
-                  ابدأ رحلتك مع هالة <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-                </span>
-                <div className="absolute inset-0 bg-[#438FB3] transform scale-x-0 group-hover:scale-x-100 transition-transform origin-right duration-500" />
-              </button>
-            </div>
-          </section>
+            <button className="w-14 h-14 rounded-full flex items-center justify-center border border-aura-silver hover:border-aura-teal hover:bg-aura-teal/10 transition-colors">
+              <Play className="w-5 h-5 text-aura-dark ml-1" />
+            </button>
+          </div>
+        </div>
+      </section>
 
-          {/* 2. Services: Bento Grid اللمسية */}
-          <section id="services" className="py-20 px-6 relative z-10">
-            <div className="max-w-7xl mx-auto">
-              <h3 className="text-4xl font-bold mb-12 text-[#1F2937]">خدماتنا: حلول مخصصة لقلب المملكة</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Service 1 */}
-                <div className="liquid-glass p-8 rounded-3xl md:col-span-2 hover:scale-[1.02] transition-transform duration-500 group cursor-none">
-                  <div className="flex justify-between items-start mb-8">
-                    <Search className="w-10 h-10 text-[#438FB3]" />
-                    <span className="text-xs font-bold border border-[#1F2937] px-3 py-1 rounded-full">SEO 2.0</span>
-                  </div>
-                  <h4 className="text-2xl font-bold mb-4 group-hover:text-[#438FB3] transition-colors">تحسين محركات البحث (SEO)</h4>
-                  <p className="text-gray-700">نركز على "سيو النية" واستهداف الكلمات المفتاحية ذات القوة الشرائية العالية في الرياض وجدة، لضمان تصدرك النتائج العضوية.</p>
-                </div>
+      {/* --- SECTION 2: SERVICES (Tactile Bento Grid) --- */}
+      <section className="services-section py-24 px-6 relative z-10">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-4xl font-black mb-16 flex items-center gap-4">
+            <Sparkles className="text-aura-teal" />
+            خدمات تتنفس إبداعاً
+          </h2>
 
-                {/* Service 2 */}
-                <div className="liquid-glass p-8 rounded-3xl hover:scale-[1.02] transition-transform duration-500 group">
-                  <Layout className="w-10 h-10 text-[#58A8B4] mb-8" />
-                  <h4 className="text-2xl font-bold mb-4">إدارة التواصل</h4>
-                  <p className="text-gray-700">صناعة محتوى "فيروسي" يحترم القيم المحلية ويتحدث بلسان الجمهور السعودي.</p>
-                </div>
-
-                 {/* Service 3 */}
-                 <div className="liquid-glass p-8 rounded-3xl hover:scale-[1.02] transition-transform duration-500 group">
-                  <PenTool className="w-10 h-10 text-[#58A8B4] mb-8" />
-                  <h4 className="text-2xl font-bold mb-4">الهوية البصرية</h4>
-                  <p className="text-gray-700">تصاميم تدمج الأصالة مع الطابع المستقبلي لـ "هالتك".</p>
-                </div>
-
-                {/* Service 4 */}
-                <div className="liquid-glass p-8 rounded-3xl md:col-span-2 hover:scale-[1.02] transition-transform duration-500 group">
-                  <BarChart3 className="w-10 h-10 text-[#438FB3] mb-8" />
-                  <h4 className="text-2xl font-bold mb-4">إدارة الحملات (PPC)</h4>
-                  <p className="text-gray-700">استراتيجيات مبنية على البيانات لتحقيق أعلى عائد على الاستثمار (ROI) بأقل تكلفة.</p>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+            {/* بطاقة كبيرة */}
+            <div className="bento-item liquid-glass md:col-span-2 rounded-[2rem] p-10 flex flex-col justify-between group cursor-pointer">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-aura-blue to-aura-teal flex items-center justify-center text-white shadow-lg mb-4 group-hover:scale-110 transition-transform">
+                <span className="text-2xl font-bold">AI</span>
+              </div>
+              <div>
+                <h3 className="text-3xl font-bold mb-2">التسويق بالذكاء الاصطناعي</h3>
+                <p className="text-slate-600">تحليلات دقيقة، استهداف ذكي، ومحتوى يتكيف مع الجمهور لحظياً.</p>
+              </div>
+              <div className="absolute right-4 top-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                <ArrowLeft className="text-aura-teal w-8 h-8" />
               </div>
             </div>
-          </section>
 
-          {/* 3. Stats: النمو المرئي */}
-          <section className="stats-section py-32 relative z-10 overflow-hidden">
-            <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
-              <div className="stat-card">
-                <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-[#1F2937] to-transparent">
-                  +250%
-                </div>
-                <p className="text-xl font-bold text-[#438FB3] mt-4">نمو في المبيعات</p>
-              </div>
-              <div className="stat-card">
-                <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-[#1F2937] to-transparent">
-                  +1.5M
-                </div>
-                <p className="text-xl font-bold text-[#58A8B4] mt-4">وصول مستهدف</p>
-              </div>
-              <div className="stat-card">
-                <div className="text-6xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-b from-[#1F2937] to-transparent">
-                  2030
-                </div>
-                <p className="text-xl font-bold text-[#438FB3] mt-4">متوافقون مع الرؤية</p>
+            {/* بطاقة عمودية */}
+            <div className="bento-item liquid-glass md:row-span-2 rounded-[2rem] p-10 group relative overflow-hidden">
+              <div className="absolute inset-0 bg-aura-gradient opacity-0 group-hover:opacity-10 transition-opacity duration-500" />
+              <div className="relative z-10 h-full flex flex-col justify-between">
+                 <h3 className="text-3xl font-bold group-hover:text-white transition-colors">الهوية البصرية</h3>
+                 <div className="w-full h-40 bg-white/20 backdrop-blur-md rounded-xl border border-white/30" />
               </div>
             </div>
-          </section>
 
-          {/* 4. Contact: المساعد الشخصي الاستباقي */}
-          <section id="contact" className="py-20 px-6 relative z-10 mb-20">
-            <div className="max-w-4xl mx-auto liquid-glass p-10 md:p-16 rounded-[3rem] text-center relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-[#438FB3] to-[#58A8B4]" />
-              
-              <h3 className="text-4xl font-bold mb-6">هل أنت مستعد لتكون هالتك هي الفارقة؟</h3>
-              <p className="mb-10 text-lg text-gray-600">
-                تواصل معنا اليوم في "أورا للتسويق" لنرسم معاً ملامح مستقبلك الرقمي انطلاقاً من أطهر البقاع.
-              </p>
-              
-              <form className="space-y-6 text-right max-w-lg mx-auto">
-                <div className="relative group">
-                    <input type="text" placeholder="اسمك الكريم" className="w-full bg-white/50 border-b-2 border-gray-300 focus:border-[#438FB3] outline-none py-3 px-4 transition-all" />
-                    <Zap className="absolute left-4 top-3 text-[#58A8B4] opacity-0 group-focus-within:opacity-100 transition-opacity" />
-                </div>
-                <div className="relative group">
-                    <input type="email" placeholder="بريدك الإلكتروني" className="w-full bg-white/50 border-b-2 border-gray-300 focus:border-[#438FB3] outline-none py-3 px-4 transition-all" />
-                </div>
-                <button type="submit" className="w-full bg-[#1F2937] text-white py-4 rounded-full font-bold hover:bg-[#438FB3] transition-colors shadow-xl">
-                  إرسال الطلب لـ هالة
-                </button>
-              </form>
+            {/* بطاقات صغيرة */}
+            <div className="bento-item liquid-glass rounded-[2rem] p-8 flex flex-col justify-center items-center text-center group">
+               <h3 className="text-xl font-bold mb-2">SEO 2.0</h3>
+               <p className="text-sm text-slate-500">تصدر النتائج بذكاء.</p>
             </div>
-          </section>
-          
-          <footer className="text-center pb-8 text-gray-500 text-sm">
-            © 2026 Aura Marketing. Made with Fluid Luminosity.
-          </footer>
-        </>
-      )}
+
+            <div className="bento-item liquid-glass rounded-[2rem] p-8 flex flex-col justify-center items-center text-center group">
+               <h3 className="text-xl font-bold mb-2">Social Media</h3>
+               <p className="text-sm text-slate-500">محتوى فيروسي.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-10 text-center text-aura-silver font-bold relative z-10">
+        © 2026 AURA Agency. Powered by Fluid Intelligence.
+      </footer>
     </main>
   );
 }
