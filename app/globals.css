@@ -2,50 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  background-color: #F8FAFC;
-}
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
-  --aura-silver: #B3B7C1;
-  --aura-blue: #438FB3;
-  --aura-teal: #58A8B4;
-  --aura-text: #1F2937;
+  --cursor-size: 20px;
 }
 
 body {
-  background-color: var(--aura-silver);
-  color: var(--aura-text);
-  overflow-x: hidden;
-  font-family: 'DIN Next LT Arabic', system-ui, sans-serif; /* تأكد من توفر الخط أو بديل */
+  @apply bg-slate-50 text-aura-dark font-din overflow-x-hidden;
+  cursor: none; /* سنصنع مؤشر ماوس خاص */
 }
 
-/* ملمس الألمنيوم (Noise Texture) */
-.bg-noise {
+/* الخلفية الحية (Gradient Mesh Animation) */
+.living-bg {
   position: fixed;
   top: 0;
   left: 0;
   width: 100vw;
   height: 100vh;
-  opacity: 0.05;
-  z-index: 0;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, rgba(88, 168, 180, 0.15), rgba(67, 143, 179, 0.05));
+  filter: blur(80px);
 }
 
-/* تأثير الزجاج السائل */
+/* الزجاج السائل (العنصر الأساسي في التصميم) */
 .liquid-glass {
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  @apply relative overflow-hidden;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(179, 183, 193, 0.4); /* الرمادي هنا كحدود فقط */
+  box-shadow: 
+    0 4px 30px rgba(67, 143, 179, 0.1),
+    inset 0 0 20px rgba(255, 255, 255, 0.2);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* إخفاء شريط التمرير للجمالية */
-::-webkit-scrollbar {
-  width: 0px;
+.liquid-glass:hover {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: #58A8B4;
+  box-shadow: 
+    0 20px 40px rgba(88, 168, 180, 0.2),
+    inset 0 0 20px rgba(255, 255, 255, 0.4);
+  transform: translateY(-5px) scale(1.01);
+}
+
+/* النص الكينيتيكي */
+.kinetic-text {
+  background: linear-gradient(to right, #438FB3, #58A8B4);
+  -webkit-background-clip: text;
+  color: transparent;
+  background-size: 200% auto;
+  animation: shine 4s linear infinite;
+}
+
+@keyframes shine {
+  to {
+    background-position: 200% center;
+  }
 }
