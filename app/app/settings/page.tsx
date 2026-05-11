@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { AGENTS, isAgentConnected } from "@/lib/agents";
+import { AGENTS, isAgentConnected, providerLabel } from "@/lib/agents";
 
 export default function SettingsPage() {
   return (
@@ -38,8 +38,8 @@ export default function SettingsPage() {
           <tbody>
             {AGENTS.map((a) => {
               const configured = isAgentConnected(a);
-              const envLabel = a.nvidiaModel
-                ? `${a.nvidiaKeyEnv ?? "Api"} (NIM)`
+              const envLabel = a.inference
+                ? `${a.inference.keyEnv} (${providerLabel(a.inference.provider)})`
                 : a.endpointEnv;
               return (
                 <tr

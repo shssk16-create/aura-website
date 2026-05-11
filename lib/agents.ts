@@ -1,11 +1,12 @@
 /**
  * Agent registry for the AURA AI marketing SaaS.
  *
- * Each agent maps to an open-weight model and a role. Where supported, an
- * agent can target an NVIDIA NIM model — the orchestrator will then call
- * `https://integrate.api.nvidia.com/v1/chat/completions` with the OpenAI
- * compatible payload. Otherwise the agent falls back to a generic endpoint
- * resolved from `endpointEnv`, and finally to a deterministic stub.
+ * Each agent describes its role and the model it should call. Inference
+ * details live in the optional `inference` block: any OpenAI-compatible
+ * provider (NVIDIA NIM, Z.AI / GLM, OpenAI, vLLM, etc.) just declares its
+ * base URL, model id, and the env var holding the API key. The orchestrator
+ * uses a single streaming code path for all of them and falls back to a
+ * deterministic stub when the key is missing.
  */
 
 export type AgentId =
@@ -18,6 +19,21 @@ export type AgentId =
   | "seo"
   | "video";
 
+export type ProviderId = "nvidia" | "zai" | "openai-compatible";
+
+export interface InferenceConfig {
+  /** Provider tag, controls per-provider quirks (key sanitisation, etc.). */
+  provider: ProviderId;
+  /** Full OpenAI-compatible chat-completions URL. */
+  url: string;
+  /** Model id exactly as the provider expects it. */
+  model: string;
+  /** Name of the env var that holds the API key. */
+  keyEnv: string;
+  /** Reasoning model? Suppress `delta.reasoning_content` in the stream. */
+  reasoning?: boolean;
+}
+
 export interface AgentDefinition {
   id: AgentId;
   /** Arabic display name shown to users. */
@@ -28,16 +44,10 @@ export interface AgentDefinition {
   descriptionAr: string;
   /** Open-weight model name powering this agent. */
   model: string;
-  /** Env-var key holding the inference endpoint URL (used when not NIM). */
+  /** Env-var key holding a custom inference endpoint URL (legacy hook). */
   endpointEnv: string;
-  /**
-   * NVIDIA NIM model id. When present, the orchestrator calls NIM directly
-   * with the API key from the env var declared in `nvidiaKeyEnv` (or `Api`
-   * / `NVIDIA_API_KEY` as fallbacks).
-   */
-  nvidiaModel?: string;
-  /** Env-var key holding the NVIDIA NIM API token. */
-  nvidiaKeyEnv?: string;
+  /** Live inference configuration. Omit to leave the agent on the stub. */
+  inference?: InferenceConfig;
   /** System prompt used when invoking the model. */
   systemPromptAr?: string;
   /** Lucide icon name (kept generic for tree-shaking). */
@@ -64,8 +74,12 @@ export const AGENTS: AgentDefinition[] = [
     descriptionAr:
       "العقل المنظِّم الذي يفكِّك أهداف الحملة، يوزِّع المهام على باقي الوكلاء، ويشغِّل سكربتات بايثون عند الحاجة.",
     model: "Nemotron Super 49B (Llama-3.3)",
-    nvidiaModel: "nvidia/llama-3.3-nemotron-super-49b-v1",
-    nvidiaKeyEnv: "Api",
+    inference: {
+      provider: "nvidia",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      model: "nvidia/llama-3.3-nemotron-super-49b-v1",
+      keyEnv: "Api",
+    },
     endpointEnv: "DEEPSEEK_API_URL",
     systemPromptAr:
       "أنت «مدير حملة» في منصَّة أورا. مهمَّتك أن تقرأ بريف الحملة، تستخرج الأهداف القابلة للقياس، تقسِّم العمل على فريق وكلاء التسويق، وتلخِّص الخطَّة في فقرة عربية بيضاء فصيحة، لا تتجاوز ٦ أسطر، خالية من الترجمة الحرفية، وبدون عناوين أو ترقيم.",
@@ -80,8 +94,13 @@ export const AGENTS: AgentDefinition[] = [
     descriptionAr:
       "يحلِّل محتوى المنافسين البصري والصوتي ويصوغ خطة محتوى تتماشى مع هوية العلامة.",
     model: "Nemotron 3 Nano Omni 30B-A3B Reasoning",
-    nvidiaModel: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-    nvidiaKeyEnv: "Api",
+    inference: {
+      provider: "nvidia",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      keyEnv: "Api",
+      reasoning: true,
+    },
     endpointEnv: "NEMOTRON_API_URL",
     systemPromptAr:
       "أنت «خبير محتوى» في منصَّة أورا. حلِّل بريف الحملة، اقترح زاوية المحتوى الأقوى، حدِّد الرسالة الجوهرية، وصياغة الإطار التحريري في فقرة عربية بيضاء فصيحة لا تتجاوز ٦ أسطر، بلا ترقيم وبلا عناوين فرعية.",
@@ -95,8 +114,16 @@ export const AGENTS: AgentDefinition[] = [
     nameEn: "Copywriter",
     descriptionAr:
       "يكتب نسخًا إعلانية بلغة عربية بيضاء فصيحة بعيدة عن الترجمة الحرفية، وملائمة للنبرة المؤسسية.",
-    model: "Jais-2 70B Chat",
+    model: "GLM-4.5 (Z.AI)",
+    inference: {
+      provider: "zai",
+      url: "https://api.z.ai/api/paas/v4/chat/completions",
+      model: "glm-4.5",
+      keyEnv: "Glm",
+    },
     endpointEnv: "JAIS_API_URL",
+    systemPromptAr:
+      "أنت «كاتب إعلانات» في منصَّة أورا. اكتب نسخة إعلانية عربية بيضاء فصيحة تتألَّف من: عنوان رئيس قصير، ثلاثة إلى أربعة أسطر للنسخة الجسمية، ثمَّ دعوة فعل واحدة واضحة. اجتنب الترجمة الحرفية والترقيم التفصيلي، ولا تتجاوز ٦ أسطر إجمالاً.",
     icon: "PenLine",
     stage: 2,
     accent: "blue",
@@ -173,19 +200,24 @@ export const AGENTS_BY_ID: Record<AgentId, AgentDefinition> = AGENTS.reduce(
 
 /**
  * True when the agent has a callable inference path configured in the current
- * environment — either an NVIDIA NIM key for `nvidiaModel`, or a custom
- * `endpointEnv` URL.
+ * environment — either an `inference.keyEnv` secret, or a custom `endpointEnv`
+ * URL.
  */
 export function isAgentConnected(agent: AgentDefinition): boolean {
-  if (agent.nvidiaModel) {
-    const key =
-      (agent.nvidiaKeyEnv && process.env[agent.nvidiaKeyEnv]) ||
-      process.env.NVIDIA_API_KEY ||
-      process.env.NEMOTRON_API_KEY ||
-      process.env.Api;
-    if (key) return true;
-  }
+  if (agent.inference && process.env[agent.inference.keyEnv]) return true;
   return Boolean(process.env[agent.endpointEnv]);
+}
+
+/** Human-readable label for an inference provider id. */
+export function providerLabel(provider: ProviderId): string {
+  switch (provider) {
+    case "nvidia":
+      return "NVIDIA NIM";
+    case "zai":
+      return "Z.AI / GLM";
+    case "openai-compatible":
+      return "OpenAI-compatible";
+  }
 }
 
 /** Default 5-stage pipeline used by the orchestrator for v1 campaigns. */

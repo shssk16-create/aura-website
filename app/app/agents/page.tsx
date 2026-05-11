@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AGENTS, isAgentConnected } from "@/lib/agents";
+import { AGENTS, isAgentConnected, providerLabel } from "@/lib/agents";
 import {
   Target,
   Lightbulb,
@@ -51,8 +51,8 @@ export default function AgentsPage() {
         {AGENTS.map((a) => {
           const Icon = ICONS[a.icon];
           const endpointConfigured = isAgentConnected(a);
-          const endpointLabel = a.nvidiaModel
-            ? `NVIDIA NIM · ${a.nvidiaKeyEnv ?? "Api"}`
+          const endpointLabel = a.inference
+            ? `${providerLabel(a.inference.provider)} · ${a.inference.keyEnv}`
             : a.endpointEnv;
           return (
             <div

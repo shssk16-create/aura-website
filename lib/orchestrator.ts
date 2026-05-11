@@ -1,22 +1,24 @@
 /**
  * Agent orchestrator.
  *
- * Streams a single agent's output through the same interface regardless of
- * which inference backend is wired up:
+ * Streams a single agent's output through one of three backends, in order:
  *
- *   1. If the agent declares `nvidiaModel` and an NVIDIA API key is in the
- *      env, call `https://integrate.api.nvidia.com/v1/chat/completions`
- *      with `Authorization: Bearer <key>` and parse OpenAI SSE chunks.
- *   2. Else if `endpointEnv` is populated, POST to that custom endpoint and
- *      pipe the raw response body through.
- *   3. Otherwise fall back to a deterministic stub so the UI is demoable
- *      without GPUs.
+ *   1. The agent's `inference` block — any OpenAI-compatible chat completions
+ *      endpoint (NVIDIA NIM, Z.AI / GLM, OpenAI, vLLM, etc.) provided the
+ *      env var named by `inference.keyEnv` is set.
+ *   2. A custom URL stored in `process.env[agent.endpointEnv]` (legacy hook).
+ *   3. A deterministic stub stream so the UI is fully demoable without GPUs.
  *
  * The function is an async generator yielding `AgentChunk` records — callers
  * forward each chunk as a Server-Sent Event to the browser.
  */
 
-import { AGENTS_BY_ID, type AgentId } from "./agents";
+import {
+  AGENTS_BY_ID,
+  type AgentDefinition,
+  type AgentId,
+  type InferenceConfig,
+} from "./agents";
 
 export interface AgentChunk {
   agentId: AgentId;
@@ -44,8 +46,6 @@ export interface OrchestratorInput {
   tone: string;
 }
 
-const NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-
 /**
  * Stream chunks for a single agent. Yields incremental deltas; the consumer
  * is responsible for appending them to the agent run's `output` field.
@@ -56,29 +56,35 @@ export async function* runAgent(
 ): AsyncGenerator<AgentChunk, void, unknown> {
   const agent = AGENTS_BY_ID[agentId];
 
-  // 1. NVIDIA NIM path
-  if (agent.nvidiaModel) {
-    const key = resolveNvidiaKey(agent.nvidiaKeyEnv);
+  // 1. Live inference path
+  if (agent.inference) {
+    const key = resolveKey(agent.inference);
     if (key) {
-      let producedText = false;
+      let liveContent = "";
       try {
-        for await (const delta of streamNim(agent.nvidiaModel, key, agent.systemPromptAr, input)) {
+        for await (const delta of streamChat(
+          agent.inference,
+          key,
+          agent.systemPromptAr,
+          input,
+        )) {
           if (delta) {
-            producedText = true;
+            liveContent += delta;
             yield { agentId, delta };
           }
         }
       } catch (err) {
         yield {
           agentId,
-          delta: `\n[تعذَّر الاتصال بـ NVIDIA NIM: ${(err as Error).message}]`,
+          delta: `\n[تعذَّر الاتصال بمزوِّد ${agent.inference.provider}: ${(err as Error).message}]`,
         };
       }
-      if (producedText) {
-        yield* finalArtefact(agentId, input, stubCanned(agentId, input));
+      if (liveContent.trim().length > 0) {
+        yield* finalArtefact(agentId, input, liveContent);
         return;
       }
-      // If NIM produced no text we fall through to the stub.
+      // If the live call produced no text, fall through to the stub so the
+      // UI still gets something to render.
     }
   }
 
@@ -94,31 +100,40 @@ export async function* runAgent(
   yield* stubStream(agentId, input);
 }
 
-function resolveNvidiaKey(envName?: string): string | undefined {
-  const raw =
-    (envName ? process.env[envName] : undefined) ??
-    process.env.NVIDIA_API_KEY ??
-    process.env.NEMOTRON_API_KEY ??
-    process.env.Api;
+/**
+ * Read and sanitise the API key. Tolerates secrets that were pasted with
+ * TOML/JSON-style wrapping such as `api_key = "..."`.
+ */
+function resolveKey(cfg: InferenceConfig): string | undefined {
+  const raw = process.env[cfg.keyEnv];
   if (!raw) return undefined;
-  // Allow the secret to be stored as `nvapi-...` raw, or wrapped in a
-  // TOML / JSON-style assignment like `api_key = "nvapi-..."`.
-  const match = raw.match(/nvapi-[A-Za-z0-9_-]+/);
-  return (match ? match[0] : raw).trim();
+
+  // NVIDIA keys always look like `nvapi-<token>`; pull that substring out
+  // even when the value is wrapped.
+  if (cfg.provider === "nvidia") {
+    const m = raw.match(/nvapi-[A-Za-z0-9_-]+/);
+    if (m) return m[0];
+  }
+
+  // For everything else, if the value contains a quoted segment, prefer it.
+  const quoted = raw.match(/"([^"\r\n]+)"/);
+  if (quoted) return quoted[1].trim();
+
+  return raw.trim();
 }
 
 /**
- * Hit NVIDIA NIM's OpenAI-compatible chat completions endpoint with streaming
- * enabled and yield each token delta.
+ * Hit an OpenAI-compatible chat completions endpoint with streaming enabled
+ * and yield each visible content delta.
  */
-async function* streamNim(
-  model: string,
+async function* streamChat(
+  cfg: InferenceConfig,
   apiKey: string,
   systemPrompt: string | undefined,
   input: OrchestratorInput,
 ): AsyncGenerator<string, void, unknown> {
   const userPrompt = buildUserPrompt(input);
-  const res = await fetch(NIM_URL, {
+  const res = await fetch(cfg.url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -126,17 +141,14 @@ async function* streamNim(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model,
+      model: cfg.model,
       stream: true,
       temperature: 0.6,
       top_p: 0.95,
-      // High enough budget for reasoning models (Nemotron Nano Omni) to
-      // finish their reasoning *and* emit a final answer.
+      // Wide enough for reasoning models to think *and* produce final text.
       max_tokens: 1024,
       messages: [
-        ...(systemPrompt
-          ? [{ role: "system", content: systemPrompt }]
-          : []),
+        ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
         { role: "user", content: userPrompt },
       ],
     }),
@@ -144,7 +156,7 @@ async function* streamNim(
 
   if (!res.ok || !res.body) {
     const text = await res.text().catch(() => "");
-    throw new Error(`NIM ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(`${cfg.provider} ${res.status}: ${text.slice(0, 300)}`);
   }
 
   const reader = res.body.getReader();
@@ -168,12 +180,13 @@ async function* streamNim(
             delta?: { content?: string; reasoning_content?: string };
           }[];
         };
-        // We surface visible content. Reasoning content (Nemotron Nano Omni)
-        // is intentionally suppressed so the UI shows only the final answer.
+        // Always surface visible content. `reasoning_content` (Nemotron
+        // Nano Omni, GLM thinking mode) is intentionally suppressed so the
+        // UI shows only the final answer.
         const delta = json.choices?.[0]?.delta?.content;
         if (delta) yield delta;
       } catch {
-        // Ignore malformed SSE lines (heartbeats, etc.)
+        // Heartbeats / malformed SSE lines.
       }
     }
   }
@@ -256,17 +269,41 @@ async function* finalArtefact(
     };
   }
   if (agentId === "copywriter") {
+    const { headline, body } = splitHeadlineAndBody(copyBody, input);
     yield {
       agentId,
       delta: "",
       artefact: {
         kind: "creative",
-        headlineAr: `${input.brand}: ${input.goal}`,
-        copyAr: copyBody,
+        headlineAr: headline,
+        copyAr: body,
         cta: defaultCta(input.channel),
       },
     };
   }
+}
+
+/**
+ * Pull a one-line headline + remaining body from the agent's text. Falls
+ * back to a brand/goal headline if the model didn't produce a clear first
+ * line.
+ */
+function splitHeadlineAndBody(
+  text: string,
+  input: OrchestratorInput,
+): { headline: string; body: string } {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return { headline: `${input.brand}: ${input.goal}`, body: trimmed };
+  }
+  const firstNewline = trimmed.indexOf("\n");
+  if (firstNewline === -1) {
+    return { headline: trimmed.slice(0, 80), body: trimmed };
+  }
+  return {
+    headline: trimmed.slice(0, firstNewline).trim().slice(0, 120),
+    body: trimmed.slice(firstNewline + 1).trim(),
+  };
 }
 
 function defaultCta(channel: string): string {
@@ -334,3 +371,7 @@ function stubCanned(agentId: AgentId, input: OrchestratorInput): string {
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// Re-export for callers that want to inspect agent metadata alongside the
+// orchestrator API.
+export type { AgentDefinition };
