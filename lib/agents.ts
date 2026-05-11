@@ -1,19 +1,11 @@
 /**
  * Agent registry for the AURA AI marketing SaaS.
  *
- * Each agent maps to an open-weight model and a role. Model endpoints are
- * resolved at runtime from environment variables so the same code can target
- * self-hosted clusters or a hosted inference provider.
- *
- * Reference strategy (2026):
- *   - Campaign Manager      → DeepSeek-V4-Pro
- *   - Content Strategist    → Nemotron-3-Nano-Omni
- *   - Copywriter            → Jais-2 70B Chat (White Arabic specialist)
- *   - Data Analyst          → DeepSeek-V4-Pro
- *   - Creative Designer     → FLUX.1 + Pillow/arabic-reshaper overlay
- *   - Social Media          → Qwen3-8B
- *   - SEO Expert            → Falcon-H1 Arabic
- *   - Video Creator         → Cosmos-Transfer2.5
+ * Each agent maps to an open-weight model and a role. Where supported, an
+ * agent can target an NVIDIA NIM model — the orchestrator will then call
+ * `https://integrate.api.nvidia.com/v1/chat/completions` with the OpenAI
+ * compatible payload. Otherwise the agent falls back to a generic endpoint
+ * resolved from `endpointEnv`, and finally to a deterministic stub.
  */
 
 export type AgentId =
@@ -36,8 +28,18 @@ export interface AgentDefinition {
   descriptionAr: string;
   /** Open-weight model name powering this agent. */
   model: string;
-  /** Env-var key holding the inference endpoint URL. */
+  /** Env-var key holding the inference endpoint URL (used when not NIM). */
   endpointEnv: string;
+  /**
+   * NVIDIA NIM model id. When present, the orchestrator calls NIM directly
+   * with the API key from the env var declared in `nvidiaKeyEnv` (or `Api`
+   * / `NVIDIA_API_KEY` as fallbacks).
+   */
+  nvidiaModel?: string;
+  /** Env-var key holding the NVIDIA NIM API token. */
+  nvidiaKeyEnv?: string;
+  /** System prompt used when invoking the model. */
+  systemPromptAr?: string;
   /** Lucide icon name (kept generic for tree-shaking). */
   icon:
     | "Target"
@@ -61,8 +63,12 @@ export const AGENTS: AgentDefinition[] = [
     nameEn: "Campaign Manager",
     descriptionAr:
       "العقل المنظِّم الذي يفكِّك أهداف الحملة، يوزِّع المهام على باقي الوكلاء، ويشغِّل سكربتات بايثون عند الحاجة.",
-    model: "DeepSeek-V4-Pro",
+    model: "Nemotron Super 49B (Llama-3.3)",
+    nvidiaModel: "nvidia/llama-3.3-nemotron-super-49b-v1",
+    nvidiaKeyEnv: "Api",
     endpointEnv: "DEEPSEEK_API_URL",
+    systemPromptAr:
+      "أنت «مدير حملة» في منصَّة أورا. مهمَّتك أن تقرأ بريف الحملة، تستخرج الأهداف القابلة للقياس، تقسِّم العمل على فريق وكلاء التسويق، وتلخِّص الخطَّة في فقرة عربية بيضاء فصيحة، لا تتجاوز ٦ أسطر، خالية من الترجمة الحرفية، وبدون عناوين أو ترقيم.",
     icon: "Target",
     stage: 0,
     accent: "blue",
@@ -73,8 +79,12 @@ export const AGENTS: AgentDefinition[] = [
     nameEn: "Content Strategist",
     descriptionAr:
       "يحلِّل محتوى المنافسين البصري والصوتي ويصوغ خطة محتوى تتماشى مع هوية العلامة.",
-    model: "Nemotron-3-Nano-Omni",
+    model: "Nemotron 3 Nano Omni 30B-A3B Reasoning",
+    nvidiaModel: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+    nvidiaKeyEnv: "Api",
     endpointEnv: "NEMOTRON_API_URL",
+    systemPromptAr:
+      "أنت «خبير محتوى» في منصَّة أورا. حلِّل بريف الحملة، اقترح زاوية المحتوى الأقوى، حدِّد الرسالة الجوهرية، وصياغة الإطار التحريري في فقرة عربية بيضاء فصيحة لا تتجاوز ٦ أسطر، بلا ترقيم وبلا عناوين فرعية.",
     icon: "Lightbulb",
     stage: 1,
     accent: "teal",
@@ -160,6 +170,23 @@ export const AGENTS_BY_ID: Record<AgentId, AgentDefinition> = AGENTS.reduce(
   },
   {} as Record<AgentId, AgentDefinition>,
 );
+
+/**
+ * True when the agent has a callable inference path configured in the current
+ * environment — either an NVIDIA NIM key for `nvidiaModel`, or a custom
+ * `endpointEnv` URL.
+ */
+export function isAgentConnected(agent: AgentDefinition): boolean {
+  if (agent.nvidiaModel) {
+    const key =
+      (agent.nvidiaKeyEnv && process.env[agent.nvidiaKeyEnv]) ||
+      process.env.NVIDIA_API_KEY ||
+      process.env.NEMOTRON_API_KEY ||
+      process.env.Api;
+    if (key) return true;
+  }
+  return Boolean(process.env[agent.endpointEnv]);
+}
 
 /** Default 5-stage pipeline used by the orchestrator for v1 campaigns. */
 export const DEFAULT_PIPELINE: AgentId[] = [

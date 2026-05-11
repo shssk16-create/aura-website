@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { AGENTS } from "@/lib/agents";
+import { AGENTS, isAgentConnected } from "@/lib/agents";
 
 export default function SettingsPage() {
   return (
@@ -37,7 +37,10 @@ export default function SettingsPage() {
           </thead>
           <tbody>
             {AGENTS.map((a) => {
-              const configured = Boolean(process.env[a.endpointEnv]);
+              const configured = isAgentConnected(a);
+              const envLabel = a.nvidiaModel
+                ? `${a.nvidiaKeyEnv ?? "Api"} (NIM)`
+                : a.endpointEnv;
               return (
                 <tr
                   key={a.id}
@@ -48,7 +51,7 @@ export default function SettingsPage() {
                   </td>
                   <td className="px-5 py-3 text-aura-dark/75">{a.model}</td>
                   <td className="px-5 py-3 font-mono text-xs text-aura-blue" dir="ltr">
-                    {a.endpointEnv}
+                    {envLabel}
                   </td>
                   <td className="px-5 py-3">
                     <span

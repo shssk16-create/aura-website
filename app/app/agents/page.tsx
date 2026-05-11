@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AGENTS } from "@/lib/agents";
+import { AGENTS, isAgentConnected } from "@/lib/agents";
 import {
   Target,
   Lightbulb,
@@ -50,7 +50,10 @@ export default function AgentsPage() {
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {AGENTS.map((a) => {
           const Icon = ICONS[a.icon];
-          const endpointConfigured = Boolean(process.env[a.endpointEnv]);
+          const endpointConfigured = isAgentConnected(a);
+          const endpointLabel = a.nvidiaModel
+            ? `NVIDIA NIM · ${a.nvidiaKeyEnv ?? "Api"}`
+            : a.endpointEnv;
           return (
             <div
               key={a.id}
@@ -89,7 +92,7 @@ export default function AgentsPage() {
                   {a.descriptionAr}
                 </p>
                 <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-aura-dark/90 px-2 py-1 font-mono text-[10px] text-aura-mist" dir="ltr">
-                  {a.endpointEnv}
+                  {endpointLabel}
                 </div>
               </div>
             </div>

@@ -49,6 +49,17 @@ body {
   transform: translateY(-2px);
 }
 
+/* keyframes — defined explicitly so Tailwind v3 JIT doesn't strip them when
+   the `animate-shimmer` utility isn't referenced as a class anywhere. */
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
 /* نص متدرج لامع */
 .kinetic-text {
   background: linear-gradient(90deg, #438fb3, #58a8b4, #438fb3);
