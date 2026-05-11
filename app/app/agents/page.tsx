@@ -53,7 +53,9 @@ export default function AgentsPage() {
           const endpointConfigured = isAgentConnected(a);
           const endpointLabel = a.inference
             ? `${providerLabel(a.inference.provider)} · ${a.inference.keyEnv}`
-            : a.endpointEnv;
+            : a.imageInference
+              ? `${providerLabel(a.imageInference.provider)} · ${a.imageInference.keyEnv}`
+              : a.endpointEnv;
           return (
             <div
               key={a.id}

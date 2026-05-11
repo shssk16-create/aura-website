@@ -20,6 +20,7 @@ export type AgentId =
   | "video";
 
 export type ProviderId = "nvidia" | "zai" | "openai-compatible";
+export type ImageProviderId = "nvidia-image";
 
 export interface InferenceConfig {
   /** Provider tag, controls per-provider quirks (key sanitisation, etc.). */
@@ -34,6 +35,19 @@ export interface InferenceConfig {
   reasoning?: boolean;
 }
 
+export interface ImageInferenceConfig {
+  /** Image-gen provider tag. */
+  provider: ImageProviderId;
+  /** Full image-generation endpoint URL. */
+  url: string;
+  /** Model id for display. */
+  model: string;
+  /** Name of the env var that holds the API key. */
+  keyEnv: string;
+  /** Diffusion steps (FLUX [klein]/[schnell] usually 4-8). */
+  steps: number;
+}
+
 export interface AgentDefinition {
   id: AgentId;
   /** Arabic display name shown to users. */
@@ -46,8 +60,10 @@ export interface AgentDefinition {
   model: string;
   /** Env-var key holding a custom inference endpoint URL (legacy hook). */
   endpointEnv: string;
-  /** Live inference configuration. Omit to leave the agent on the stub. */
+  /** Live (text) inference configuration. Omit to leave the agent on the stub. */
   inference?: InferenceConfig;
+  /** Live image-generation configuration (for diffusion agents). */
+  imageInference?: ImageInferenceConfig;
   /** System prompt used when invoking the model. */
   systemPromptAr?: string;
   /** Lucide icon name (kept generic for tree-shaking). */
@@ -145,9 +161,18 @@ export const AGENTS: AgentDefinition[] = [
     nameAr: "المصمِّم الإبداعي",
     nameEn: "Creative Designer",
     descriptionAr:
-      "يولِّد خلفيات بصرية بـ FLUX.1 ثم يستدعي سكربت بايثون لِطَبع النص العربي بدقة طباعية كاملة.",
-    model: "FLUX.1 [pro] + Pillow",
+      "يولِّد خلفيات بصرية عبر FLUX.2 [klein] 4B ثم يجهِّز الصورة لطباعة النص العربي بدقة طباعية كاملة.",
+    model: "FLUX.2 [klein] 4B",
+    imageInference: {
+      provider: "nvidia-image",
+      url: "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.2-klein-4b",
+      model: "black-forest-labs/flux.2-klein-4b",
+      keyEnv: "Flux",
+      steps: 4,
+    },
     endpointEnv: "FLUX_API_URL",
+    systemPromptAr:
+      "أنت «المصمِّم الإبداعي» في منصَّة أورا. صف بإيجاز خلفية إعلانية واحدة عالية الجودة تخدم نسخة الإعلان، مع مساحة سلبية كافية للنص العربي على اليمين.",
     icon: "Palette",
     stage: 4,
     accent: "blue",
@@ -200,16 +225,18 @@ export const AGENTS_BY_ID: Record<AgentId, AgentDefinition> = AGENTS.reduce(
 
 /**
  * True when the agent has a callable inference path configured in the current
- * environment — either an `inference.keyEnv` secret, or a custom `endpointEnv`
- * URL.
+ * environment — either an `inference.keyEnv` / `imageInference.keyEnv` secret,
+ * or a custom `endpointEnv` URL.
  */
 export function isAgentConnected(agent: AgentDefinition): boolean {
   if (agent.inference && process.env[agent.inference.keyEnv]) return true;
+  if (agent.imageInference && process.env[agent.imageInference.keyEnv])
+    return true;
   return Boolean(process.env[agent.endpointEnv]);
 }
 
 /** Human-readable label for an inference provider id. */
-export function providerLabel(provider: ProviderId): string {
+export function providerLabel(provider: ProviderId | ImageProviderId): string {
   switch (provider) {
     case "nvidia":
       return "NVIDIA NIM";
@@ -217,6 +244,8 @@ export function providerLabel(provider: ProviderId): string {
       return "Z.AI / GLM";
     case "openai-compatible":
       return "OpenAI-compatible";
+    case "nvidia-image":
+      return "NVIDIA NIM (Image)";
   }
 }
 

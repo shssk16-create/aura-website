@@ -40,7 +40,9 @@ export default function SettingsPage() {
               const configured = isAgentConnected(a);
               const envLabel = a.inference
                 ? `${a.inference.keyEnv} (${providerLabel(a.inference.provider)})`
-                : a.endpointEnv;
+                : a.imageInference
+                  ? `${a.imageInference.keyEnv} (${providerLabel(a.imageInference.provider)})`
+                  : a.endpointEnv;
               return (
                 <tr
                   key={a.id}

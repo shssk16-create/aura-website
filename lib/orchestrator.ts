@@ -13,11 +13,17 @@
  * forward each chunk as a Server-Sent Event to the browser.
  */
 
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
 import {
   AGENTS_BY_ID,
   type AgentDefinition,
   type AgentId,
+  type ImageInferenceConfig,
+  type ImageProviderId,
   type InferenceConfig,
+  type ProviderId,
 } from "./agents";
 
 export interface AgentChunk {
@@ -56,7 +62,50 @@ export async function* runAgent(
 ): AsyncGenerator<AgentChunk, void, unknown> {
   const agent = AGENTS_BY_ID[agentId];
 
-  // 1. Live inference path
+  // 1a. Live image-generation path (FLUX et al). The agent yields a short
+  // narration while the diffusion call is in flight, then emits an `image`
+  // artefact pointing at the saved file.
+  if (agent.imageInference) {
+    const key = resolveKeyByProvider(
+      agent.imageInference.provider,
+      agent.imageInference.keyEnv,
+    );
+    if (key) {
+      const fluxPrompt = buildImagePrompt(input);
+      const narration = [
+        "أبني موجِّهًا بصريًا بالإنجليزية يحترم نبرة العلامة وقناة النشر، مع مساحة سلبية على اليمين للنص العربي.\n\n",
+        `» ${fluxPrompt}\n\n`,
+        `جارٍ توليد الخلفية عبر ${agent.imageInference.model}…\n`,
+      ];
+      for (const part of narration) {
+        for (const tok of part.match(/\S+\s*|\s+/g) ?? [part]) {
+          await sleep(25);
+          yield { agentId, delta: tok };
+        }
+      }
+      try {
+        const imageUrl = await generateImage(
+          agent.imageInference,
+          key,
+          fluxPrompt,
+        );
+        const done = "اكتملت الخلفية. ستوضع طبقة النص العربي عبر سكربت بايثون (arabic-reshaper + python-bidi).";
+        yield { agentId, delta: done };
+        yield {
+          agentId,
+          delta: "",
+          artefact: { kind: "image", url: imageUrl },
+        };
+        return;
+      } catch (err) {
+        const tail = `\n[تعذَّر توليد الصورة عبر ${agent.imageInference.provider}: ${(err as Error).message}]`;
+        yield { agentId, delta: tail };
+        // Fall through to text/stub backends so the UI still gets an artefact.
+      }
+    }
+  }
+
+  // 1. Live (text) inference path
   if (agent.inference) {
     const key = resolveKey(agent.inference);
     if (key) {
@@ -130,12 +179,19 @@ export async function* runAgent(
  * TOML/JSON-style wrapping such as `api_key = "..."`.
  */
 function resolveKey(cfg: InferenceConfig): string | undefined {
-  const raw = process.env[cfg.keyEnv];
+  return resolveKeyByProvider(cfg.provider, cfg.keyEnv);
+}
+
+function resolveKeyByProvider(
+  provider: ProviderId | ImageProviderId,
+  keyEnv: string,
+): string | undefined {
+  const raw = process.env[keyEnv];
   if (!raw) return undefined;
 
   // NVIDIA keys always look like `nvapi-<token>`; pull that substring out
-  // even when the value is wrapped.
-  if (cfg.provider === "nvidia") {
+  // even when the value is wrapped (toml/json-style).
+  if (provider === "nvidia" || provider === "nvidia-image") {
     const m = raw.match(/nvapi-[A-Za-z0-9_-]+/);
     if (m) return m[0];
   }
@@ -246,6 +302,81 @@ async function* streamFromEndpoint(
       delta: `[تعذَّر الاتصال بنقطة الاستدلال: ${(err as Error).message}]`,
     };
   }
+}
+
+/**
+ * Build an English diffusion prompt from the Arabic brief. FLUX (and most
+ * text-to-image models) understand English best, so we map the Arabic
+ * tone/channel hints to English keywords deterministically.
+ */
+function buildImagePrompt(input: OrchestratorInput): string {
+  const toneEn: Record<string, string> = {
+    corporate: "premium corporate, restrained editorial color palette",
+    youthful: "vibrant youthful, bold accent colors, energetic mood",
+    luxury: "luxurious, soft golden lighting, refined minimalism",
+    playful: "playful, expressive shapes, joyful palette",
+  };
+  const channelEn: Record<string, string> = {
+    instagram: "Instagram-ready 1:1 hero composition",
+    x: "X/Twitter banner composition",
+    tiktok: "TikTok 9:16-aware composition",
+    linkedin: "LinkedIn corporate composition",
+    web: "web hero banner composition",
+  };
+  return [
+    `Premium advertising background image for the brand "${input.brand}".`,
+    `Style: ${toneEn[input.tone] ?? "clean modern editorial"}.`,
+    `Layout: ${channelEn[input.channel] ?? "flexible hero composition"}.`,
+    `Generous empty negative space on the right side for Arabic text overlay.`,
+    `Soft cinematic lighting, photorealistic, ultra-detailed, 4k, no text, no logos, no watermarks.`,
+  ].join(" ");
+}
+
+/**
+ * Call NVIDIA NIM's FLUX-style image-generation endpoint and persist the
+ * resulting JPEG to `.data/images/<uuid>.jpg`. Returns the public URL the
+ * front-end should load.
+ */
+async function generateImage(
+  cfg: ImageInferenceConfig,
+  apiKey: string,
+  prompt: string,
+): Promise<string> {
+  const res = await fetch(cfg.url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      prompt,
+      steps: cfg.steps,
+      seed: Math.floor(Math.random() * 1_000_000),
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `${cfg.provider} ${res.status}: ${text.slice(0, 300)}`,
+    );
+  }
+  const json = (await res.json()) as {
+    artifacts?: Array<{ base64?: string; mime_type?: string }>;
+    image?: string;
+  };
+  const artefact = json.artifacts?.[0];
+  const b64 = artefact?.base64 ?? json.image;
+  if (!b64) throw new Error(`${cfg.provider}: empty image payload`);
+
+  // FLUX returns image/jpeg by default; honour the mime_type hint when given.
+  const ext = artefact?.mime_type?.endsWith("png") ? "png" : "jpg";
+  const dataDir = process.env.AURA_DATA_DIR ?? path.join(process.cwd(), ".data");
+  const imagesDir = path.join(dataDir, "images");
+  await fs.mkdir(imagesDir, { recursive: true });
+  const filename = `${crypto.randomUUID()}.${ext}`;
+  await fs.writeFile(path.join(imagesDir, filename), Buffer.from(b64, "base64"));
+  return `/api/images/file/${filename}`;
 }
 
 function buildUserPrompt(input: OrchestratorInput): string {
