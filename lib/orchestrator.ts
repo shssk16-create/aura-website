@@ -1,22 +1,36 @@
 /**
  * Agent orchestrator.
  *
- * Streams a single agent's output through the same interface regardless of
- * which inference backend is wired up:
+ * Streams a single agent's output through one of three backends, in order:
  *
- *   1. If the agent declares `nvidiaModel` and an NVIDIA API key is in the
- *      env, call `https://integrate.api.nvidia.com/v1/chat/completions`
- *      with `Authorization: Bearer <key>` and parse OpenAI SSE chunks.
- *   2. Else if `endpointEnv` is populated, POST to that custom endpoint and
- *      pipe the raw response body through.
- *   3. Otherwise fall back to a deterministic stub so the UI is demoable
- *      without GPUs.
+ *   1. The agent's `inference` block — any OpenAI-compatible chat completions
+ *      endpoint (NVIDIA NIM, Z.AI / GLM, OpenAI, vLLM, etc.) provided the
+ *      env var named by `inference.keyEnv` is set.
+ *   2. A custom URL stored in `process.env[agent.endpointEnv]` (legacy hook).
+ *   3. A deterministic stub stream so the UI is fully demoable without GPUs.
  *
  * The function is an async generator yielding `AgentChunk` records — callers
  * forward each chunk as a Server-Sent Event to the browser.
  */
 
-import { AGENTS_BY_ID, type AgentId } from "./agents";
+import { promises as fs } from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import {
+  AGENTS_BY_ID,
+  type AgentDefinition,
+  type AgentId,
+  type ImageInferenceConfig,
+  type ImageProviderId,
+  type InferenceConfig,
+  type ProviderId,
+} from "./agents";
+import { getKey } from "./secrets";
+import {
+  formatSamplesAsFewShot,
+  pickSamplesForCampaign,
+  type StyleSample,
+} from "./style";
 
 export interface AgentChunk {
   agentId: AgentId;
@@ -44,8 +58,6 @@ export interface OrchestratorInput {
   tone: string;
 }
 
-const NIM_URL = "https://integrate.api.nvidia.com/v1/chat/completions";
-
 /**
  * Stream chunks for a single agent. Yields incremental deltas; the consumer
  * is responsible for appending them to the agent run's `output` field.
@@ -56,37 +68,121 @@ export async function* runAgent(
 ): AsyncGenerator<AgentChunk, void, unknown> {
   const agent = AGENTS_BY_ID[agentId];
 
-  // 1. NVIDIA NIM path
-  if (agent.nvidiaModel) {
-    const key = resolveNvidiaKey(agent.nvidiaKeyEnv);
+  // Style memory — top-3 brand-voice samples for this agent. Injected into
+  // the user prompt as worked examples for live runs (no-op on stub path).
+  const samples = await pickSamplesForCampaign({
+    brand: input.brand,
+    channel: input.channel,
+    tone: input.tone,
+    agent: agentId,
+  });
+
+  // 1a. Live image-generation path (FLUX et al). The agent yields a short
+  // narration while the diffusion call is in flight, then emits an `image`
+  // artefact pointing at the saved file.
+  if (agent.imageInference) {
+    const key = await resolveKeyByProvider(
+      agent.imageInference.provider,
+      agent.imageInference.keyEnv,
+    );
     if (key) {
-      let producedText = false;
-      try {
-        for await (const delta of streamNim(agent.nvidiaModel, key, agent.systemPromptAr, input)) {
-          if (delta) {
-            producedText = true;
-            yield { agentId, delta };
-          }
+      const fluxPrompt = buildImagePrompt(input);
+      const narration = [
+        "أبني موجِّهًا بصريًا بالإنجليزية يحترم نبرة العلامة وقناة النشر، مع مساحة سلبية على اليمين للنص العربي.\n\n",
+        `» ${fluxPrompt}\n\n`,
+        `جارٍ توليد الخلفية عبر ${agent.imageInference.model}…\n`,
+      ];
+      for (const part of narration) {
+        for (const tok of part.match(/\S+\s*|\s+/g) ?? [part]) {
+          await sleep(25);
+          yield { agentId, delta: tok };
         }
-      } catch (err) {
+      }
+      try {
+        const imageUrl = await generateImage(
+          agent.imageInference,
+          key,
+          fluxPrompt,
+        );
+        const done = "اكتملت الخلفية. ستوضع طبقة النص العربي عبر سكربت بايثون (arabic-reshaper + python-bidi).";
+        yield { agentId, delta: done };
         yield {
           agentId,
-          delta: `\n[تعذَّر الاتصال بـ NVIDIA NIM: ${(err as Error).message}]`,
+          delta: "",
+          artefact: { kind: "image", url: imageUrl },
         };
-      }
-      if (producedText) {
-        yield* finalArtefact(agentId, input, stubCanned(agentId, input));
         return;
+      } catch (err) {
+        const tail = `\n[تعذَّر توليد الصورة عبر ${agent.imageInference.provider}: ${(err as Error).message}]`;
+        yield { agentId, delta: tail };
+        // Fall through to text/stub backends so the UI still gets an artefact.
       }
-      // If NIM produced no text we fall through to the stub.
     }
   }
 
-  // 2. Custom endpoint path
+  // 1. Live (text) inference path
+  if (agent.inference) {
+    const key = await resolveKey(agent.inference);
+    if (key) {
+      let liveContent = "";
+      let liveOk = false;
+      try {
+        for await (const delta of streamChat(
+          agent.inference,
+          key,
+          agent.systemPromptAr,
+          input,
+          samples,
+        )) {
+          if (delta) {
+            liveContent += delta;
+            yield { agentId, delta };
+          }
+        }
+        liveOk = liveContent.trim().length > 0;
+      } catch (err) {
+        // Surface a short tail message only if we already streamed visible
+        // content (so the user knows their stream was truncated). When the
+        // call fails before producing anything, stay silent so the fallback
+        // path can emit clean output without our error message bleeding into
+        // the persisted artefact.
+        if (liveContent.trim().length > 0) {
+          const tail = `\n[انقطع البث: ${(err as Error).message}]`;
+          liveContent += tail;
+          yield { agentId, delta: tail };
+          liveOk = true;
+        } else {
+          console.warn(
+            `[orchestrator] ${agent.inference.provider} call failed:`,
+            (err as Error).message,
+          );
+        }
+      }
+      if (liveOk) {
+        yield* finalArtefact(agentId, input, liveContent);
+        return;
+      }
+      // No live content — fall through to the next backend.
+    }
+  }
+
+  // 2. Custom endpoint path. Accumulate the streamed body so the final
+  // creative/image artefact reflects the real model output, not the stub.
   const endpoint = process.env[agent.endpointEnv];
   if (endpoint) {
-    yield* streamFromEndpoint(agentId, endpoint, agent.systemPromptAr, input);
-    yield* finalArtefact(agentId, input, stubCanned(agentId, input));
+    let liveContent = "";
+    for await (const chunk of streamFromEndpoint(
+      agentId,
+      endpoint,
+      agent.systemPromptAr,
+      input,
+    )) {
+      if (chunk.delta) liveContent += chunk.delta;
+      yield chunk;
+    }
+    const body =
+      liveContent.trim().length > 0 ? liveContent : stubCanned(agentId, input);
+    yield* finalArtefact(agentId, input, body);
     return;
   }
 
@@ -94,31 +190,50 @@ export async function* runAgent(
   yield* stubStream(agentId, input);
 }
 
-function resolveNvidiaKey(envName?: string): string | undefined {
-  const raw =
-    (envName ? process.env[envName] : undefined) ??
-    process.env.NVIDIA_API_KEY ??
-    process.env.NEMOTRON_API_KEY ??
-    process.env.Api;
+/**
+ * Read and sanitise the API key. Tolerates secrets that were pasted with
+ * TOML/JSON-style wrapping such as `api_key = "..."`.
+ */
+async function resolveKey(cfg: InferenceConfig): Promise<string | undefined> {
+  return resolveKeyByProvider(cfg.provider, cfg.keyEnv);
+}
+
+async function resolveKeyByProvider(
+  provider: ProviderId | ImageProviderId,
+  keyEnv: string,
+): Promise<string | undefined> {
+  // Prefer the encrypted store (UI-managed); fall back to env vars so
+  // existing env-only deploys keep working transparently.
+  const raw = (await getKey(keyEnv)) ?? process.env[keyEnv];
   if (!raw) return undefined;
-  // Allow the secret to be stored as `nvapi-...` raw, or wrapped in a
-  // TOML / JSON-style assignment like `api_key = "nvapi-..."`.
-  const match = raw.match(/nvapi-[A-Za-z0-9_-]+/);
-  return (match ? match[0] : raw).trim();
+
+  // NVIDIA keys always look like `nvapi-<token>`; pull that substring out
+  // even when the value is wrapped (toml/json-style).
+  if (provider === "nvidia" || provider === "nvidia-image") {
+    const m = raw.match(/nvapi-[A-Za-z0-9_-]+/);
+    if (m) return m[0];
+  }
+
+  // For everything else, if the value contains a quoted segment, prefer it.
+  const quoted = raw.match(/"([^"\r\n]+)"/);
+  if (quoted) return quoted[1].trim();
+
+  return raw.trim();
 }
 
 /**
- * Hit NVIDIA NIM's OpenAI-compatible chat completions endpoint with streaming
- * enabled and yield each token delta.
+ * Hit an OpenAI-compatible chat completions endpoint with streaming enabled
+ * and yield each visible content delta.
  */
-async function* streamNim(
-  model: string,
+async function* streamChat(
+  cfg: InferenceConfig,
   apiKey: string,
   systemPrompt: string | undefined,
   input: OrchestratorInput,
+  samples: StyleSample[] = [],
 ): AsyncGenerator<string, void, unknown> {
-  const userPrompt = buildUserPrompt(input);
-  const res = await fetch(NIM_URL, {
+  const userPrompt = buildUserPrompt(input, samples);
+  const res = await fetch(cfg.url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -126,17 +241,17 @@ async function* streamNim(
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model,
+      model: cfg.model,
       stream: true,
       temperature: 0.6,
       top_p: 0.95,
-      // High enough budget for reasoning models (Nemotron Nano Omni) to
-      // finish their reasoning *and* emit a final answer.
-      max_tokens: 1024,
+      // Reasoning models (Nemotron-Nano-Omni, GLM thinking, etc.) burn most
+      // of their budget on `reasoning_content` before emitting any visible
+      // `content`. Give them ~4× the head-room of plain chat models so the
+      // final answer survives the orchestrator's `reasoning_content` filter.
+      max_tokens: cfg.reasoning ? 4096 : 1024,
       messages: [
-        ...(systemPrompt
-          ? [{ role: "system", content: systemPrompt }]
-          : []),
+        ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
         { role: "user", content: userPrompt },
       ],
     }),
@@ -144,7 +259,7 @@ async function* streamNim(
 
   if (!res.ok || !res.body) {
     const text = await res.text().catch(() => "");
-    throw new Error(`NIM ${res.status}: ${text.slice(0, 300)}`);
+    throw new Error(`${cfg.provider} ${res.status}: ${text.slice(0, 300)}`);
   }
 
   const reader = res.body.getReader();
@@ -168,12 +283,13 @@ async function* streamNim(
             delta?: { content?: string; reasoning_content?: string };
           }[];
         };
-        // We surface visible content. Reasoning content (Nemotron Nano Omni)
-        // is intentionally suppressed so the UI shows only the final answer.
+        // Always surface visible content. `reasoning_content` (Nemotron
+        // Nano Omni, GLM thinking mode) is intentionally suppressed so the
+        // UI shows only the final answer.
         const delta = json.choices?.[0]?.delta?.content;
         if (delta) yield delta;
       } catch {
-        // Ignore malformed SSE lines (heartbeats, etc.)
+        // Heartbeats / malformed SSE lines.
       }
     }
   }
@@ -210,8 +326,88 @@ async function* streamFromEndpoint(
   }
 }
 
-function buildUserPrompt(input: OrchestratorInput): string {
+/**
+ * Build an English diffusion prompt from the Arabic brief. FLUX (and most
+ * text-to-image models) understand English best, so we map the Arabic
+ * tone/channel hints to English keywords deterministically.
+ */
+function buildImagePrompt(input: OrchestratorInput): string {
+  const toneEn: Record<string, string> = {
+    corporate: "premium corporate, restrained editorial color palette",
+    youthful: "vibrant youthful, bold accent colors, energetic mood",
+    luxury: "luxurious, soft golden lighting, refined minimalism",
+    playful: "playful, expressive shapes, joyful palette",
+  };
+  const channelEn: Record<string, string> = {
+    instagram: "Instagram-ready 1:1 hero composition",
+    x: "X/Twitter banner composition",
+    tiktok: "TikTok 9:16-aware composition",
+    linkedin: "LinkedIn corporate composition",
+    web: "web hero banner composition",
+  };
   return [
+    `Premium advertising background image for the brand "${input.brand}".`,
+    `Style: ${toneEn[input.tone] ?? "clean modern editorial"}.`,
+    `Layout: ${channelEn[input.channel] ?? "flexible hero composition"}.`,
+    `Generous empty negative space on the right side for Arabic text overlay.`,
+    `Soft cinematic lighting, photorealistic, ultra-detailed, 4k, no text, no logos, no watermarks.`,
+  ].join(" ");
+}
+
+/**
+ * Call NVIDIA NIM's FLUX-style image-generation endpoint and persist the
+ * resulting JPEG to `.data/images/<uuid>.jpg`. Returns the public URL the
+ * front-end should load.
+ */
+async function generateImage(
+  cfg: ImageInferenceConfig,
+  apiKey: string,
+  prompt: string,
+): Promise<string> {
+  const res = await fetch(cfg.url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      prompt,
+      steps: cfg.steps,
+      seed: Math.floor(Math.random() * 1_000_000),
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(
+      `${cfg.provider} ${res.status}: ${text.slice(0, 300)}`,
+    );
+  }
+  const json = (await res.json()) as {
+    artifacts?: Array<{ base64?: string; mime_type?: string }>;
+    image?: string;
+  };
+  const artefact = json.artifacts?.[0];
+  const b64 = artefact?.base64 ?? json.image;
+  if (!b64) throw new Error(`${cfg.provider}: empty image payload`);
+
+  // FLUX returns image/jpeg by default; honour the mime_type hint when given.
+  const ext = artefact?.mime_type?.endsWith("png") ? "png" : "jpg";
+  const dataDir = process.env.AURA_DATA_DIR ?? path.join(process.cwd(), ".data");
+  const imagesDir = path.join(dataDir, "images");
+  await fs.mkdir(imagesDir, { recursive: true });
+  const filename = `${crypto.randomUUID()}.${ext}`;
+  await fs.writeFile(path.join(imagesDir, filename), Buffer.from(b64, "base64"));
+  return `/api/images/file/${filename}`;
+}
+
+function buildUserPrompt(
+  input: OrchestratorInput,
+  samples: StyleSample[] = [],
+): string {
+  const fewShot = formatSamplesAsFewShot(samples);
+  return [
+    fewShot,
     "هذه بيانات الحملة:",
     `- العلامة: ${input.brand}`,
     `- الهدف: ${input.goal}`,
@@ -220,7 +416,9 @@ function buildUserPrompt(input: OrchestratorInput): string {
     `- النبرة: ${input.tone}`,
     "",
     "اكتب جوابك مباشرةً بلغة عربية بيضاء فصيحة، بدون مقدِّمات أو تعليقات عن المهمَّة نفسها.",
-  ].join("\n");
+  ]
+    .filter((s) => s.length > 0)
+    .join("\n");
 }
 
 /** Deterministic stub stream. Splits a canned response into small chunks. */
@@ -256,17 +454,41 @@ async function* finalArtefact(
     };
   }
   if (agentId === "copywriter") {
+    const { headline, body } = splitHeadlineAndBody(copyBody, input);
     yield {
       agentId,
       delta: "",
       artefact: {
         kind: "creative",
-        headlineAr: `${input.brand}: ${input.goal}`,
-        copyAr: copyBody,
+        headlineAr: headline,
+        copyAr: body,
         cta: defaultCta(input.channel),
       },
     };
   }
+}
+
+/**
+ * Pull a one-line headline + remaining body from the agent's text. Falls
+ * back to a brand/goal headline if the model didn't produce a clear first
+ * line.
+ */
+function splitHeadlineAndBody(
+  text: string,
+  input: OrchestratorInput,
+): { headline: string; body: string } {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return { headline: `${input.brand}: ${input.goal}`, body: trimmed };
+  }
+  const firstNewline = trimmed.indexOf("\n");
+  if (firstNewline === -1) {
+    return { headline: trimmed.slice(0, 80), body: trimmed };
+  }
+  return {
+    headline: trimmed.slice(0, firstNewline).trim().slice(0, 120),
+    body: trimmed.slice(firstNewline + 1).trim(),
+  };
 }
 
 function defaultCta(channel: string): string {
@@ -334,3 +556,7 @@ function stubCanned(agentId: AgentId, input: OrchestratorInput): string {
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
+
+// Re-export for callers that want to inspect agent metadata alongside the
+// orchestrator API.
+export type { AgentDefinition };

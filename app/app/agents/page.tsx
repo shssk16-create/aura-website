@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { AGENTS, isAgentConnected } from "@/lib/agents";
+import { AGENTS, providerLabel } from "@/lib/agents";
+import { isAgentConnectedAsync } from "@/lib/secrets";
 import {
   Target,
   Lightbulb,
@@ -24,7 +25,12 @@ const ICONS: Record<string, LucideIcon> = {
   Clapperboard,
 };
 
-export default function AgentsPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AgentsPage() {
+  const connected = await Promise.all(
+    AGENTS.map((a) => isAgentConnectedAsync(a)),
+  );
   return (
     <div>
       <Link
@@ -48,12 +54,14 @@ export default function AgentsPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {AGENTS.map((a) => {
+        {AGENTS.map((a, i) => {
           const Icon = ICONS[a.icon];
-          const endpointConfigured = isAgentConnected(a);
-          const endpointLabel = a.nvidiaModel
-            ? `NVIDIA NIM · ${a.nvidiaKeyEnv ?? "Api"}`
-            : a.endpointEnv;
+          const endpointConfigured = connected[i];
+          const endpointLabel = a.inference
+            ? `${providerLabel(a.inference.provider)} · ${a.inference.keyEnv}`
+            : a.imageInference
+              ? `${providerLabel(a.imageInference.provider)} · ${a.imageInference.keyEnv}`
+              : a.endpointEnv;
           return (
             <div
               key={a.id}
