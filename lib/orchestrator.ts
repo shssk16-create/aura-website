@@ -226,8 +226,11 @@ async function* streamChat(
       stream: true,
       temperature: 0.6,
       top_p: 0.95,
-      // Wide enough for reasoning models to think *and* produce final text.
-      max_tokens: 1024,
+      // Reasoning models (Nemotron-Nano-Omni, GLM thinking, etc.) burn most
+      // of their budget on `reasoning_content` before emitting any visible
+      // `content`. Give them ~4× the head-room of plain chat models so the
+      // final answer survives the orchestrator's `reasoning_content` filter.
+      max_tokens: cfg.reasoning ? 4096 : 1024,
       messages: [
         ...(systemPrompt ? [{ role: "system", content: systemPrompt }] : []),
         { role: "user", content: userPrompt },
