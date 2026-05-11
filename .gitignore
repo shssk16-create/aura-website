@@ -32,6 +32,15 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# AURA runtime data (campaigns json store)
+/.data/
+
+# Python tooling
+__pycache__/
+*.pyc
+.venv/
 
 # vercel
 .vercel
