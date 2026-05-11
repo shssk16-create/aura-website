@@ -25,6 +25,12 @@ import {
   type InferenceConfig,
   type ProviderId,
 } from "./agents";
+import { getKey } from "./secrets";
+import {
+  formatSamplesAsFewShot,
+  pickSamplesForCampaign,
+  type StyleSample,
+} from "./style";
 
 export interface AgentChunk {
   agentId: AgentId;
@@ -62,11 +68,20 @@ export async function* runAgent(
 ): AsyncGenerator<AgentChunk, void, unknown> {
   const agent = AGENTS_BY_ID[agentId];
 
+  // Style memory — top-3 brand-voice samples for this agent. Injected into
+  // the user prompt as worked examples for live runs (no-op on stub path).
+  const samples = await pickSamplesForCampaign({
+    brand: input.brand,
+    channel: input.channel,
+    tone: input.tone,
+    agent: agentId,
+  });
+
   // 1a. Live image-generation path (FLUX et al). The agent yields a short
   // narration while the diffusion call is in flight, then emits an `image`
   // artefact pointing at the saved file.
   if (agent.imageInference) {
-    const key = resolveKeyByProvider(
+    const key = await resolveKeyByProvider(
       agent.imageInference.provider,
       agent.imageInference.keyEnv,
     );
@@ -107,7 +122,7 @@ export async function* runAgent(
 
   // 1. Live (text) inference path
   if (agent.inference) {
-    const key = resolveKey(agent.inference);
+    const key = await resolveKey(agent.inference);
     if (key) {
       let liveContent = "";
       let liveOk = false;
@@ -117,6 +132,7 @@ export async function* runAgent(
           key,
           agent.systemPromptAr,
           input,
+          samples,
         )) {
           if (delta) {
             liveContent += delta;
@@ -178,15 +194,17 @@ export async function* runAgent(
  * Read and sanitise the API key. Tolerates secrets that were pasted with
  * TOML/JSON-style wrapping such as `api_key = "..."`.
  */
-function resolveKey(cfg: InferenceConfig): string | undefined {
+async function resolveKey(cfg: InferenceConfig): Promise<string | undefined> {
   return resolveKeyByProvider(cfg.provider, cfg.keyEnv);
 }
 
-function resolveKeyByProvider(
+async function resolveKeyByProvider(
   provider: ProviderId | ImageProviderId,
   keyEnv: string,
-): string | undefined {
-  const raw = process.env[keyEnv];
+): Promise<string | undefined> {
+  // Prefer the encrypted store (UI-managed); fall back to env vars so
+  // existing env-only deploys keep working transparently.
+  const raw = (await getKey(keyEnv)) ?? process.env[keyEnv];
   if (!raw) return undefined;
 
   // NVIDIA keys always look like `nvapi-<token>`; pull that substring out
@@ -212,8 +230,9 @@ async function* streamChat(
   apiKey: string,
   systemPrompt: string | undefined,
   input: OrchestratorInput,
+  samples: StyleSample[] = [],
 ): AsyncGenerator<string, void, unknown> {
-  const userPrompt = buildUserPrompt(input);
+  const userPrompt = buildUserPrompt(input, samples);
   const res = await fetch(cfg.url, {
     method: "POST",
     headers: {
@@ -382,8 +401,13 @@ async function generateImage(
   return `/api/images/file/${filename}`;
 }
 
-function buildUserPrompt(input: OrchestratorInput): string {
+function buildUserPrompt(
+  input: OrchestratorInput,
+  samples: StyleSample[] = [],
+): string {
+  const fewShot = formatSamplesAsFewShot(samples);
   return [
+    fewShot,
     "هذه بيانات الحملة:",
     `- العلامة: ${input.brand}`,
     `- الهدف: ${input.goal}`,
@@ -392,7 +416,9 @@ function buildUserPrompt(input: OrchestratorInput): string {
     `- النبرة: ${input.tone}`,
     "",
     "اكتب جوابك مباشرةً بلغة عربية بيضاء فصيحة، بدون مقدِّمات أو تعليقات عن المهمَّة نفسها.",
-  ].join("\n");
+  ]
+    .filter((s) => s.length > 0)
+    .join("\n");
 }
 
 /** Deterministic stub stream. Splits a canned response into small chunks. */
