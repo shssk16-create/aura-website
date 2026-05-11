@@ -61,6 +61,7 @@ export async function* runAgent(
     const key = resolveKey(agent.inference);
     if (key) {
       let liveContent = "";
+      let liveOk = false;
       try {
         for await (const delta of streamChat(
           agent.inference,
@@ -73,26 +74,50 @@ export async function* runAgent(
             yield { agentId, delta };
           }
         }
+        liveOk = liveContent.trim().length > 0;
       } catch (err) {
-        yield {
-          agentId,
-          delta: `\n[تعذَّر الاتصال بمزوِّد ${agent.inference.provider}: ${(err as Error).message}]`,
-        };
+        // Surface a short tail message only if we already streamed visible
+        // content (so the user knows their stream was truncated). When the
+        // call fails before producing anything, stay silent so the fallback
+        // path can emit clean output without our error message bleeding into
+        // the persisted artefact.
+        if (liveContent.trim().length > 0) {
+          const tail = `\n[انقطع البث: ${(err as Error).message}]`;
+          liveContent += tail;
+          yield { agentId, delta: tail };
+          liveOk = true;
+        } else {
+          console.warn(
+            `[orchestrator] ${agent.inference.provider} call failed:`,
+            (err as Error).message,
+          );
+        }
       }
-      if (liveContent.trim().length > 0) {
+      if (liveOk) {
         yield* finalArtefact(agentId, input, liveContent);
         return;
       }
-      // If the live call produced no text, fall through to the stub so the
-      // UI still gets something to render.
+      // No live content — fall through to the next backend.
     }
   }
 
-  // 2. Custom endpoint path
+  // 2. Custom endpoint path. Accumulate the streamed body so the final
+  // creative/image artefact reflects the real model output, not the stub.
   const endpoint = process.env[agent.endpointEnv];
   if (endpoint) {
-    yield* streamFromEndpoint(agentId, endpoint, agent.systemPromptAr, input);
-    yield* finalArtefact(agentId, input, stubCanned(agentId, input));
+    let liveContent = "";
+    for await (const chunk of streamFromEndpoint(
+      agentId,
+      endpoint,
+      agent.systemPromptAr,
+      input,
+    )) {
+      if (chunk.delta) liveContent += chunk.delta;
+      yield chunk;
+    }
+    const body =
+      liveContent.trim().length > 0 ? liveContent : stubCanned(agentId, input);
+    yield* finalArtefact(agentId, input, body);
     return;
   }
 
