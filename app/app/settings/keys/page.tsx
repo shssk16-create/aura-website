@@ -6,7 +6,7 @@ import KeyRow from "@/components/app/KeyRow";
 export const dynamic = "force-dynamic";
 
 export default async function KeysPage() {
-  const slots = listSlotConfig();
+  const slots = await listSlotConfig();
   const masks = await listMasks();
   const masksByName = new Map(masks.map((m) => [m.slot, m]));
 

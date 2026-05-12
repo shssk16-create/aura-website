@@ -17,7 +17,6 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
 import {
-  AGENTS_BY_ID,
   type AgentDefinition,
   type AgentId,
   type ImageInferenceConfig,
@@ -25,6 +24,7 @@ import {
   type InferenceConfig,
   type ProviderId,
 } from "./agents";
+import { getAgentById } from "./registry";
 import { getKey } from "./secrets";
 import {
   formatSamplesAsFewShot,
@@ -66,7 +66,15 @@ export async function* runAgent(
   agentId: AgentId,
   input: OrchestratorInput,
 ): AsyncGenerator<AgentChunk, void, unknown> {
-  const agent = AGENTS_BY_ID[agentId];
+  const agent = await getAgentById(agentId);
+  if (!agent) {
+    yield { agentId, delta: `(unknown agent: ${agentId})` };
+    return;
+  }
+  if (agent.disabled) {
+    yield { agentId, delta: `(الوكيل معطّل)` };
+    return;
+  }
 
   // Style memory — top-3 brand-voice samples for this agent. Injected into
   // the user prompt as worked examples for live runs (no-op on stub path).
@@ -549,6 +557,13 @@ function stubCanned(agentId: AgentId, input: OrchestratorInput): string {
     case "video":
       return [
         "أعددتُ ستوريبورد من ٦ لقطات: مشهد افتتاحي بصري، إشكال، حلٌّ، شهادة عميل، دعوة فعل، شعار.",
+      ].join(" ");
+    default:
+      // Custom agent without a live key: produce a neutral, brief Arabic
+      // placeholder so the pipeline never stalls on a missing model.
+      return [
+        `وكيل «${agentId}» يعمل في الوضع التجريبي.`,
+        `الإدخال: علامة ${input.brand}، الهدف ${input.goal}، الجمهور ${input.audience}، القناة ${input.channel}.`,
       ].join(" ");
   }
 }

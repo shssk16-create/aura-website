@@ -8,7 +8,7 @@ export async function DELETE(
   ctx: { params: Promise<{ slot: string }> },
 ) {
   const { slot } = await ctx.params;
-  if (!listSlotConfig().some((s) => s.name === slot)) {
+  if (!(await listSlotConfig()).some((s) => s.name === slot)) {
     return NextResponse.json({ error: "unknown slot" }, { status: 404 });
   }
   const removed = await deleteKey(slot);

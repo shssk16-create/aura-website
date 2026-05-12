@@ -1,33 +1,13 @@
 import Link from "next/link";
-import { AGENTS, providerLabel } from "@/lib/agents";
+import { providerLabel } from "@/lib/agents";
+import { getAgents } from "@/lib/registry";
 import { isAgentConnectedAsync } from "@/lib/secrets";
-import {
-  Target,
-  Lightbulb,
-  PenLine,
-  BarChart3,
-  Palette,
-  Share2,
-  Search,
-  Clapperboard,
-  ArrowLeft,
-  type LucideIcon,
-} from "lucide-react";
-
-const ICONS: Record<string, LucideIcon> = {
-  Target,
-  Lightbulb,
-  PenLine,
-  BarChart3,
-  Palette,
-  Share2,
-  Search,
-  Clapperboard,
-};
+import { agentIcon, ArrowLeft } from "@/components/app/AgentIcon";
 
 export const dynamic = "force-dynamic";
 
 export default async function AgentsPage() {
+  const AGENTS = await getAgents();
   const connected = await Promise.all(
     AGENTS.map((a) => isAgentConnectedAsync(a)),
   );
@@ -45,17 +25,25 @@ export default async function AgentsPage() {
           الفريق
         </p>
         <h1 className="mt-1 text-3xl font-black text-aura-dark">
-          ثمانية وكلاء جاهزون للعمل.
+          {AGENTS.length} وكلاء جاهزون للعمل.
         </h1>
         <p className="mt-2 max-w-2xl text-aura-dark/70">
           كل وكيل يعمل خلف بروكسي Node.js + LangChain. وصِّل نقطة الاستدلال
-          المناسبة عبر متغيِّر البيئة الموضَّح بجانبه.
+          المناسبة عبر متغيِّر البيئة الموضَّح بجانبه. لإضافة وكيل جديد أو
+          تعديل دوره، افتح{" "}
+          <Link
+            href="/app/settings/agents"
+            className="font-bold text-aura-blue hover:underline"
+          >
+            إعدادات الوكلاء
+          </Link>
+          .
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {AGENTS.map((a, i) => {
-          const Icon = ICONS[a.icon];
+          const Icon = agentIcon(a.icon);
           const endpointConfigured = connected[i];
           const endpointLabel = a.inference
             ? `${providerLabel(a.inference.provider)} · ${a.inference.keyEnv}`
@@ -83,15 +71,28 @@ export default async function AgentsPage() {
                   <h3 className="text-lg font-black text-aura-dark">
                     {a.nameAr}
                   </h3>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
-                      endpointConfigured
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-aura-silver/30 text-aura-dark/70"
-                    }`}
-                  >
-                    {endpointConfigured ? "متَّصل" : "وضع التجربة"}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {a.custom && (
+                      <span className="rounded-full bg-aura-blue/15 px-2 py-0.5 text-[10px] font-bold text-aura-blue">
+                        مخصَّص
+                      </span>
+                    )}
+                    {a.disabled ? (
+                      <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700">
+                        معطَّل
+                      </span>
+                    ) : (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          endpointConfigured
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-aura-silver/30 text-aura-dark/70"
+                        }`}
+                      >
+                        {endpointConfigured ? "متَّصل" : "وضع التجربة"}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <p className="text-xs font-medium uppercase tracking-wider text-aura-blue/70">
                   {a.model}

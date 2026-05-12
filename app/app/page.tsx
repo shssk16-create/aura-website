@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { listCampaigns } from "@/lib/store";
-import { AGENTS_BY_ID } from "@/lib/agents";
+import { getAgentsById } from "@/lib/registry";
 import { ArrowLeft, Plus, Sparkles } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +30,10 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export default async function DashboardPage() {
-  const campaigns = await listCampaigns();
+  const [campaigns, agentsById] = await Promise.all([
+    listCampaigns(),
+    getAgentsById(),
+  ]);
 
   return (
     <div>
@@ -74,11 +77,13 @@ export default async function DashboardPage() {
                 <div className="flex items-center gap-4">
                   <div className="flex -space-x-1.5 space-x-reverse">
                     {campaign.pipeline.slice(0, 5).map((run) => {
-                      const a = AGENTS_BY_ID[run.agentId];
+                      const a = agentsById[run.agentId];
+                      const titleAr = a?.nameAr ?? run.agentId;
+                      const initials = (a?.nameEn ?? run.agentId).slice(0, 2);
                       return (
                         <div
                           key={run.agentId}
-                          title={a.nameAr}
+                          title={titleAr}
                           className={`flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[10px] font-black ${
                             run.status === "completed"
                               ? "bg-emerald-100 text-emerald-700"
@@ -89,7 +94,7 @@ export default async function DashboardPage() {
                                   : "bg-aura-silver/40 text-aura-dark/60"
                           }`}
                         >
-                          {a.nameEn.slice(0, 2)}
+                          {initials}
                         </div>
                       );
                     })}

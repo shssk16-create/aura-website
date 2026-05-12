@@ -14,7 +14,7 @@ export async function POST(req: Request) {
   if (!slot) {
     return NextResponse.json({ error: "slot is required" }, { status: 400 });
   }
-  if (!listSlotConfig().some((s) => s.name === slot)) {
+  if (!(await listSlotConfig()).some((s) => s.name === slot)) {
     return NextResponse.json({ error: "unknown slot" }, { status: 400 });
   }
   const result = await pingSlot(slot);
