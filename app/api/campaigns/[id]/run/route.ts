@@ -34,11 +34,19 @@ export async function POST(
 
   await updateCampaign(id, (c) => ({ ...c, status: "running" }));
 
+  let clientGone = false;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const encoder = new TextEncoder();
       const send = (payload: unknown) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+        if (clientGone) return;
+        try {
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify(payload)}\n\n`));
+        } catch {
+          // Controller already closed (client disconnected). Stop emitting,
+          // but let the pipeline keep running on the server.
+          clientGone = true;
+        }
       };
 
       try {
@@ -127,14 +135,29 @@ export async function POST(
         await updateCampaign(id, (c) => ({ ...c, status: "completed" }));
         send({ type: "pipeline_done" });
       } catch (err) {
-        await updateCampaign(id, (c) => ({ ...c, status: "failed" }));
+        // Only mark the campaign as failed if the pipeline actually failed —
+        // a closed-controller error simply means the browser disconnected,
+        // which is not a pipeline failure. The pipeline already updated each
+        // agent's status as it ran, so the saved record stays accurate.
+        if (!clientGone) {
+          await updateCampaign(id, (c) => ({ ...c, status: "failed" }));
+        }
         send({
           type: "error",
           message: err instanceof Error ? err.message : String(err),
         });
       } finally {
-        controller.close();
+        try {
+          controller.close();
+        } catch {
+          // already closed
+        }
       }
+    },
+    cancel() {
+      // Browser closed the SSE — flip the flag so the pipeline finishes
+      // quietly without poisoning the campaign's persisted status.
+      clientGone = true;
     },
   });
 
