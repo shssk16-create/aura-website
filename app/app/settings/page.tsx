@@ -1,11 +1,13 @@
 import Link from "next/link";
-import { ArrowLeft, KeyRound, Sparkles } from "lucide-react";
-import { AGENTS, providerLabel } from "@/lib/agents";
+import { ArrowLeft, Bot, KeyRound, Sparkles } from "lucide-react";
+import { providerLabel } from "@/lib/agents";
+import { getAgents } from "@/lib/registry";
 import { isAgentConnectedAsync } from "@/lib/secrets";
 
 export const dynamic = "force-dynamic";
 
 export default async function SettingsPage() {
+  const AGENTS = await getAgents();
   const connected = await Promise.all(
     AGENTS.map((a) => isAgentConnectedAsync(a)),
   );
@@ -31,7 +33,7 @@ export default async function SettingsPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card
           href="/app/settings/keys"
           icon={KeyRound}
@@ -39,6 +41,14 @@ export default async function SettingsPage() {
           titleAr="مفاتيح المزوِّدين"
           descAr="الصق مفاتيح NVIDIA NIM وZ.AI وغيرها بأمان. تُحفظ مشفَّرة محليًا ولا تُكشَف بعد الحفظ."
           metaAr="AES‑256‑GCM · paste‑only · مع زرّ اختبار"
+        />
+        <Card
+          href="/app/settings/agents"
+          icon={Bot}
+          accent="silver"
+          titleAr="الوكلاء والنماذج"
+          descAr="عدِّل نماذج الوكلاء، غيِّر دور كل واحد، أو أضف وكيلًا مخصَّصًا جديدًا. التعديلات تنعكس فورًا على خطّ الإنتاج."
+          metaAr="٨ وكلاء جاهزون · وكلاء مخصَّصون"
         />
         <Card
           href="/app/settings/style"
@@ -131,24 +141,26 @@ export default async function SettingsPage() {
 interface CardProps {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
-  accent: "blue" | "teal";
+  accent: "blue" | "teal" | "silver";
   titleAr: string;
   descAr: string;
   metaAr: string;
 }
 
 function Card({ href, icon: Icon, accent, titleAr, descAr, metaAr }: CardProps) {
+  const accentClasses =
+    accent === "teal"
+      ? "bg-aura-teal/15 text-aura-teal"
+      : accent === "silver"
+        ? "bg-aura-silver/30 text-aura-dark"
+        : "bg-aura-blue/15 text-aura-blue";
   return (
     <Link
       href={href}
       className="group flex items-start gap-4 rounded-2xl border border-aura-silver/40 bg-white/80 p-5 transition hover:border-aura-blue/40 hover:shadow-md"
     >
       <div
-        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${
-          accent === "teal"
-            ? "bg-aura-teal/15 text-aura-teal"
-            : "bg-aura-blue/15 text-aura-blue"
-        }`}
+        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${accentClasses}`}
       >
         <Icon className="h-6 w-6" />
       </div>

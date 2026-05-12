@@ -34,8 +34,11 @@ yarn-error.log*
 .env*
 !.env.example
 
-# AURA runtime data (campaigns json store)
+# AURA runtime data (campaigns json store, agent overrides, encrypted secrets)
 /.data/
+
+# Devin test artefacts (plans, reports) — never committed
+/.devin/
 
 # Python tooling
 __pycache__/

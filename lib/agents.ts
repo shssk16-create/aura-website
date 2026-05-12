@@ -9,15 +9,24 @@
  * deterministic stub when the key is missing.
  */
 
-export type AgentId =
-  | "manager"
-  | "strategist"
-  | "copywriter"
-  | "analyst"
-  | "designer"
-  | "social"
-  | "seo"
-  | "video";
+/**
+ * Agent identifier. Widened to `string` so users can register custom
+ * agents at runtime via `/app/settings/agents`. Use `BUILTIN_AGENT_IDS`
+ * for the 8 default roles shipped with AURA.
+ */
+export type AgentId = string;
+
+export const BUILTIN_AGENT_IDS = [
+  "manager",
+  "strategist",
+  "copywriter",
+  "analyst",
+  "designer",
+  "social",
+  "seo",
+  "video",
+] as const;
+export type BuiltinAgentId = (typeof BUILTIN_AGENT_IDS)[number];
 
 export type ProviderId = "nvidia" | "zai" | "openai-compatible";
 export type ImageProviderId = "nvidia-image";
@@ -48,6 +57,25 @@ export interface ImageInferenceConfig {
   steps: number;
 }
 
+export const AGENT_ICONS = [
+  "Target",
+  "Lightbulb",
+  "PenLine",
+  "BarChart3",
+  "Palette",
+  "Share2",
+  "Search",
+  "Clapperboard",
+  "Sparkles",
+  "Megaphone",
+  "Bot",
+  "Brain",
+  "Wand2",
+] as const;
+export type AgentIcon = (typeof AGENT_ICONS)[number];
+export const AGENT_ACCENTS = ["blue", "teal", "silver"] as const;
+export type AgentAccent = (typeof AGENT_ACCENTS)[number];
+
 export interface AgentDefinition {
   id: AgentId;
   /** Arabic display name shown to users. */
@@ -67,22 +95,20 @@ export interface AgentDefinition {
   /** System prompt used when invoking the model. */
   systemPromptAr?: string;
   /** Lucide icon name (kept generic for tree-shaking). */
-  icon:
-    | "Target"
-    | "Lightbulb"
-    | "PenLine"
-    | "BarChart3"
-    | "Palette"
-    | "Share2"
-    | "Search"
-    | "Clapperboard";
+  icon: AgentIcon;
   /** Stage order in the default campaign pipeline. */
   stage: number;
   /** Accent color token (Tailwind aura-*). */
-  accent: "blue" | "teal" | "silver";
+  accent: AgentAccent;
+  /** True when the agent participates in the default campaign pipeline. */
+  pipelineEnabled?: boolean;
+  /** True when the agent is disabled and should be skipped. */
+  disabled?: boolean;
+  /** True when this is a user-created custom agent (not a built-in). */
+  custom?: boolean;
 }
 
-export const AGENTS: AgentDefinition[] = [
+export const DEFAULT_AGENTS: AgentDefinition[] = [
   {
     id: "manager",
     nameAr: "مدير الحملة",
@@ -102,6 +128,7 @@ export const AGENTS: AgentDefinition[] = [
     icon: "Target",
     stage: 0,
     accent: "blue",
+    pipelineEnabled: true,
   },
   {
     id: "strategist",
@@ -123,6 +150,7 @@ export const AGENTS: AgentDefinition[] = [
     icon: "Lightbulb",
     stage: 1,
     accent: "teal",
+    pipelineEnabled: true,
   },
   {
     id: "copywriter",
@@ -143,6 +171,7 @@ export const AGENTS: AgentDefinition[] = [
     icon: "PenLine",
     stage: 2,
     accent: "blue",
+    pipelineEnabled: true,
   },
   {
     id: "analyst",
@@ -176,6 +205,7 @@ export const AGENTS: AgentDefinition[] = [
     icon: "Palette",
     stage: 4,
     accent: "blue",
+    pipelineEnabled: true,
   },
   {
     id: "social",
@@ -188,6 +218,7 @@ export const AGENTS: AgentDefinition[] = [
     icon: "Share2",
     stage: 5,
     accent: "teal",
+    pipelineEnabled: true,
   },
   {
     id: "seo",
@@ -215,7 +246,13 @@ export const AGENTS: AgentDefinition[] = [
   },
 ];
 
-export const AGENTS_BY_ID: Record<AgentId, AgentDefinition> = AGENTS.reduce(
+/**
+ * Backwards-compatible alias. New code should import from `lib/registry.ts`
+ * via `getAgents()` / `getAgentById()` so user overrides + custom agents are
+ * respected. This export is kept so existing imports continue to compile.
+ */
+export const AGENTS: AgentDefinition[] = DEFAULT_AGENTS;
+export const AGENTS_BY_ID: Record<AgentId, AgentDefinition> = DEFAULT_AGENTS.reduce(
   (acc, agent) => {
     acc[agent.id] = agent;
     return acc;
@@ -249,11 +286,13 @@ export function providerLabel(provider: ProviderId | ImageProviderId): string {
   }
 }
 
-/** Default 5-stage pipeline used by the orchestrator for v1 campaigns. */
-export const DEFAULT_PIPELINE: AgentId[] = [
-  "manager",
-  "strategist",
-  "copywriter",
-  "designer",
-  "social",
-];
+/**
+ * Default pipeline derived from `pipelineEnabled` + `stage`. Use
+ * `getDefaultPipeline()` from `lib/registry.ts` for the live, user-aware
+ * pipeline that includes custom agents.
+ */
+export const DEFAULT_PIPELINE: AgentId[] = DEFAULT_AGENTS.filter(
+  (a) => a.pipelineEnabled,
+)
+  .sort((a, b) => a.stage - b.stage)
+  .map((a) => a.id);

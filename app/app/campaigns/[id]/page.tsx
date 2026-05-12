@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getCampaign } from "@/lib/store";
+import { getAgents } from "@/lib/registry";
 import AgentPipeline from "@/components/app/AgentPipeline";
 
 export const dynamic = "force-dynamic";
@@ -14,6 +15,7 @@ export default async function CampaignDetailPage({
   const { id } = await params;
   const campaign = await getCampaign(id);
   if (!campaign) notFound();
+  const agentDefs = await getAgents();
 
   return (
     <div>
@@ -42,7 +44,7 @@ export default async function CampaignDetailPage({
         </dl>
       </div>
 
-      <AgentPipeline campaign={campaign} />
+      <AgentPipeline campaign={campaign} agentDefs={agentDefs} />
     </div>
   );
 }

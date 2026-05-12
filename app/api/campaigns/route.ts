@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createCampaign, listCampaigns } from "@/lib/store";
-import { DEFAULT_PIPELINE } from "@/lib/agents";
+import { getDefaultPipeline } from "@/lib/registry";
 
 export const dynamic = "force-dynamic";
 
@@ -22,9 +22,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
+  const pipeline = await getDefaultPipeline();
   const campaign = await createCampaign({
     ...parsed.value,
-    pipeline: DEFAULT_PIPELINE,
+    pipeline,
   });
   return NextResponse.json({ campaign }, { status: 201 });
 }

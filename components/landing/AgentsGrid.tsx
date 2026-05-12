@@ -1,28 +1,11 @@
 "use client";
 import { motion } from "framer-motion";
-import {
-  Target,
-  Lightbulb,
-  PenLine,
-  BarChart3,
-  Palette,
-  Share2,
-  Search,
-  Clapperboard,
-  type LucideIcon,
-} from "lucide-react";
-import { AGENTS, type AgentDefinition } from "@/lib/agents";
+import { DEFAULT_AGENTS } from "@/lib/agents";
+import { agentIcon } from "@/components/app/AgentIcon";
 
-const ICONS: Record<AgentDefinition["icon"], LucideIcon> = {
-  Target,
-  Lightbulb,
-  PenLine,
-  BarChart3,
-  Palette,
-  Share2,
-  Search,
-  Clapperboard,
-};
+// Landing page advertises the 8 default agents — user customs only show up
+// in the authenticated /app surface.
+const AGENTS = DEFAULT_AGENTS;
 
 export default function AgentsGrid() {
   return (
@@ -45,7 +28,7 @@ export default function AgentsGrid() {
 
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-4">
           {AGENTS.map((agent, idx) => {
-            const Icon = ICONS[agent.icon];
+            const Icon = agentIcon(agent.icon);
             return (
               <motion.div
                 key={agent.id}

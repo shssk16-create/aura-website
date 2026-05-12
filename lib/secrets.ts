@@ -22,7 +22,8 @@
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { AGENTS, type AgentDefinition } from "./agents";
+import { type AgentDefinition } from "./agents";
+import { getAgents } from "./registry";
 
 const DATA_DIR =
   process.env.AURA_DATA_DIR ?? path.join(process.cwd(), ".data");
@@ -67,14 +68,15 @@ export type KeyPingConfig =
     };
 
 /**
- * Slot registry — derived from the agent registry so adding an agent
+ * Slot registry — derived from the live agent registry so adding an agent
  * automatically adds its slot. Slots without an agent yet (Deepseek, Seo,
  * Seo2) are declared explicitly so the UI still shows them.
  */
-export function listSlotConfig(): KeySlot[] {
+export async function listSlotConfig(): Promise<KeySlot[]> {
   const fromAgents = new Map<string, KeySlot>();
+  const agents = await getAgents();
 
-  for (const agent of AGENTS) {
+  for (const agent of agents) {
     if (agent.inference) {
       const slot = agent.inference.keyEnv;
       const prev = fromAgents.get(slot);
@@ -340,7 +342,7 @@ export async function deleteKey(slot: string): Promise<boolean> {
  * or unset. Never returns plaintext.
  */
 export async function listMasks(): Promise<KeyMask[]> {
-  const slots = listSlotConfig();
+  const slots = await listSlotConfig();
   const store = await readStore();
   return slots.map((slot) => {
     const record = store[slot.name];
@@ -386,7 +388,8 @@ export interface PingResult {
  * key is accepted. The plaintext key is read locally and never returned.
  */
 export async function pingSlot(slot: string): Promise<PingResult> {
-  const cfg = listSlotConfig().find((s) => s.name === slot);
+  const slots = await listSlotConfig();
+  const cfg = slots.find((s) => s.name === slot);
   if (!cfg) return { ok: false, error: "unknown slot" };
   const key = await getKey(slot);
   if (!key) return { ok: false, error: "no key configured" };

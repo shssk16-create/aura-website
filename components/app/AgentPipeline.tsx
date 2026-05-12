@@ -1,34 +1,15 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Target,
-  Lightbulb,
-  PenLine,
-  BarChart3,
-  Palette,
-  Share2,
-  Search,
-  Clapperboard,
   Loader2,
   CheckCircle2,
   CircleDashed,
   AlertCircle,
   PlayCircle,
-  type LucideIcon,
 } from "lucide-react";
-import { AGENTS_BY_ID, type AgentId, type AgentDefinition } from "@/lib/agents";
+import { type AgentId, type AgentDefinition } from "@/lib/agents";
+import { agentIcon } from "@/components/app/AgentIcon";
 import type { Campaign } from "@/lib/store";
-
-const ICONS: Record<AgentDefinition["icon"], LucideIcon> = {
-  Target,
-  Lightbulb,
-  PenLine,
-  BarChart3,
-  Palette,
-  Share2,
-  Search,
-  Clapperboard,
-};
 
 type RunStatus = "pending" | "running" | "completed" | "failed";
 
@@ -45,7 +26,18 @@ interface UiCreative {
   imageUrl: string | null;
 }
 
-export default function AgentPipeline({ campaign }: { campaign: Campaign }) {
+export default function AgentPipeline({
+  campaign,
+  agentDefs,
+}: {
+  campaign: Campaign;
+  agentDefs: AgentDefinition[];
+}) {
+  const agentMap = useMemo(() => {
+    const m: Record<AgentId, AgentDefinition> = {};
+    for (const a of agentDefs) m[a.id] = a;
+    return m;
+  }, [agentDefs]);
   const [agents, setAgents] = useState<UiAgent[]>(() =>
     campaign.pipeline.map((r) => ({
       id: r.agentId,
@@ -218,8 +210,11 @@ export default function AgentPipeline({ campaign }: { campaign: Campaign }) {
 
         <ol className="space-y-3">
           {agents.map((a, idx) => {
-            const def = AGENTS_BY_ID[a.id];
-            const Icon = ICONS[def.icon];
+            const def = agentMap[a.id];
+            const Icon = agentIcon(def?.icon ?? "Bot");
+            const nameAr = def?.nameAr ?? a.id;
+            const model = def?.model ?? "—";
+            const accent = def?.accent ?? "blue";
             return (
               <li
                 key={a.id}
@@ -236,9 +231,9 @@ export default function AgentPipeline({ campaign }: { campaign: Campaign }) {
                 <div className="flex items-start gap-4">
                   <div
                     className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                      def.accent === "teal"
+                      accent === "teal"
                         ? "bg-aura-teal/15 text-aura-teal"
-                        : def.accent === "silver"
+                        : accent === "silver"
                           ? "bg-aura-silver/30 text-aura-dark"
                           : "bg-aura-blue/15 text-aura-blue"
                     }`}
@@ -249,13 +244,13 @@ export default function AgentPipeline({ campaign }: { campaign: Campaign }) {
                     <div className="flex items-center justify-between gap-2">
                       <div>
                         <h3 className="text-base font-black text-aura-dark">
-                          {def.nameAr}
+                          {nameAr}
                           <span className="mr-2 text-xs font-medium text-aura-dark/40">
                             #{idx + 1}
                           </span>
                         </h3>
                         <p className="text-[11px] font-medium uppercase tracking-wider text-aura-blue/70">
-                          {def.model}
+                          {model}
                         </p>
                       </div>
                       <StatusIcon status={a.status} />

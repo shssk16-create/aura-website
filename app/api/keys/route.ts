@@ -4,10 +4,7 @@ import { listMasks, listSlotConfig, setKey } from "@/lib/secrets";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const [slots, masks] = await Promise.all([
-    Promise.resolve(listSlotConfig()),
-    listMasks(),
-  ]);
+  const [slots, masks] = await Promise.all([listSlotConfig(), listMasks()]);
   // Strip the ping config; the browser doesn't need (and shouldn't see)
   // raw provider URLs for unrelated keys.
   const slotPublic = slots.map((s) => ({
@@ -35,7 +32,7 @@ export async function POST(req: Request) {
       { status: 400 },
     );
   }
-  const known = listSlotConfig().some((s) => s.name === slot);
+  const known = (await listSlotConfig()).some((s) => s.name === slot);
   if (!known) {
     return NextResponse.json({ error: "unknown slot" }, { status: 400 });
   }
