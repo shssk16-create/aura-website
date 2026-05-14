@@ -5,6 +5,7 @@
  */
 
 import {
+  Eye,
   Target,
   Lightbulb,
   PenLine,
@@ -24,6 +25,7 @@ import {
 import type { AgentIcon as AgentIconName } from "@/lib/agents";
 
 const ICONS: Record<AgentIconName, LucideIcon> = {
+  Eye,
   Target,
   Lightbulb,
   PenLine,

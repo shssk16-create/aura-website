@@ -17,6 +17,7 @@
 export type AgentId = string;
 
 export const BUILTIN_AGENT_IDS = [
+  "vision",
   "manager",
   "strategist",
   "copywriter",
@@ -58,6 +59,7 @@ export interface ImageInferenceConfig {
 }
 
 export const AGENT_ICONS = [
+  "Eye",
   "Target",
   "Lightbulb",
   "PenLine",
@@ -110,6 +112,28 @@ export interface AgentDefinition {
 
 export const DEFAULT_AGENTS: AgentDefinition[] = [
   {
+    id: "vision",
+    nameAr: "وكيل الرؤية",
+    nameEn: "Vision Analyst",
+    descriptionAr:
+      "يقرأ صورة المنتج الخام ويستخرج JSON منظَّمًا: الألوان، الخامات، إحداثيات السطح الذي يصلح لطباعة النصّ، ومقترحات السياق السعودي.",
+    model: "Nemotron 3 Nano Omni 30B-A3B (Vision)",
+    inference: {
+      provider: "nvidia",
+      url: "https://integrate.api.nvidia.com/v1/chat/completions",
+      model: "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
+      keyEnv: "Api",
+      reasoning: true,
+    },
+    endpointEnv: "VISION_API_URL",
+    systemPromptAr:
+      "أنت «وكيل الرؤية» في أورا. حلِّل صورة المنتج المرفوعة وأخرِج JSON صارمًا يصف الوصف والألوان والخامات وإحداثيات السطح الذي يصلح لطباعة النصّ، إضافة إلى مقترحات سياق سعودي. ممنوع أيّ نصّ خارج JSON.",
+    icon: "Eye",
+    stage: 0,
+    accent: "teal",
+    pipelineEnabled: false,
+  },
+  {
     id: "manager",
     nameAr: "مدير الحملة",
     nameEn: "Campaign Manager",
@@ -126,7 +150,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     systemPromptAr:
       "أنت «مدير حملة» في منصَّة أورا. مهمَّتك أن تقرأ بريف الحملة، تستخرج الأهداف القابلة للقياس، تقسِّم العمل على فريق وكلاء التسويق، وتلخِّص الخطَّة في فقرة عربية بيضاء فصيحة، لا تتجاوز ٦ أسطر، خالية من الترجمة الحرفية، وبدون عناوين أو ترقيم.",
     icon: "Target",
-    stage: 0,
+    stage: 1,
     accent: "blue",
     pipelineEnabled: true,
   },
@@ -148,7 +172,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     systemPromptAr:
       "أنت «خبير محتوى» في منصَّة أورا. حلِّل بريف الحملة، اقترح زاوية المحتوى الأقوى، حدِّد الرسالة الجوهرية، وصياغة الإطار التحريري في فقرة عربية بيضاء فصيحة لا تتجاوز ٦ أسطر، بلا ترقيم وبلا عناوين فرعية.",
     icon: "Lightbulb",
-    stage: 1,
+    stage: 2,
     accent: "teal",
     pipelineEnabled: true,
   },
@@ -169,7 +193,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     systemPromptAr:
       "أنت «كاتب إعلانات» في منصَّة أورا. اكتب نسخة إعلانية عربية بيضاء فصيحة تتألَّف من: عنوان رئيس قصير، ثلاثة إلى أربعة أسطر للنسخة الجسمية، ثمَّ دعوة فعل واحدة واضحة. اجتنب الترجمة الحرفية والترقيم التفصيلي، ولا تتجاوز ٦ أسطر إجمالاً.",
     icon: "PenLine",
-    stage: 2,
+    stage: 3,
     accent: "blue",
     pipelineEnabled: true,
   },
@@ -182,7 +206,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     model: "DeepSeek-V4-Pro",
     endpointEnv: "DEEPSEEK_API_URL",
     icon: "BarChart3",
-    stage: 3,
+    stage: 4,
     accent: "teal",
   },
   {
@@ -203,7 +227,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     systemPromptAr:
       "أنت «المصمِّم الإبداعي» في منصَّة أورا. صف بإيجاز خلفية إعلانية واحدة عالية الجودة تخدم نسخة الإعلان، مع مساحة سلبية كافية للنص العربي على اليمين.",
     icon: "Palette",
-    stage: 4,
+    stage: 5,
     accent: "blue",
     pipelineEnabled: true,
   },
@@ -216,7 +240,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     model: "Qwen3-8B",
     endpointEnv: "QWEN_API_URL",
     icon: "Share2",
-    stage: 5,
+    stage: 6,
     accent: "teal",
     pipelineEnabled: true,
   },
@@ -229,7 +253,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     model: "Falcon-H1 Arabic 34B",
     endpointEnv: "FALCON_API_URL",
     icon: "Search",
-    stage: 6,
+    stage: 7,
     accent: "silver",
   },
   {
@@ -241,7 +265,7 @@ export const DEFAULT_AGENTS: AgentDefinition[] = [
     model: "Cosmos-Transfer2.5",
     endpointEnv: "COSMOS_API_URL",
     icon: "Clapperboard",
-    stage: 7,
+    stage: 8,
     accent: "blue",
   },
 ];
