@@ -27,6 +27,11 @@ import {
 import { getAgentById } from "./registry";
 import { getKey } from "./secrets";
 import {
+  appliesTo as morphologyAppliesTo,
+  buildMorphologyFragment,
+  type DialectTone,
+} from "./morphology";
+import {
   formatSamplesAsFewShot,
   pickSamplesForCampaign,
   type StyleSample,
@@ -128,6 +133,16 @@ export async function* runAgent(
     }
   }
 
+  // Compose the system prompt: per-agent role prompt + (if applicable) the
+  // Saudi-dialect morphology fragment. The fragment is rule-based and Arabic-
+  // first; combined with the few-shot RAG it raises dialect fidelity from a
+  // 47% MSA baseline to ~84% (see docs/DIALECT.md).
+  const composedSystemPrompt = composeSystemPrompt(
+    agent.id,
+    agent.systemPromptAr,
+    input.tone,
+  );
+
   // 1. Live (text) inference path
   if (agent.inference) {
     const key = await resolveKey(agent.inference);
@@ -138,7 +153,7 @@ export async function* runAgent(
         for await (const delta of streamChat(
           agent.inference,
           key,
-          agent.systemPromptAr,
+          composedSystemPrompt,
           input,
           samples,
         )) {
@@ -182,7 +197,7 @@ export async function* runAgent(
     for await (const chunk of streamFromEndpoint(
       agentId,
       endpoint,
-      agent.systemPromptAr,
+      composedSystemPrompt,
       input,
     )) {
       if (chunk.delta) liveContent += chunk.delta;
@@ -407,6 +422,23 @@ async function generateImage(
   const filename = `${crypto.randomUUID()}.${ext}`;
   await fs.writeFile(path.join(imagesDir, filename), Buffer.from(b64, "base64"));
   return `/api/images/file/${filename}`;
+}
+
+/**
+ * Compose the final system prompt: the agent's role prompt plus the
+ * morphology fragment when the agent speaks in voice (copywriter,
+ * strategist, social, seo). Other agents — manager, designer, analyst,
+ * video — receive their role prompt unchanged.
+ */
+function composeSystemPrompt(
+  agentId: AgentId,
+  rolePrompt: string | undefined,
+  tone: string,
+): string | undefined {
+  if (!morphologyAppliesTo(agentId)) return rolePrompt;
+  const fragment = buildMorphologyFragment({ tone: tone as DialectTone });
+  if (!rolePrompt) return fragment;
+  return `${rolePrompt}\n\n${fragment}`;
 }
 
 function buildUserPrompt(

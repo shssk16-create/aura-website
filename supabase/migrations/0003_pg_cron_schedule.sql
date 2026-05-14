@@ -1,0 +1,45 @@
+-- Schedules the generation worker to run every minute via pg_cron.
+--
+-- This migration is *intentionally commented out* — enabling it requires
+-- the `pg_cron` extension (Supabase: Database → Extensions) and a
+-- service-role JWT secret stored as a database secret. Uncomment after
+-- both prerequisites are satisfied in production.
+
+-- create extension if not exists pg_cron;
+-- create extension if not exists pg_net;
+
+-- ---------------------------------------------------------------------------
+-- Helper: call the Next.js worker endpoint with the service-role JWT.
+-- ---------------------------------------------------------------------------
+-- create or replace function public.invoke_generation_worker()
+-- returns void
+-- language plpgsql
+-- security definer
+-- as $$
+-- declare
+--   worker_url text := current_setting('app.worker_url', true);
+--   worker_secret text := current_setting('app.worker_secret', true);
+-- begin
+--   if worker_url is null or worker_secret is null then
+--     raise notice 'worker_url / worker_secret not configured; skipping';
+--     return;
+--   end if;
+--   perform net.http_post(
+--     url := worker_url || '/api/jobs/worker',
+--     headers := jsonb_build_object(
+--       'Content-Type', 'application/json',
+--       'Authorization', 'Bearer ' || worker_secret
+--     ),
+--     body := '{}'::jsonb
+--   );
+-- end;
+-- $$;
+
+-- ---------------------------------------------------------------------------
+-- Schedule: run once a minute.
+-- ---------------------------------------------------------------------------
+-- select cron.schedule(
+--   'aura-generation-worker',
+--   '* * * * *',
+--   $$select public.invoke_generation_worker();$$
+-- );
