@@ -25,88 +25,97 @@ export async function GET(req: Request) {
   const subtitle = searchParams.get("subtitle")?.trim() ?? "";
   const brand = searchParams.get("brand")?.trim() ?? "AURA";
 
-  const nextOg = await tryLoadNextOg();
-  if (nextOg) {
-    return nextOg.render({ title, subtitle, brand });
+  const png = await tryRenderSatoriPng({ title, subtitle, brand });
+  if (png) {
+    return new NextResponse(png, {
+      headers: {
+        "Content-Type": "image/png",
+        "Cache-Control": "public, max-age=300",
+      },
+    });
   }
   return svgFallback({ title, subtitle, brand });
 }
 
-async function tryLoadNextOg(): Promise<
-  | {
-      render: (args: { title: string; subtitle: string; brand: string }) => Response;
-    }
-  | null
-> {
+/**
+ * Render via Satori (next/og), capture the bytes server-side, and bail to
+ * the SVG fallback on any error. Without a bundled Arabic font, Satori's
+ * embedded fallback font crashes on certain GSUB lookups
+ * (`substFormat: 3 is not yet supported`) — that error otherwise surfaces
+ * mid-stream as a 500 because `ImageResponse` defers rendering to body
+ * consumption time. Materialising to `ArrayBuffer` here lets us catch it.
+ */
+async function tryRenderSatoriPng(args: {
+  title: string;
+  subtitle: string;
+  brand: string;
+}): Promise<ArrayBuffer | null> {
   try {
     const mod = (await import("next/og").catch(() => null)) as
       | typeof import("next/og")
       | null;
     if (!mod) return null;
     const { ImageResponse } = mod;
-    return {
-      render: ({ title, subtitle, brand }) =>
-        new ImageResponse(
-          (
-            <div
-              style={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "space-between",
-                padding: 80,
-                background:
-                  "linear-gradient(135deg, #58A8B4 0%, #438FB3 100%)",
-                color: "#ffffff",
-                fontFamily: "Cairo, 'IBM Plex Sans Arabic', sans-serif",
-              }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-start",
-                  fontSize: 28,
-                  fontWeight: 700,
-                  letterSpacing: 2,
-                }}
-              >
-                {brand}
-              </div>
-              <div
-                dir="rtl"
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "flex-end",
-                  textAlign: "right",
-                  gap: 16,
-                }}
-              >
-                <div style={{ fontSize: 96, fontWeight: 900, lineHeight: 1.1 }}>
-                  {title}
-                </div>
-                {subtitle ? (
-                  <div style={{ fontSize: 36, fontWeight: 500, opacity: 0.9 }}>
-                    {subtitle}
-                  </div>
-                ) : null}
-              </div>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  fontSize: 24,
-                  opacity: 0.85,
-                }}
-              >
-                aura.ai
-              </div>
+    const response = new ImageResponse(
+      (
+        <div
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
+            padding: 80,
+            background:
+              "linear-gradient(135deg, #58A8B4 0%, #438FB3 100%)",
+            color: "#ffffff",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-start",
+              fontSize: 28,
+              fontWeight: 700,
+              letterSpacing: 2,
+            }}
+          >
+            {args.brand}
+          </div>
+          <div
+            dir="rtl"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "flex-end",
+              textAlign: "right",
+              gap: 16,
+            }}
+          >
+            <div style={{ fontSize: 96, fontWeight: 900, lineHeight: 1.1 }}>
+              {args.title}
             </div>
-          ),
-          { width: 1200, height: 630 },
-        ),
-    };
+            {args.subtitle ? (
+              <div style={{ fontSize: 36, fontWeight: 500, opacity: 0.9 }}>
+                {args.subtitle}
+              </div>
+            ) : null}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "flex-end",
+              fontSize: 24,
+              opacity: 0.85,
+            }}
+          >
+            aura.ai
+          </div>
+        </div>
+      ),
+      { width: 1200, height: 630 },
+    );
+    return await response.arrayBuffer();
   } catch {
     return null;
   }
