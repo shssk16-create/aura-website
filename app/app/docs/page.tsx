@@ -48,12 +48,28 @@ FLUX_API_URL=https://flux.local/v1/images`}
         <li>المستخدم يدخل تفاصيل الحملة من الواجهة.</li>
         <li>الطلب يمرُّ إلى Node.js مع توقيع المصادقة.</li>
         <li>
-          LangChain يستدعي الوكلاء بالترتيب: Manager → Strategist → Copywriter
-          → Designer → Social.
+          المنسِّق (Orchestrator) يستدعي الوكلاء بالترتيب: Manager → Strategist
+          → Copywriter → Designer → Social.
         </li>
         <li>كل وكيل يرسل ناتجه عبر SSE إلى الواجهة.</li>
-        <li>الناتج النهائي يُخزَّن في قاعدة البيانات للمراجعة.</li>
+        <li>
+          الناتج النهائي يُخزَّن محليًا داخل مجلَّد <code>.data/</code> بصيغة
+          JSON (مفاتيحك مشفَّرة بـ AES‑256‑GCM). تستطيع الانتقال إلى Postgres
+          لاحقًا بتبديل <code>lib/store.ts</code> فقط.
+        </li>
       </ol>
+
+      <h2 className="mt-8 text-xl font-black text-aura-dark">
+        ٤. الترقية لقاعدة بيانات حقيقية
+      </h2>
+      <p className="text-aura-dark/75">
+        المنصَّة تعمل بدون قاعدة بيانات خارجية للتجارب والاستخدام الفردي. لو
+        احتجت تسجيل دخول وعدَّة مستخدمين، استبدل دوال{" "}
+        <code>listCampaigns/getCampaign/createCampaign/updateCampaign</code> في{" "}
+        <code>lib/store.ts</code> بمحرِّك Postgres (Neon أو Supabase). نفس
+        الشيء ينطبق على <code>lib/registry.ts</code> و <code>lib/style.ts</code>
+        و <code>lib/secrets.ts</code>.
+      </p>
     </div>
   );
 }

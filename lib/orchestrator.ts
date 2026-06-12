@@ -521,13 +521,30 @@ function splitHeadlineAndBody(
   if (!trimmed) {
     return { headline: `${input.brand}: ${input.goal}`, body: trimmed };
   }
+  // Prefer a clean split on the first newline.
   const firstNewline = trimmed.indexOf("\n");
-  if (firstNewline === -1) {
-    return { headline: trimmed.slice(0, 80), body: trimmed };
+  if (firstNewline !== -1) {
+    return {
+      headline: trimmed.slice(0, firstNewline).trim().slice(0, 120),
+      body: trimmed.slice(firstNewline + 1).trim(),
+    };
   }
+  // Single-line output: split on the first sentence boundary so the headline
+  // and body stay distinct instead of duplicating the full text twice.
+  const boundary = trimmed.search(/[.!?؟،]\s|[.!?؟،]$/);
+  if (boundary !== -1 && boundary < trimmed.length - 1) {
+    const cut = boundary + 1;
+    const head = trimmed.slice(0, cut).trim();
+    const body = trimmed.slice(cut).trim();
+    if (head && body) {
+      return { headline: head.slice(0, 120), body };
+    }
+  }
+  // No usable boundary — derive a brand/goal headline so the UI does not
+  // render the same text twice.
   return {
-    headline: trimmed.slice(0, firstNewline).trim().slice(0, 120),
-    body: trimmed.slice(firstNewline + 1).trim(),
+    headline: `${input.brand}: ${input.goal}`.slice(0, 120),
+    body: trimmed,
   };
 }
 
